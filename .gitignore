@@ -1,0 +1,14 @@
+/target/
+target/classes/META-INF/maven/com.startup/goHappy/pom.xml
+target/classes/META-INF/maven/com.startup/goHappy/pom.properties
+target/classes/com/startup/goHappy/controllers/HomeController.class
+target/classes/application.properties
+.DS_Store
+.classpath
+.project
+*.prefs
+target/classes/application.properties
+target/classes/com/startup/goHappy/controllers/HomeController.class
+target/classes/com/startup/goHappy/services/HomeService.class
+target/classes/META-INF/maven/com.startup/goHappy/pom.properties
+target/classes/META-INF/maven/com.startup/goHappy/pom.xml

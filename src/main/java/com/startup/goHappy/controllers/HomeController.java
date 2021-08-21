@@ -16,8 +16,10 @@ public class HomeController {
 	@Autowired
 	HomeService homeService;
 	
-	@GetMapping("getEvents")
-	public JSONObject getEvents() {
-		return homeService.getEvents();
-	}
+	
+	
+		@PostMapping("getEvents")
+		public JSONObject getEvents() {
+			return homeService.getEvents();
+		}
 }
