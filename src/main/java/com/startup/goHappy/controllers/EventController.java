@@ -1,7 +1,10 @@
 package com.startup.goHappy.controllers;
 
+import java.util.List;
 import java.util.UUID;
 
+import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,7 +36,22 @@ public class EventController {
 		ev.setEventName(event.getString("eventName"));
 		ev.setExpertName(event.getString("expertName"));
 		ev.setStartTime(event.getString("startTime"));
+		ev.setType(StringUtils.isEmpty(event.getString("type"))?"0":event.getString("type"));
 		eventService.save(ev);
 		return;
+	}
+	@PostMapping("delete")
+	public void deleteEvent(@RequestBody JSONObject params) {
+		String id = params.getString("id");
+		eventService.delete(id);
+		return;
+	}
+	@PostMapping("findAll")
+	public JSONObject findAll() {
+		Iterable<Event> events = eventService.findAll();
+		List<Event> result = IterableUtils.toList(events);
+		JSONObject output = new JSONObject();
+		output.put("events", result);
+		return output;
 	}
 }

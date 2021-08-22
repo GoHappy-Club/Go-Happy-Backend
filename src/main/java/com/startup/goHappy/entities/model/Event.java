@@ -33,6 +33,8 @@ public class Event {
 	private String category;
 	@Field(type = FieldType.Keyword)
 	private String description;
+	@Field(type = FieldType.Keyword)
+	private String type; //0:event,1:session
 	@Field(type = FieldType.Binary)
 	private String coverImage;
 	@Override
@@ -40,8 +42,10 @@ public class Event {
 		return "Event [id=" + id + ", eventName=" + eventName + ", creator=" + creator + ", modifier=" + modifier
 				+ ", lastUpdated=" + lastUpdated + ", startTime=" + startTime + ", endTime=" + endTime + ", eventDate="
 				+ eventDate + ", expertName=" + expertName + ", category=" + category + ", description=" + description
-				+ ", coverImage=" + coverImage + "]";
+				+ ", type=" + type + ", coverImage=" + coverImage + "]";
 	}
+
+	
 	
 	
 	

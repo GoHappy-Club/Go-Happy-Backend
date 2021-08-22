@@ -12,3 +12,4 @@ target/classes/com/startup/goHappy/controllers/HomeController.class
 target/classes/com/startup/goHappy/services/HomeService.class
 target/classes/META-INF/maven/com.startup/goHappy/pom.properties
 target/classes/META-INF/maven/com.startup/goHappy/pom.xml
+target/classes/META-INF/maven/com.startup/goHappy/pom.properties
