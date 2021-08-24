@@ -1,6 +1,7 @@
 package com.startup.goHappy.controllers;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +42,7 @@ public class EventController {
 		ev.setExpertName(event.getString("expertName"));
 		ev.setStartTime(event.getString("startTime"));
 		ev.setType(StringUtils.isEmpty(event.getString("type"))?"0":event.getString("type"));
-		ev.setSeatsLeft(event.getString("seatsLeft"));
+		ev.setSeatsLeft(event.getInteger("seatsLeft"));
 		eventService.save(ev);
 		return;
 	}
@@ -63,6 +64,25 @@ public class EventController {
 	public JSONObject getEventsByDate(@RequestBody JSONObject params) throws IOException {
 		QueryBuilder qb = QueryBuilders.matchQuery("eventDate", params.getString("date"));
 	
+		Iterable<Event> events = eventService.search(qb);
+		List<Event> result = IterableUtils.toList(events);
+		JSONObject output = new JSONObject();
+		output.put("events", result);
+		return output;
+	}
+	@PostMapping("bookEvent")
+	public String bookEvent(@RequestBody JSONObject params) throws IOException {
+		Event event = eventService.findById(params.getString("id"));
+		event.setSeatsLeft(event.getSeatsLeft()-1);
+		List<String> participants = event.getParticipants();
+		participants.add(params.getString("email"));
+		event.setParticipants(participants);
+		return "SUCCESS";
+	}
+	@PostMapping("mySessions")
+	public JSONObject mySessions(@RequestBody JSONObject params) throws IOException {
+		QueryBuilder qb = QueryBuilders.regexpQuery("eventDate", ".*"+params.getString("email")+".*");
+		
 		Iterable<Event> events = eventService.search(qb);
 		List<Event> result = IterableUtils.toList(events);
 		JSONObject output = new JSONObject();

@@ -1,5 +1,9 @@
 package com.startup.goHappy.entities.model;
 
+
+
+import java.util.List;
+
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -33,12 +37,14 @@ public class Event {
 	private String category;
 	@Field(type = FieldType.Keyword)
 	private String description;
-	@Field(type = FieldType.Keyword)
-	private String seatsLeft="0";
+	@Field(type = FieldType.Integer)
+	private Integer seatsLeft=0;
 	@Field(type = FieldType.Keyword)
 	private String type; //0:event,1:session
 	@Field(type = FieldType.Binary)
 	private String coverImage;
+	@Field(type = FieldType.Nested)
+	private List<String> participants;
 	@Override
 	public String toString() {
 		return "Event [id=" + id + ", eventName=" + eventName + ", creator=" + creator + ", modifier=" + modifier
