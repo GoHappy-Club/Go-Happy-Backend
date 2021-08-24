@@ -21,11 +21,13 @@ public class UserProfile {
 	private String email;
 	@Field(type = FieldType.Keyword)
 	private String phone;
+	@Field(type = FieldType.Keyword)
+	private String sessionsAttended;
+	@Field(type = FieldType.Keyword)
+	private String password;
+	@Field(type = FieldType.Boolean)
+	private Boolean googleSignIn;
 	@Field(type = FieldType.Binary)
 	private String profileImage;
-	@Override
-	public String toString() {
-		return "UserProfile [id=" + id + ", name=" + name + ", dateOfJoining=" + dateOfJoining + ", email=" + email
-				+ ", phone=" + phone + ", profileImage=" + profileImage + "]";
-	}	
+
 }

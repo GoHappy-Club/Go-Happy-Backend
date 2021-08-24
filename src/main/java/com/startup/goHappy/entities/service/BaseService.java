@@ -12,6 +12,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -122,7 +123,7 @@ public class BaseService<T> {
 //		SearchResponse scrollResp = this.client.prepareSearch(doc.indexName()).setScroll(new TimeValue(60000))
 //				.setQuery(qb).setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setIndices(doc.indexName())
 //				.setTypes(doc.indexStoreType()).setSize(1000).get();
-		SearchResponse scrollResp = client.search(searchRequest,null);
+		SearchResponse scrollResp = client.search(searchRequest,RequestOptions.DEFAULT);
 		List<SearchHit> sources = new ArrayList<>();
 		for(SearchHit hit: scrollResp.getHits().getHits()) {
 			sources.add(hit);

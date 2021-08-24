@@ -1,10 +1,15 @@
 package com.startup.goHappy.controllers;
 
+import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,7 +30,6 @@ public class EventController {
 
 	@PostMapping("create")
 	public void createEvent(@RequestBody JSONObject event) {
-		eventService.findAll();
 		Event ev = new Event();
 		ev.setId(UUID.randomUUID().toString());
 		ev.setCategory(event.getString("category"));
@@ -37,6 +41,7 @@ public class EventController {
 		ev.setExpertName(event.getString("expertName"));
 		ev.setStartTime(event.getString("startTime"));
 		ev.setType(StringUtils.isEmpty(event.getString("type"))?"0":event.getString("type"));
+		ev.setSeatsLeft(event.getString("seatsLeft"));
 		eventService.save(ev);
 		return;
 	}
@@ -49,6 +54,16 @@ public class EventController {
 	@PostMapping("findAll")
 	public JSONObject findAll() {
 		Iterable<Event> events = eventService.findAll();
+		List<Event> result = IterableUtils.toList(events);
+		JSONObject output = new JSONObject();
+		output.put("events", result);
+		return output;
+	}
+	@PostMapping("getEventsByDate")
+	public JSONObject getEventsByDate(@RequestBody JSONObject params) throws IOException {
+		QueryBuilder qb = QueryBuilders.matchQuery("eventDate", params.getString("date"));
+	
+		Iterable<Event> events = eventService.search(qb);
 		List<Event> result = IterableUtils.toList(events);
 		JSONObject output = new JSONObject();
 		output.put("events", result);

@@ -34,6 +34,8 @@ public class Event {
 	@Field(type = FieldType.Keyword)
 	private String description;
 	@Field(type = FieldType.Keyword)
+	private String seatsLeft="0";
+	@Field(type = FieldType.Keyword)
 	private String type; //0:event,1:session
 	@Field(type = FieldType.Binary)
 	private String coverImage;
@@ -42,8 +44,10 @@ public class Event {
 		return "Event [id=" + id + ", eventName=" + eventName + ", creator=" + creator + ", modifier=" + modifier
 				+ ", lastUpdated=" + lastUpdated + ", startTime=" + startTime + ", endTime=" + endTime + ", eventDate="
 				+ eventDate + ", expertName=" + expertName + ", category=" + category + ", description=" + description
-				+ ", type=" + type + ", coverImage=" + coverImage + "]";
+				+ ", seatsLeft=" + seatsLeft + ", type=" + type + ", coverImage=" + coverImage + "]";
 	}
+
+	
 
 	
 	
