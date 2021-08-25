@@ -2,7 +2,7 @@ package com.startup.goHappy.entities.model;
 
 
 
-import java.util.List;
+import java.util.*;
 
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.annotation.Id;
@@ -44,7 +44,7 @@ public class Event {
 	@Field(type = FieldType.Binary)
 	private String coverImage;
 	@Field(type = FieldType.Nested)
-	private List<String> participants;
+	private List<String> participants = new ArrayList<String>();
 	@Override
 	public String toString() {
 		return "Event [id=" + id + ", eventName=" + eventName + ", creator=" + creator + ", modifier=" + modifier

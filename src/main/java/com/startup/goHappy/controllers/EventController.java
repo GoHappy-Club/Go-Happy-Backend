@@ -2,6 +2,8 @@ package com.startup.goHappy.controllers;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -63,9 +65,9 @@ public class EventController {
 	@PostMapping("getEventsByDate")
 	public JSONObject getEventsByDate(@RequestBody JSONObject params) throws IOException {
 		QueryBuilder qb = QueryBuilders.matchQuery("eventDate", params.getString("date"));
-	
 		Iterable<Event> events = eventService.search(qb);
 		List<Event> result = IterableUtils.toList(events);
+		Collections.sort(result,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
 		JSONObject output = new JSONObject();
 		output.put("events", result);
 		return output;
@@ -73,15 +75,22 @@ public class EventController {
 	@PostMapping("bookEvent")
 	public String bookEvent(@RequestBody JSONObject params) throws IOException {
 		Event event = eventService.findById(params.getString("id"));
+		if(event.getSeatsLeft()<=0) {
+			return "FAILED:FULL";
+		}
 		event.setSeatsLeft(event.getSeatsLeft()-1);
 		List<String> participants = event.getParticipants();
+		if(participants==null) {
+			participants = new ArrayList<String>();
+		}
 		participants.add(params.getString("email"));
 		event.setParticipants(participants);
+		eventService.save(event);
 		return "SUCCESS";
 	}
 	@PostMapping("mySessions")
 	public JSONObject mySessions(@RequestBody JSONObject params) throws IOException {
-		QueryBuilder qb = QueryBuilders.regexpQuery("eventDate", ".*"+params.getString("email")+".*");
+		QueryBuilder qb = QueryBuilders.regexpQuery("participants", ".*"+params.getString("email")+".*");
 		
 		Iterable<Event> events = eventService.search(qb);
 		List<Event> result = IterableUtils.toList(events);
@@ -90,3 +99,12 @@ public class EventController {
 		return output;
 	}
 }
+
+class TimeComparator implements Comparator<Event>{  
+public int compare(Event e1,Event e2){  
+if(e1.getStartTime()==e2.getStartTime())  
+return 0;  
+else return (e1.getStartTime().compareTo(e2.getStartTime()));
+}  
+}  
+
