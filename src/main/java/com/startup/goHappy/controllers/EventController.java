@@ -79,12 +79,12 @@ public class EventController {
 			return "FAILED:FULL";
 		}
 		event.setSeatsLeft(event.getSeatsLeft()-1);
-		List<String> participants = event.getParticipants();
+		List<String> participants = event.getParticipantsList();
 		if(participants==null) {
 			participants = new ArrayList<String>();
 		}
 		participants.add(params.getString("email"));
-		event.setParticipants(participants);
+		event.setParticipantsList(participants);
 		eventService.save(event);
 		return "SUCCESS";
 	}

@@ -44,7 +44,7 @@ public class Event {
 	@Field(type = FieldType.Binary)
 	private String coverImage;
 	@Field(type = FieldType.Nested)
-	private List<String> participants = new ArrayList<String>();
+	private List<String> participantsList = new ArrayList<String>();
 	@Override
 	public String toString() {
 		return "Event [id=" + id + ", eventName=" + eventName + ", creator=" + creator + ", modifier=" + modifier
