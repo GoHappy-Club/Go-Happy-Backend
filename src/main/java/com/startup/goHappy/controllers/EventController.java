@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -90,21 +91,32 @@ public class EventController {
 	}
 	@PostMapping("mySessions")
 	public JSONObject mySessions(@RequestBody JSONObject params) throws IOException {
-		QueryBuilder qb = QueryBuilders.regexpQuery("participants", ".*"+params.getString("email")+".*");
+		QueryBuilder upcomingQb = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("participantsList.keyword",params.getString("email")))
+				.must(QueryBuilders.rangeQuery("startTime").gte(""+new Date().getTime()));
+		Iterable<Event> upcomingEvents = eventService.search(upcomingQb);
+		List<Event> upresult = IterableUtils.toList(upcomingEvents);
+		Collections.sort(upresult,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
 		
-		Iterable<Event> events = eventService.search(qb);
-		List<Event> result = IterableUtils.toList(events);
+		QueryBuilder ongoingQb = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("participantsList.keyword",params.getString("email")))
+				.must(QueryBuilders.rangeQuery("startTime").lte(""+new Date().getTime()))
+				.must(QueryBuilders.rangeQuery("endTime").gte(""+new Date().getTime()));
+		Iterable<Event> ongoingEvents = eventService.search(ongoingQb);
+		List<Event> ogresult = IterableUtils.toList(ongoingEvents);
+		Collections.sort(ogresult,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+		
+
+		QueryBuilder expiredQb = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("participantsList.keyword",params.getString("email")))
+		.must(QueryBuilders.rangeQuery("endTime").lte(""+new Date().getTime()));
+		Iterable<Event> expiredEvents = eventService.search(expiredQb);
+		List<Event> expresult = IterableUtils.toList(expiredEvents);
+		Collections.sort(expresult,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+
+		
 		JSONObject output = new JSONObject();
-		output.put("events", result);
+		output.put("upcomingEvents", upresult);
+		output.put("ongoingEvents", ogresult);
+		output.put("expiredEvents", expresult);
 		return output;
 	}
-}
-
-class TimeComparator implements Comparator<Event>{  
-public int compare(Event e1,Event e2){  
-if(e1.getStartTime()==e2.getStartTime())  
-return 0;  
-else return (e1.getStartTime().compareTo(e2.getStartTime()));
-}  
 }  
 
