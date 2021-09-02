@@ -46,6 +46,7 @@ public class EventController {
 		ev.setStartTime(event.getString("startTime"));
 		ev.setType(StringUtils.isEmpty(event.getString("type"))?"0":event.getString("type"));
 		ev.setSeatsLeft(event.getInteger("seatsLeft"));
+		ev.setParticipantList(new ArrayList<String>());
 		eventService.save(ev);
 		return;
 	}
@@ -80,24 +81,24 @@ public class EventController {
 			return "FAILED:FULL";
 		}
 		event.setSeatsLeft(event.getSeatsLeft()-1);
-		List<String> participants = event.getParticipantsList();
+		List<String> participants = event.getParticipantList();
 		if(participants==null) {
 			participants = new ArrayList<String>();
 		}
 		participants.add(params.getString("email"));
-		event.setParticipantsList(participants);
+		event.setParticipantList(participants);
 		eventService.save(event);
 		return "SUCCESS";
 	}
 	@PostMapping("mySessions")
 	public JSONObject mySessions(@RequestBody JSONObject params) throws IOException {
-		QueryBuilder upcomingQb = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("participantsList.keyword",params.getString("email")))
+		QueryBuilder upcomingQb = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("participantList.keyword",params.getString("email")))
 				.must(QueryBuilders.rangeQuery("startTime").gte(""+new Date().getTime()));
 		Iterable<Event> upcomingEvents = eventService.search(upcomingQb);
 		List<Event> upresult = IterableUtils.toList(upcomingEvents);
 		Collections.sort(upresult,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
 		
-		QueryBuilder ongoingQb = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("participantsList.keyword",params.getString("email")))
+		QueryBuilder ongoingQb = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("participantList.keyword",params.getString("email")))
 				.must(QueryBuilders.rangeQuery("startTime").lte(""+new Date().getTime()))
 				.must(QueryBuilders.rangeQuery("endTime").gte(""+new Date().getTime()));
 		Iterable<Event> ongoingEvents = eventService.search(ongoingQb);
@@ -105,7 +106,7 @@ public class EventController {
 		Collections.sort(ogresult,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
 		
 
-		QueryBuilder expiredQb = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("participantsList.keyword",params.getString("email")))
+		QueryBuilder expiredQb = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("participantList.keyword",params.getString("email")))
 		.must(QueryBuilders.rangeQuery("endTime").lte(""+new Date().getTime()));
 		Iterable<Event> expiredEvents = eventService.search(expiredQb);
 		List<Event> expresult = IterableUtils.toList(expiredEvents);

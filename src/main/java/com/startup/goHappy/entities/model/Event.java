@@ -13,7 +13,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 import lombok.Data;
 
 @Data
-@Document(indexName = "event", createIndex = true)
+@Document(indexName = "session", createIndex = true)
 public class Event {
 	@Id
 	private String id;
@@ -44,7 +44,7 @@ public class Event {
 	@Field(type = FieldType.Binary)
 	private String coverImage;
 	@Field(type = FieldType.Nested)
-	private List<String> participantsList = new ArrayList<String>();
+	private List<String> participantList;
 	@Override
 	public String toString() {
 		return "Event [id=" + id + ", eventName=" + eventName + ", creator=" + creator + ", modifier=" + modifier
