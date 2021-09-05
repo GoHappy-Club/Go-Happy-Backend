@@ -33,16 +33,28 @@ public class Event {
 	private String eventDate;
 	@Field(type = FieldType.Keyword)
 	private String expertName;
+	@Field(type = FieldType.Binary)
+	private String expertImage;
 	@Field(type = FieldType.Keyword)
 	private String category;
 	@Field(type = FieldType.Keyword)
 	private String description;
 	@Field(type = FieldType.Integer)
-	private Integer seatsLeft=0;
+	private Integer seatsLeft=30;
 	@Field(type = FieldType.Keyword)
 	private String type; //0:event,1:session
+	@Field(type = FieldType.Keyword)
+	private String lang; //0:event,1:session
 	@Field(type = FieldType.Binary)
 	private String coverImage;
+	@Field(type = FieldType.Boolean)
+	private Boolean isScheduled=false;
+	@Field(type = FieldType.Boolean)
+	private Boolean isParent=false;
+	@Field(type = FieldType.Keyword)
+	private String parentId;
+	@Field(type = FieldType.Keyword)
+	private String cron;
 	@Field(type = FieldType.Nested)
 	private List<String> participantList;
 	@Override
