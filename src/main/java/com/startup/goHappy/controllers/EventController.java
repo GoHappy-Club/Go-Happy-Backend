@@ -1,6 +1,11 @@
 package com.startup.goHappy.controllers;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,6 +35,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.startup.goHappy.entities.model.Event;
 import com.startup.goHappy.entities.service.EventService;
+import com.startup.goHappy.integrations.model.ZoomMeetingObjectDTO;
+import com.startup.goHappy.integrations.service.ZoomService;
 
 import io.micrometer.core.instrument.util.StringEscapeUtils;
 
@@ -39,10 +46,14 @@ public class EventController {
 
 	@Autowired
 	EventService eventService;
+	
+	@Autowired
+	ZoomService zoomService;
 
 	@SuppressWarnings("deprecation")
 	@PostMapping("create")
 	public void createEvent(@RequestBody JSONObject event) throws JsonMappingException, JsonProcessingException {
+		//eventService.deleteAll();
 		ObjectMapper objectMapper = new ObjectMapper();
 		
 		Event ev = objectMapper.readValue(event.toJSONString(), Event.class);	
@@ -56,8 +67,12 @@ public class EventController {
 			ev.setIsParent(true);
 			ev.setEventDate("");
 			eventService.save(ev);
+			long duration = (Long.parseLong(ev.getEndTime())- nextExecutionDate.getTime())/(60000);
 			int i=0;
-			while(i<14 && nextExecutionDate!=null) {
+			String newYorkDateTimePattern = "yyyy-MM-dd HH:mm:ssZ";
+			//Date d = new Date(ev.getStartTime());
+			Event tempChild=null;
+			while(i<5 && nextExecutionDate!=null) {
 				Event childEvent = objectMapper.readValue(event.toJSONString(), Event.class);
 				childEvent.setId(UUID.randomUUID().toString());
 				childEvent.setIsParent(false);
@@ -66,14 +81,40 @@ public class EventController {
 				childEvent.setCron("");
 				childEvent.setStartTime(""+nextExecutionDate.getTime());
 				childEvent.setEventDate(""+nextExecutionDate.getTime());
-				Date parentEndTime = new Date(Long.parseLong(ev.getEndTime()));
-				nextExecutionDate.setHours(parentEndTime.getHours());
-				nextExecutionDate.setMinutes(parentEndTime.getMinutes());
-				nextExecutionDate.setSeconds(parentEndTime.getSeconds());
-				childEvent.setEndTime(""+nextExecutionDate.getTime());
+				long start = nextExecutionDate.getTime();
+				
+				Date newEndTime = new Date(nextExecutionDate.getTime()+60000);
+//				nextExecutionDate.setDate(parentEndTime.getDate());
+//				nextExecutionDate.setMonth(parentEndTime.getMonth());
+//				nextExecutionDate.setYear(parentEndTime.getYear());
+//				nextExecutionDate.setHours(parentEndTime.getHours());
+//				nextExecutionDate.setMinutes(parentEndTime.getMinutes());
+//				nextExecutionDate.setSeconds(parentEndTime.getSeconds());
+				childEvent.setEndTime(""+newEndTime.getTime());				
+				
+				ZoomMeetingObjectDTO obj = new ZoomMeetingObjectDTO();
+				obj.setTopic(ev.getEventName());
+				obj.setTimezone("Asia/Kolkata");
+				obj.setDuration((int)duration);
+				obj.setType(2);
+				obj.setPassword("212121");
+				Date startDate = new Date(start);
+				
+				DateTimeFormatter newYorkDateFormatter = DateTimeFormatter.ofPattern(newYorkDateTimePattern);
+				LocalDateTime summerDay = LocalDateTime.of(startDate.getYear()+1900, startDate.getMonth()+1, startDate.getDate(), startDate.getHours(), startDate.getMinutes());
+				String finalDateForZoom = newYorkDateFormatter.format(ZonedDateTime.of(summerDay, ZoneId.of("Asia/Kolkata")));
+				finalDateForZoom = finalDateForZoom.replace(" ", "T");
+
+				obj.setStart_time(finalDateForZoom);
+				
+				String zoomLink = zoomService.createMeeting(obj).getJoin_url();
+				
+				childEvent.setMeetingLink(zoomLink);
 				eventService.save(childEvent);
+				tempChild=childEvent;
 				nextExecutionDate = generator.next(nextExecutionDate);
 				i++;
+				
 			}
 		}
 		else {

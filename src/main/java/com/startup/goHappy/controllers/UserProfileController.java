@@ -1,6 +1,7 @@
 package com.startup.goHappy.controllers;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -11,6 +12,8 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,6 +32,9 @@ public class UserProfileController {
 
 	@Autowired
 	UserProfileService userProfileService;
+	
+	@Autowired
+	EventService eventService;
 
 	@PostMapping("create")
 	public void create(@RequestBody JSONObject userProfile) {
@@ -79,5 +85,15 @@ public class UserProfileController {
 		JSONObject output = new JSONObject();
 		output.put("user", result);
 		return output;
+	}
+	
+	@PostMapping("getTotalSessions")
+	public long totalSessions(@RequestBody JSONObject params) throws IOException {
+		NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+				  .withQuery(QueryBuilders.termQuery("participantList.keyword",params.getString("email")))
+				  .build();
+		long sessionsCount = eventService.count(searchQuery);
+		return sessionsCount;
+		
 	}
 }

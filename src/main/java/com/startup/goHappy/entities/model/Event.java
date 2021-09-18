@@ -55,6 +55,8 @@ public class Event {
 	private String parentId;
 	@Field(type = FieldType.Keyword)
 	private String cron;
+	@Field(type = FieldType.Keyword)
+	private String meetingLink;
 	@Field(type = FieldType.Nested)
 	private List<String> participantList;
 	@Override

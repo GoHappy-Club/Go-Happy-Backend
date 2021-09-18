@@ -27,6 +27,12 @@ public class ZoomController {
 		
 		ZoomMeetingObjectDTO zoomdto = objectMapper.readValue(params.toJSONString(), ZoomMeetingObjectDTO.class);	
 		zoomdto = zoomService.createMeeting(zoomdto);
-		return "SUCCESS";
+		return zoomdto.getJoin_url();
+	}
+	
+	@PostMapping("getRecording")
+	public String getRecording(@RequestBody JSONObject params) throws IOException {
+		String recordingLink = zoomService.getRecordingById(params.getString("meetingId"));
+		return recordingLink;
 	}
 }

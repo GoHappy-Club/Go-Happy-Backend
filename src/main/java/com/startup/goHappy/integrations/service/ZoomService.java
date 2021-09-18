@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.alibaba.fastjson.JSONObject;
 import com.startup.goHappy.integrations.model.ZoomMeetingObjectDTO;
 import com.startup.goHappy.integrations.model.ZoomMeetingSettingsDTO;
 
@@ -27,12 +28,13 @@ public class ZoomService {
 	
 	public ZoomMeetingObjectDTO createMeeting(ZoomMeetingObjectDTO zoomMeetingObjectDTO) {
        // replace zoomUserId with your user ID
+		String accountId = "7002431600";
 		String zoomUserId = "kathuria.soham96@gmail.com";
 		String yourPass = "";
-        String apiUrl = "https://api.zoom.us/v2/users/" + zoomUserId + "/meetings";
-
+        String apiUrl = "https://api.zoom.us/v2/users/"+zoomUserId+"/meetings";
+        String apiUrl2 = "https://api.zoom.us/v2/meetings/6361126516";
       // replace with your password or method
-        zoomMeetingObjectDTO.setPassword(yourPass);
+//        zoomMeetingObjectDTO.setPassword();
       // replace email with your email
         zoomMeetingObjectDTO.setHost_email("kathuria.soham96@gmail.com");
 
@@ -47,10 +49,15 @@ public class ZoomService {
 
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + generateZoomJWTTOken());
+        headers.add("Authorization", "Bearer "+generateZoomJWTTOken());
         headers.add("content-type", "application/json");
         HttpEntity<ZoomMeetingObjectDTO> httpEntity = new HttpEntity<ZoomMeetingObjectDTO>(zoomMeetingObjectDTO, headers);
         ResponseEntity<ZoomMeetingObjectDTO> zEntity = restTemplate.exchange(apiUrl, HttpMethod.POST, httpEntity, ZoomMeetingObjectDTO.class);
+        
+//        HttpEntity<String> entity = new HttpEntity<String>(headers);
+//        ResponseEntity<ZoomMeetingObjectDTO> zEntity =restTemplate.exchange(apiUrl2,HttpMethod.GET,entity,ZoomMeetingObjectDTO.class);
+        
+       
         if(zEntity.getStatusCodeValue() == 201) {
             return zEntity.getBody();
         } else {
@@ -73,25 +80,41 @@ public class ZoomService {
         }
         return null;
     }
+    
+    public String getRecordingById(String meetingId) {
+        String getMeetingUrl = "https://api.zoom.us/v2/meetings/" + meetingId + "/recordings";
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + generateZoomJWTTOken());
+        headers.add("content-type", "application/json");
+        HttpEntity<?> requestEntity = new HttpEntity<>(headers);
+        ResponseEntity<JSONObject> zoomEntityRes =  restTemplate
+            .exchange(getMeetingUrl, HttpMethod.GET, requestEntity, JSONObject.class);
+        if(zoomEntityRes.getStatusCodeValue() == 200) {
+                return zoomEntityRes.getBody().getString("share_url");
+        } else if (zoomEntityRes.getStatusCodeValue() == 404) {
+        }
+        return null;
+    }
 	
 	private String generateZoomJWTTOken() {
+		
 		String zoomApiKey = "ixMflExhTP2akOqgsFQ9eg";
         String zoomApiSecret = "JGh6f5RX1SQfsw8iabdT0l6RUcFnj2MVAHUi";
         String id = UUID.randomUUID().toString().replace("-", "");
         SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 
-        long nowMillis = System.currentTimeMillis();
-        Date now = new Date(nowMillis);
-        Date tokenExpiry = new Date(System.currentTimeMillis() + (1000 * 60));
+        Date creation = new Date(System.currentTimeMillis());
+
+        Date tokenExpiry = new Date(System.currentTimeMillis() + (1000 * 60 * 60));
 
         //We will sign our JWT with our ApiKey secret
         byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(zoomApiSecret);
-        Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
-
+        Key signingKey = new SecretKeySpec(zoomApiSecret.getBytes(),signatureAlgorithm.getJcaName());
         return Jwts.builder()
                 .setId(id)
                 .setIssuer(zoomApiKey)
-                .setIssuedAt(now)
+                .setIssuedAt(creation)
                 .setSubject("")
                 .setExpiration(tokenExpiry)
                 .signWith(signatureAlgorithm, signingKey)
