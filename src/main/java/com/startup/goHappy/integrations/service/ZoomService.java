@@ -7,6 +7,7 @@ import java.util.UUID;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -26,11 +27,22 @@ import io.jsonwebtoken.Jwts;
 @Service
 public class ZoomService {
 	
+	@Value("${zoom.account}")
+    private String zoomUserId;
+	@Value("${zoom.accountId}")
+    private String accountId;
+	@Value("${zoom.password}")
+    private String yourPass;
+	@Value("${zoom.apiKey}")
+    private String zoomApiKey;
+	@Value("${zoom.apiSecret}")
+    private String zoomApiSecret;
+
 	public ZoomMeetingObjectDTO createMeeting(ZoomMeetingObjectDTO zoomMeetingObjectDTO) {
        // replace zoomUserId with your user ID
-		String accountId = "7002431600";
-		String zoomUserId = "kathuria.soham96@gmail.com";
-		String yourPass = "";
+//		String accountId = "7002431600";
+//		String zoomUserId = "kathuria.soham96@gmail.com";
+//		String yourPass = "Always@2022@kind";
         String apiUrl = "https://api.zoom.us/v2/users/"+zoomUserId+"/meetings";
         String apiUrl2 = "https://api.zoom.us/v2/meetings/6361126516";
       // replace with your password or method
@@ -99,8 +111,8 @@ public class ZoomService {
 	
 	private String generateZoomJWTTOken() {
 		
-		String zoomApiKey = "ixMflExhTP2akOqgsFQ9eg";
-        String zoomApiSecret = "JGh6f5RX1SQfsw8iabdT0l6RUcFnj2MVAHUi";
+//		String zoomApiKey = "ixMflExhTP2akOqgsFQ9eg";
+//        String zoomApiSecret = "JGh6f5RX1SQfsw8iabdT0l6RUcFnj2MVAHUi";
         String id = UUID.randomUUID().toString().replace("-", "");
         SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 
