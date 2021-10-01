@@ -72,7 +72,7 @@ public class UserProfileController {
 		Iterable<UserProfile> user = userProfileService.search(qb);
 		List<UserProfile> result = IterableUtils.toList(user);
 		JSONObject output = new JSONObject();
-		output.put("user", result);
+		output.put("user", result.get(0));
 		return output;
 	}
 	
@@ -83,7 +83,7 @@ public class UserProfileController {
 		Iterable<UserProfile> user = userProfileService.search(qb);
 		List<UserProfile> result = IterableUtils.toList(user);
 		JSONObject output = new JSONObject();
-		output.put("user", result);
+		output.put("user", result.get(0));
 		return output;
 	}
 	
@@ -95,5 +95,18 @@ public class UserProfileController {
 		long sessionsCount = eventService.count(searchQuery);
 		return sessionsCount;
 		
+	}
+	
+	@PostMapping("setMembership")
+	public void setMembership(@RequestBody JSONObject params) throws IOException {
+		QueryBuilder qb = QueryBuilders.matchQuery("email", params.getString("email"));
+		
+		Iterable<UserProfile> user = userProfileService.search(qb);
+		List<UserProfile> result = IterableUtils.toList(user);
+		if(result.size()>0) {
+			result.get(0).setMembership(params.getString("planName"));
+			result.get(0).setLastPaymentDate(""+new Date().getTime());
+		}
+		userProfileService.save(result);
 	}
 }

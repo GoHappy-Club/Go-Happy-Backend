@@ -25,8 +25,7 @@ public class RazorPayController {
 	
 	@PostMapping("pay")
 	public String setup(@RequestBody JSONObject params) throws IOException, RazorpayException {
-		razorPayService.pay();
-		return "";
+		return razorPayService.pay(params.getString("amount"));
 	}
 	
 

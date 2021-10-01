@@ -29,5 +29,9 @@ public class UserProfile {
 	private Boolean googleSignIn;
 	@Field(type = FieldType.Binary)
 	private String profileImage;
+	@Field(type = FieldType.Keyword)
+	private String membership;
+	@Field(type = FieldType.Keyword)
+	private String lastPaymentDate;
 
 }

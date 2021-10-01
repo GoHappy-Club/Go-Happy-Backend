@@ -36,15 +36,16 @@ public class RazorPayService {
 	@Value("${razorPay.apiSecret}")
     private String razorPayApiSecret;
 
-	public void pay() throws RazorpayException {
+	public String pay(String amount) throws RazorpayException {
 		RazorpayClient razorpayClient = new RazorpayClient(razorPayApiKey, razorPayApiSecret);
 		org.json.JSONObject options = new org.json.JSONObject();
-		options.put("amount", 5000);
+		options.put("amount", amount);
 		options.put("currency", "INR");
-		options.put("receipt", "txn_123456");
+//		options.put("receipt", "txn_123456");
 		Order order = razorpayClient.Orders.create(options);
-//		Order order = razorpayClient.Orders.fetch("order_id");
+//		Order order = razorpayClient.Orders.fetch("order_I0zXHKi7SP8ijQ");
 		System.out.println(order);
+		return order.get("id");
     }
 	
     
