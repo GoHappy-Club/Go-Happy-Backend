@@ -40,17 +40,15 @@ public class AuthController {
 	@PostMapping("login")
 	public UserProfile login(@RequestBody JSONObject params) throws IOException {
 		BoolQueryBuilder qb = new BoolQueryBuilder();
-		qb.must(QueryBuilders.matchQuery("email", params.getString("email")));
-		if(!StringUtils.isEmpty(params.getString("password"))) {
-			qb.must(QueryBuilders.matchQuery("password", params.getString("password")));
+		if(StringUtils.isEmpty(params.getString("email"))) {
+			qb.must(QueryBuilders.matchQuery("phone", params.getString("phone")));
 		}
+		else
+			qb.must(QueryBuilders.matchQuery("email", params.getString("email")));
 		Iterable<UserProfile> user = userProfileService.search(qb);
 		List<UserProfile> result = IterableUtils.toList(user);
 		if(result.size()==1) {
-			if(!StringUtils.isEmpty(params.getString("token")) || 
-					!StringUtils.isEmpty(params.getString("password"))) {
-				return result.get(0);
-			}
+			return result.get(0);
 		}
 		else if(StringUtils.isEmpty(params.getString("password")) && 
 				!StringUtils.isEmpty(params.getString("token"))) {
