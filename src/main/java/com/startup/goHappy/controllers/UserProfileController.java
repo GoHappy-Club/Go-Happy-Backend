@@ -111,7 +111,7 @@ public class UserProfileController {
 	}
 	
 	@PostMapping("update")
-	public void updateUser(@RequestBody JSONObject params) throws IOException {
+	public UserProfile updateUser(@RequestBody JSONObject params) throws IOException {
 		QueryBuilder qb = QueryBuilders.boolQuery()
 				.should(QueryBuilders.matchQuery("email", params.getString("email")))
 				.should(QueryBuilders.matchQuery("phone", params.getString("phone")));
@@ -120,9 +120,12 @@ public class UserProfileController {
 		List<UserProfile> result = IterableUtils.toList(user);
 		if(result.size()>0) {
 			result.get(0).setName(params.getString("name"));
-			result.get(0).setEmail(params.getString("email"));
-			result.get(0).setPhone(params.getString("phone"));
+			if(!StringUtils.isEmpty(params.getString("email")))
+				result.get(0).setEmail(params.getString("email"));
+			if(!StringUtils.isEmpty(params.getString("phone")))
+				result.get(0).setPhone(params.getString("phone"));
 		}
 		userProfileService.save(result);
+		return result.get(0);
 	}
 }
