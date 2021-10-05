@@ -91,12 +91,12 @@
 			<artifactId>razorpay-java</artifactId>
 			<version>1.3.9</version>
 		</dependency>
-<!-- 		<dependency>  
-			<groupId>org.springframework.boot</groupId>  
-			<artifactId>spring-boot-starter-security</artifactId>  
-		</dependency>   -->
-
 		
+	    <dependency>
+	      <groupId>org.springframework.cloud</groupId>
+	      <artifactId>spring-cloud-gcp-starter</artifactId>
+	      <version>1.0.0.RELEASE</version>
+	    </dependency>
 	</dependencies>
 
 	<build>
@@ -113,6 +113,11 @@
 					</excludes>
 				</configuration>
 			</plugin>
+			<plugin>
+	         <groupId>com.google.cloud.tools</groupId>
+	         <artifactId>appengine-maven-plugin</artifactId>
+	         <version>1.3.2</version>
+	       </plugin>
 		</plugins>
 	</build>
 
