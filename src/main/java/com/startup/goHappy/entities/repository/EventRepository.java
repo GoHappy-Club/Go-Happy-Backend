@@ -1,15 +1,18 @@
 package com.startup.goHappy.entities.repository;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
+import org.springframework.stereotype.Repository;
 
+import com.google.cloud.firestore.Firestore;
 import com.startup.goHappy.entities.model.Event;
+import com.startup.goHappy.entities.model.UserProfile;
+import com.startup.goHappy.entities.service.AbstractFirestoreRepository;
 
 import java.util.List;
 
-public interface EventRepository extends ElasticsearchRepository<Event, String> {
 
-
-
+@Repository
+public class EventRepository extends AbstractFirestoreRepository<Event> {
+    protected EventRepository(Firestore firestore) {
+        super(firestore, "Events");
+    }
 }
