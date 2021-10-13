@@ -20,6 +20,8 @@ import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
+import javax.mail.MessagingException;
+
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +46,7 @@ import com.startup.goHappy.entities.model.Event;
 import com.startup.goHappy.entities.model.UserProfile;
 import com.startup.goHappy.entities.repository.EventRepository;
 import com.startup.goHappy.integrations.model.ZoomMeetingObjectDTO;
+import com.startup.goHappy.integrations.service.EmailService;
 import com.startup.goHappy.integrations.service.ZoomService;
 
 import io.micrometer.core.instrument.util.StringEscapeUtils;
@@ -57,6 +60,57 @@ public class EventController {
 	
 	@Autowired
 	ZoomService zoomService;
+	
+	@Autowired
+	EmailService emailService;
+	String content = "	<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;border:0;border-spacing:0;background:#ffffff;\">\n"
+			+ "		<tr>\n"
+			+ "			<td align=\"center\" style=\"padding:0;\">\n"
+			+ "				<table role=\"presentation\" style=\"width:602px;border-collapse:collapse;border:1px solid #cccccc;border-spacing:0;text-align:left;\">\n"
+			+ "					<tr>\n"
+			+ "						<td align=\"center\" style=\"padding:40px 0 30px 0;background:#70bbd9;\">\n"
+			+ "							<img src=\"https://storage.googleapis.com/gohappy-main-bucket/logo.png\" alt=\"\" width=\"300\" style=\"height:auto;display:block;\" />\n"
+			+ "						</td>\n"
+			+ "					</tr>\n"
+			+ "					<tr>\n"
+			+ "						<td style=\"padding:36px 30px 42px 30px;\">\n"
+			+ "							<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;border:0;border-spacing:0;\">\n"
+			+ "								<tr>\n"
+			+ "									<td style=\"padding:0 0 36px 0;color:#153643;\">\n"
+			+ "										<h1 style=\"font-size:24px;margin:0 0 20px 0;font-family:Arial,sans-serif;\">Thank you for choosing us.</h1>\n"
+			+ "										<p style=\"margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;\">Below are the details for your session: </p>\n"
+			+ "                    <p><b>Title: </b>${title}</p>\n"
+			+ "                    <p><b>Date: </b>${date}</p>\n"
+			+ "                    <p><b>Time: </b>${time}</p>\n"
+			+ "                    <p><b>Link to join: </b><a href=\"${zoomLink}\" style=\"text-decoration:underline;\">${zoomLink}</a></p>\n"
+			+ "										\n"
+			+ "									</td>\n"
+			+ "								</tr>\n"
+			+ "								\n"
+			+ "							</table>\n"
+			+ "						</td>\n"
+			+ "					</tr>\n"
+			+ "					<tr>\n"
+			+ "						<td style=\"padding:30px;background:#ee4c50;\">\n"
+			+ "							<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;border:0;border-spacing:0;font-size:9px;font-family:Arial,sans-serif;\">\n"
+			+ "								<tr>\n"
+			+ "									<td style=\"padding:0;width:50%;\" align=\"left\">\n"
+			+ "										<p style=\"margin:0;font-size:14px;line-height:16px;font-family:Arial,sans-serif;color:#ffffff;\">\n"
+			+ "											&reg; GoHappy Club 2021<br/>\n"
+			+ "										</p>\n"
+			+ "									</td>\n"
+			+ "									<td style=\"padding:0;width:50%;\" align=\"right\">\n"
+			+ "										<table role=\"presentation\" style=\"border-collapse:collapse;border:0;border-spacing:0;\">\n"
+			+ "										</table>\n"
+			+ "									</td>\n"
+			+ "								</tr>\n"
+			+ "							</table>\n"
+			+ "						</td>\n"
+			+ "					</tr>\n"
+			+ "				</table>\n"
+			+ "			</td>\n"
+			+ "		</tr>\n"
+			+ "	</table>";
 
 	@SuppressWarnings("deprecation")
 	@PostMapping("create")
@@ -181,7 +235,7 @@ public class EventController {
 		return output;
 	}
 	@PostMapping("bookEvent")
-	public String bookEvent(@RequestBody JSONObject params) throws IOException {
+	public String bookEvent(@RequestBody JSONObject params) throws IOException, MessagingException {
 		CollectionReference eventRef = eventService.getCollectionReference();
 		Optional<Event> oevent = eventService.findById(params.getString("id"));
 		Event event = oevent.get();
@@ -199,6 +253,15 @@ public class EventController {
 		map.put("participantList",participants);
 		map.put("seatsLeft",event.getSeatsLeft());
 		eventRef.document(params.getString("id")).update(map);
+//		content = content.replace("${username}", event.getEventName());
+		content = content.replace("${title}", event.getEventName());
+		content = content.replace("${zoomLink}", event.getMeetingLink());
+		content = content.replace("${zoomLink}", event.getMeetingLink());
+		content = content.replace("${date}", ""+new Date(Long.parseLong(event.getEventDate())).getDate()
+				+"-"+new Date(Long.parseLong(event.getEventDate())).getMonth()+1+"-"+
+				new Date(Long.parseLong(event.getEventDate())).getYear());
+		content = content.replace("${time}", new Date(Long.parseLong(event.getStartTime())).getHours()+":"+new Date(Long.parseLong(event.getStartTime())).getMinutes());
+		emailService.sendSimpleMessage(params.getString("email"), "GoHappy Club: Session Booked", content);
 		return "SUCCESS";
 	}
 	@PostMapping("cancelEvent")

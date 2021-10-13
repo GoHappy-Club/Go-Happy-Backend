@@ -29,7 +29,7 @@ public class EmailService {
         MimeMessageHelper helper = new MimeMessageHelper(msg, true);
 		
         helper.setTo(to);
-
+        helper.setFrom("GoHappy-Club");
         helper.setSubject(subject);
 
         // default = text/plain
