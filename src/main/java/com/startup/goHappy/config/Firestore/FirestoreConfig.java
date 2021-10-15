@@ -31,21 +31,22 @@ public class FirestoreConfig {
 	String BUCKET_NAME = "gohappy-main-bucket";
 	String OBJECT_NAME = "go-happy-322816-99b559058469.json";
 	  @Value("gs://gohappy-main-bucket/config/go-happy-322816-99b559058469.json")
-	  private Resource gcsFile;
+	  private String gcsFile;
 	@Bean
 	public Firestore getFireStore() throws IOException {
-//		FileInputStream serviceAccount = new FileInputStream(credentialPath);
-		System.out.println("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"+gcsFile);
-	Storage storage = StorageOptions.newBuilder()
-	            .setProjectId(PROJECT_ID)
-	            .setCredentials(GoogleCredentials.fromStream(
-	                    new FileInputStream(PATH_TO_JSON_KEY))).build().getService();
+		System.out.println("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"+System.getProperty("user.dir"));
 
-		Blob blob = storage.get(BUCKET_NAME, OBJECT_NAME);
-		ReadChannel r = blob.reader();
+		FileInputStream serviceAccount = new FileInputStream("go-happy-322816-99b559058469.json");
+//	Storage storage = StorageOptions.newBuilder()
+//	            .setProjectId(PROJECT_ID)
+//	            .setCredentials(GoogleCredentials.fromStream(
+//	                    new FileInputStream(PATH_TO_JSON_KEY))).build().getService();
+//
+//		Blob blob = storage.get(BUCKET_NAME, OBJECT_NAME);
+//		ReadChannel r = blob.reader();
 		
 		
-		GoogleCredentials credentials = GoogleCredentials.fromStream(java.nio.channels.Channels.newInputStream(r));
+		GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
 
 		FirestoreOptions options1 = FirestoreOptions.newBuilder()
 						.setCredentials(credentials).build();
