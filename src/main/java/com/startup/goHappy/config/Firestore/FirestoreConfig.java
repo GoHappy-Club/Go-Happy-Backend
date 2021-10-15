@@ -35,8 +35,9 @@ public class FirestoreConfig {
 	@Bean
 	public Firestore getFireStore() throws IOException {
 		System.out.println("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"+System.getProperty("user.dir"));
-
-		FileInputStream serviceAccount = new FileInputStream("go-happy-322816-99b559058469.json");
+		InputStream serviceAccount = getClass().getResourceAsStream("/go-happy-322816-99b559058469.json");
+		
+		FileInputStream serviceAccount1 = new FileInputStream("go-happy-322816-99b559058469.json");
 //	Storage storage = StorageOptions.newBuilder()
 //	            .setProjectId(PROJECT_ID)
 //	            .setCredentials(GoogleCredentials.fromStream(
