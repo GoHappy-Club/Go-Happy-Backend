@@ -9,9 +9,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.google.api.services.storage.Storage.Channels;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.ReadChannel;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.FirestoreOptions;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
@@ -19,14 +24,30 @@ import com.google.firebase.cloud.FirestoreClient;
 
 @Configuration
 public class FirestoreConfig {
-	@Bean
-	public Firestore getFireStore(@Value("${firebase.credential.path}") String credentialPath) throws IOException {
-		FileInputStream serviceAccount = new FileInputStream(credentialPath);
-		GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
+	
+	String PROJECT_ID = "go-happy-322816";
+	String PATH_TO_JSON_KEY = "gs://gohappy-main-bucket/config/go-happy-322816-99b559058469.json";
+	String BUCKET_NAME = "gohappy-main-bucket";
+	String OBJECT_NAME = "go-happy-322816-99b559058469.json";
 
-		FirestoreOptions options = FirestoreOptions.newBuilder()
+	@Bean
+	public Firestore getFireStore() throws IOException {
+//		FileInputStream serviceAccount = new FileInputStream(credentialPath);
+
+	Storage storage = StorageOptions.newBuilder()
+	            .setProjectId(PROJECT_ID)
+	            .setCredentials(GoogleCredentials.fromStream(
+	                    new FileInputStream(PATH_TO_JSON_KEY))).build().getService();
+
+		Blob blob = storage.get(BUCKET_NAME, OBJECT_NAME);
+		ReadChannel r = blob.reader();
+		
+		
+		GoogleCredentials credentials = GoogleCredentials.fromStream(java.nio.channels.Channels.newInputStream(r));
+
+		FirestoreOptions options1 = FirestoreOptions.newBuilder()
 						.setCredentials(credentials).build();
 //		FirebaseApp.initializeApp(options);
-		return options.getService();
+		return options1.getService();
 	}
 }
