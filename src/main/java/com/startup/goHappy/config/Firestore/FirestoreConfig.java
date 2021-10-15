@@ -20,20 +20,22 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
+import com.google.rpc.context.AttributeContext.Resource;
 
 
 @Configuration
 public class FirestoreConfig {
 	
 	String PROJECT_ID = "go-happy-322816";
-	String PATH_TO_JSON_KEY = "https://storage.googleapis.com/gohappy-main-bucket/config/go-happy-322816-99b559058469.json";
+	String PATH_TO_JSON_KEY = "gohappy-main-bucket/config/go-happy-322816-99b559058469.json";
 	String BUCKET_NAME = "gohappy-main-bucket";
 	String OBJECT_NAME = "go-happy-322816-99b559058469.json";
-
+	  @Value("gs://gohappy-main-bucket/config/go-happy-322816-99b559058469.json")
+	  private Resource gcsFile;
 	@Bean
 	public Firestore getFireStore() throws IOException {
 //		FileInputStream serviceAccount = new FileInputStream(credentialPath);
-
+		System.out.println("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"+gcsFile);
 	Storage storage = StorageOptions.newBuilder()
 	            .setProjectId(PROJECT_ID)
 	            .setCredentials(GoogleCredentials.fromStream(
