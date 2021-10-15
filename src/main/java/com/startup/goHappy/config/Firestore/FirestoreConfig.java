@@ -26,7 +26,7 @@ import com.google.firebase.cloud.FirestoreClient;
 public class FirestoreConfig {
 	
 	String PROJECT_ID = "go-happy-322816";
-	String PATH_TO_JSON_KEY = "gs://gohappy-main-bucket/config/go-happy-322816-99b559058469.json";
+	String PATH_TO_JSON_KEY = "gohappy-main-bucket/config/go-happy-322816-99b559058469.json";
 	String BUCKET_NAME = "gohappy-main-bucket";
 	String OBJECT_NAME = "go-happy-322816-99b559058469.json";
 
