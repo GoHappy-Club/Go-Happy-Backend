@@ -37,7 +37,7 @@ public class FirestoreConfig {
 		System.out.println("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"+System.getProperty("user.dir"));
 		InputStream serviceAccount = getClass().getResourceAsStream("/go-happy-322816-99b559058469.json");
 		
-		FileInputStream serviceAccount1 = new FileInputStream("go-happy-322816-99b559058469.json");
+//		FileInputStream serviceAccount1 = new FileInputStream("go-happy-322816-99b559058469.json");
 //	Storage storage = StorageOptions.newBuilder()
 //	            .setProjectId(PROJECT_ID)
 //	            .setCredentials(GoogleCredentials.fromStream(
