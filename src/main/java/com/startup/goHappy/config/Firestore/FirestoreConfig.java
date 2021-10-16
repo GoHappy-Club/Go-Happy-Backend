@@ -4,7 +4,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.Scanner;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -32,17 +34,19 @@ public class FirestoreConfig {
 	String PATH_TO_JSON_KEY = "gohappy-main-bucket/config/go-happy-322816-99b559058469.json";
 	String BUCKET_NAME = "gohappy-main-bucket";
 	String OBJECT_NAME = "go-happy-322816-99b559058469.json";
-	@Value("gs://gohappy-main-bucket/config/go-happy-322816-99b559058469.json")
-	  private Resource gcsFile;
+//	@Value("gs://gohappy-main-bucket/config/go-happy-322816-99b559058469.json")
+//	  private Resource gcsFile;
 	@Bean
 	public Firestore getFireStore() throws IOException {
-		System.out.println("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"+
-				StreamUtils.copyToString(
-				        gcsFile.getInputStream(),
-				        Charset.defaultCharset()));
-		InputStream serviceAccount = getClass().getResourceAsStream("/go-happy-322816-99b559058469.json");
-		
-		FileInputStream serviceAccount1 = new FileInputStream("go-happy-322816-99b559058469.json");
+		URL url = new URL("https://storage.googleapis.com/gohappy-main-bucket/config/go-happy-322816-99b559058469.json");
+		 InputStream in = url.openStream();
+//		System.out.println("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"+
+//				StreamUtils.copyToString(
+//				        gcsFile.getInputStream(),
+//				        Charset.defaultCharset()));
+//		InputStream serviceAccount = getClass().getResourceAsStream("/go-happy-322816-99b559058469.json");
+//		
+//		FileInputStream serviceAccount1 = new FileInputStream("go-happy-322816-99b559058469.json");
 //	Storage storage = StorageOptions.newBuilder()
 //	            .setProjectId(PROJECT_ID)
 //	            .setCredentials(GoogleCredentials.fromStream(
@@ -52,7 +56,7 @@ public class FirestoreConfig {
 //		ReadChannel r = blob.reader();
 		
 		
-		GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
+		GoogleCredentials credentials = GoogleCredentials.fromStream(in);
 
 		FirestoreOptions options1 = FirestoreOptions.newBuilder()
 						.setCredentials(credentials).build();
