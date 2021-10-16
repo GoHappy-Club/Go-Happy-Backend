@@ -4,10 +4,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
+import org.springframework.util.StreamUtils;
 
 import com.google.api.services.storage.Storage.Channels;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -20,7 +23,6 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
-import com.google.rpc.context.AttributeContext.Resource;
 
 
 @Configuration
@@ -30,14 +32,17 @@ public class FirestoreConfig {
 	String PATH_TO_JSON_KEY = "gohappy-main-bucket/config/go-happy-322816-99b559058469.json";
 	String BUCKET_NAME = "gohappy-main-bucket";
 	String OBJECT_NAME = "go-happy-322816-99b559058469.json";
-	  @Value("gs://gohappy-main-bucket/config/go-happy-322816-99b559058469.json")
-	  private String gcsFile;
+	@Value("gs://gohappy-main-bucket/config/go-happy-322816-99b559058469.json")
+	  private Resource gcsFile;
 	@Bean
 	public Firestore getFireStore() throws IOException {
-		System.out.println("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"+System.getProperty("user.dir"));
+		System.out.println("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"+
+				StreamUtils.copyToString(
+				        gcsFile.getInputStream(),
+				        Charset.defaultCharset()));
 		InputStream serviceAccount = getClass().getResourceAsStream("/go-happy-322816-99b559058469.json");
 		
-//		FileInputStream serviceAccount1 = new FileInputStream("go-happy-322816-99b559058469.json");
+		FileInputStream serviceAccount1 = new FileInputStream("go-happy-322816-99b559058469.json");
 //	Storage storage = StorageOptions.newBuilder()
 //	            .setProjectId(PROJECT_ID)
 //	            .setCredentials(GoogleCredentials.fromStream(
