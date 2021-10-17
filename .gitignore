@@ -17,3 +17,4 @@ target/classes/META-INF/maven/com.startup/goHappy/pom.properties
 target/classes/com/startup/goHappy/GoHappyApplication.class
 target/classes/application.properties
 target/classes/META-INF/maven/com.startup/goHappy/pom.xml
+target/classes/application.properties
