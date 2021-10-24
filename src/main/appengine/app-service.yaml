@@ -11,4 +11,4 @@ handlers:
   redirect_http_response_code: 301
   script: auto
 
-entrypoint: java noverify -jar goHappy-0.0.1-SNAPSHOT.jar
+entrypoint: java -noverify -jar goHappy-0.0.1-SNAPSHOT.jar
