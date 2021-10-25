@@ -2,7 +2,9 @@ package com.startup.goHappy.controllers;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -196,16 +198,19 @@ public class EventController {
 	@PostMapping("getEventsByDate")
 	public JSONObject getEventsByDate(@RequestBody JSONObject params){
 		System.out.println(params.getString("date"));
-		Date filterEnd = new Date(Long.parseLong(params.getString("date")));
-		filterEnd.setHours(23);
-		filterEnd.setMinutes(59);
-		filterEnd.setSeconds(59);
-		System.out.println(filterEnd);
+		
+		Instant instance = java.time.Instant.ofEpochMilli(Long.parseLong(params.getString("date")));
+		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
+		                            .ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
+		zonedDateTime = zonedDateTime.with(LocalTime.of ( 23 , 59 ));
+		System.out.println(zonedDateTime);
+
+		System.out.println(zonedDateTime.toInstant().toEpochMilli());
 		CollectionReference eventsRef = eventService.getCollectionReference();
 
 		Query query1 = eventsRef.whereGreaterThan("startTime", params.getString("date"));
 		
-		Query query2 = eventsRef.whereLessThan("endTime", ""+filterEnd.getTime());
+		Query query2 = eventsRef.whereLessThan("endTime", ""+zonedDateTime.toInstant().toEpochMilli());
 		
 		Query query3 = eventsRef.whereEqualTo("isParent", false);
 
