@@ -194,13 +194,13 @@ public class EventController {
 		return output;
 	}
 	@PostMapping("getEventsByDate")
-	public JSONObject getEventsByDate(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
-		
+	public JSONObject getEventsByDate(@RequestBody JSONObject params){
+		System.out.println(params.getString("date"));
 		Date filterEnd = new Date(Long.parseLong(params.getString("date")));
 		filterEnd.setHours(23);
 		filterEnd.setMinutes(59);
 		filterEnd.setSeconds(59);
-		
+		System.out.println(filterEnd);
 		CollectionReference eventsRef = eventService.getCollectionReference();
 
 		Query query1 = eventsRef.whereGreaterThan("startTime", params.getString("date"));
@@ -217,19 +217,25 @@ public class EventController {
 		Set<Event> events1 = new HashSet<>();
 		Set<Event> events2 = new HashSet<>();
 		Set<Event> events3 = new HashSet<>();
-		for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
-			events1.add(document.toObject(Event.class));  
+		try {
+			for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
+				events1.add(document.toObject(Event.class));  
+			}
+			for (DocumentSnapshot document : querySnapshot2.get().getDocuments()) {
+				events2.add(document.toObject(Event.class));  
+			}
+			for (DocumentSnapshot document : querySnapshot3.get().getDocuments()) {
+				events3.add(document.toObject(Event.class));  
+			}
 		}
-		for (DocumentSnapshot document : querySnapshot2.get().getDocuments()) {
-			events2.add(document.toObject(Event.class));  
-		}
-		for (DocumentSnapshot document : querySnapshot3.get().getDocuments()) {
-			events3.add(document.toObject(Event.class));  
+		catch(Exception e) {
+			e.printStackTrace();
 		}
 		events1.retainAll(events2);
 		events1.retainAll(events3);
 		List<Event> events = IterableUtils.toList(events1);
 		Collections.sort(events,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+		System.out.println(events.size());
 		JSONObject output = new JSONObject();
 		output.put("events", events);
 		return output;
