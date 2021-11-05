@@ -2,6 +2,7 @@ package com.startup.goHappy.controllers;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.security.GeneralSecurityException;
 import java.util.List;
 
 import javax.mail.MessagingException;
@@ -26,18 +27,11 @@ import com.startup.goHappy.services.HomeService;
 public class HomeController {
 	
 	@Autowired
-	HomeService homeService;
-	@Autowired
-	EventRepository erepo;
-	@Autowired
 	EmailService emailService;
-	  @Value("gs://gohappy-main-bucket/config/go-happy-322816-99b559058469.json")
-	  private Resource gcsFile;
 	
 		@GetMapping("getEvents")
-		public String getEvents() throws IOException {
-			return StreamUtils.copyToString(
-			        gcsFile.getInputStream(),
-			        Charset.defaultCharset());
+		public String getEvents() throws Exception {
+			emailService.sendSimpleMessage("","","");
+			return "";
 		}
 }

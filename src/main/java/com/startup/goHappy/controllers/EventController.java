@@ -1,6 +1,7 @@
 package com.startup.goHappy.controllers;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -9,9 +10,11 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -56,6 +59,9 @@ import io.micrometer.core.instrument.util.StringEscapeUtils;
 @RestController
 @RequestMapping("event")
 public class EventController {
+	
+	
+	private static DateTimeFormatter FOMATTER = DateTimeFormatter.ofPattern("EEEE, MMM dd, yyyy 'at' HH:mm:ss a");
 
 	@Autowired
 	EventRepository eventService;
@@ -82,10 +88,16 @@ public class EventController {
 			+ "										<h1 style=\"font-size:24px;margin:0 0 20px 0;font-family:Arial,sans-serif;\">Thank you for choosing us.</h1>\n"
 			+ "										<p style=\"margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;\">Below are the details for your session: </p>\n"
 			+ "                    <p><b>Title: </b>${title}</p>\n"
-			+ "                    <p><b>Date: </b>${date}</p>\n"
-			+ "                    <p><b>Time: </b>${time}</p>\n"
-			+ "                    <p><b>Link to join: </b><a href=\"${zoomLink}\" style=\"text-decoration:underline;\">${zoomLink}</a></p>\n"
-			+ "										\n"
+			+ "                    <p><b>Date & Time: </b>${date}</p>\n"
+			+ "					   <a href=\"${zoomLink}\" target=\"_blank\" style=\"text-decoration: none;\"><button type=\"button\" style=\"background-color: #70bbd9;\n"
+			+ "  border: none;\n"
+			+ "  color: white;\n"
+			+ "  padding: 15px 32px;cursor: pointer;\n"
+			+ "  text-align: center;\n"
+			+ "  text-decoration: none;\n"
+			+ "  display: inline-block;\n"
+			+ "  font-size: 16px;margin:0 auto;\n"
+			+ "    display:block;\">Join Now</button></a> \n"
 			+ "									</td>\n"
 			+ "								</tr>\n"
 			+ "								\n"
@@ -93,7 +105,7 @@ public class EventController {
 			+ "						</td>\n"
 			+ "					</tr>\n"
 			+ "					<tr>\n"
-			+ "						<td style=\"padding:30px;background:#ee4c50;\">\n"
+			+ "						<td style=\"padding:30px;background:#70bbd9;\">\n"
 			+ "							<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;border:0;border-spacing:0;font-size:9px;font-family:Arial,sans-serif;\">\n"
 			+ "								<tr>\n"
 			+ "									<td style=\"padding:0;width:50%;\" align=\"left\">\n"
@@ -118,8 +130,10 @@ public class EventController {
 	@PostMapping("create")
 	public void createEvent(@RequestBody JSONObject event) throws JsonMappingException, JsonProcessingException {
 		//eventService.deleteAll();
+		Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
+		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
+		                            .ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
 		ObjectMapper objectMapper = new ObjectMapper();
-		
 		Event ev = objectMapper.readValue(event.toJSONString(), Event.class);	
 		ev.setId(UUID.randomUUID().toString());
 		ev.setParticipantList(new ArrayList<String>());
@@ -127,7 +141,7 @@ public class EventController {
 		ev.setType(StringUtils.isEmpty(event.getString("type"))?"0":event.getString("type"));
 		if(!StringUtils.isEmpty(ev.getCron())) {
 			CronSequenceGenerator generator = new CronSequenceGenerator(ev.getCron());
-			Date nextExecutionDate = generator.next(new Date());
+			Date nextExecutionDate = generator.next(Date.from(zonedDateTime.now().toInstant()));
 			ev.setIsParent(true);
 			ev.setEventDate("");
 			eventService.save(ev);
@@ -136,7 +150,7 @@ public class EventController {
 			String newYorkDateTimePattern = "yyyy-MM-dd HH:mm:ssZ";
 //			Date d = new Date(ev.getStartTime());
 			Event tempChild=null;
-			while(i<5 && nextExecutionDate!=null) {
+			while(i<Integer.parseInt(event.getString("occurance")) && nextExecutionDate!=null) {
 				Event childEvent = objectMapper.readValue(event.toJSONString(), Event.class);
 				childEvent.setId(UUID.randomUUID().toString());
 				childEvent.setIsParent(false);
@@ -147,7 +161,7 @@ public class EventController {
 				childEvent.setEventDate(""+nextExecutionDate.getTime());
 				long start = nextExecutionDate.getTime();
 				
-				Date newEndTime = new Date(nextExecutionDate.getTime()+60000);
+				Date newEndTime = new Date(nextExecutionDate.getTime()+duration*60000);
 				childEvent.setEndTime(""+newEndTime.getTime());				
 				
 				ZoomMeetingObjectDTO obj = new ZoomMeetingObjectDTO();
@@ -209,9 +223,13 @@ public class EventController {
 		CollectionReference eventsRef = eventService.getCollectionReference();
 
 		Query query1 = eventsRef.whereGreaterThan("startTime", params.getString("date"));
-		
-		Query query2 = eventsRef.whereLessThan("endTime", ""+zonedDateTime.toInstant().toEpochMilli());
-		
+		Query query2 = null;
+		if(params.getString("endDate")!=null) {
+			query2 = eventsRef.whereLessThan("endTime", ""+params.getString("endDate"));
+		}
+		else {
+			query2 = eventsRef.whereLessThan("endTime", ""+zonedDateTime.toInstant().toEpochMilli());
+		}
 		Query query3 = eventsRef.whereEqualTo("isParent", false);
 
 		ApiFuture<QuerySnapshot> querySnapshot1 = query1.get();
@@ -246,7 +264,7 @@ public class EventController {
 		return output;
 	}
 	@PostMapping("bookEvent")
-	public String bookEvent(@RequestBody JSONObject params) throws IOException, MessagingException {
+	public String bookEvent(@RequestBody JSONObject params) throws IOException, MessagingException, GeneralSecurityException {
 		CollectionReference eventRef = eventService.getCollectionReference();
 		Optional<Event> oevent = eventService.findById(params.getString("id"));
 		Event event = oevent.get();
@@ -265,13 +283,15 @@ public class EventController {
 		map.put("seatsLeft",event.getSeatsLeft());
 		eventRef.document(params.getString("id")).update(map);
 //		content = content.replace("${username}", event.getEventName());
+		
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(Long.parseLong(event.getEventDate()));
+		
+		
 		content = content.replace("${title}", event.getEventName());
 		content = content.replace("${zoomLink}", event.getMeetingLink());
 		content = content.replace("${zoomLink}", event.getMeetingLink());
-		content = content.replace("${date}", ""+new Date(Long.parseLong(event.getEventDate())).getDate()
-				+"-"+new Date(Long.parseLong(event.getEventDate())).getMonth()+1+"-"+
-				new Date(Long.parseLong(event.getEventDate())).getYear());
-		content = content.replace("${time}", new Date(Long.parseLong(event.getStartTime())).getHours()+":"+new Date(Long.parseLong(event.getStartTime())).getMinutes());
+		content = content.replace("${date}", FOMATTER.format(((GregorianCalendar) calendar).toZonedDateTime()));
 		emailService.sendSimpleMessage(params.getString("email"), "GoHappy Club: Session Booked", content);
 		return "SUCCESS";
 	}
@@ -291,34 +311,45 @@ public class EventController {
 		eventRef.document(params.getString("id")).update(map);
 		return "SUCCESS";
 	}
-//	@PostMapping("mySessions")
-//	public JSONObject mySessions(@RequestBody JSONObject params) throws IOException {
-//		QueryBuilder upcomingQb = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("participantList.keyword",params.getString("email")))
-//				.must(QueryBuilders.rangeQuery("startTime").gte(""+new Date().getTime()));
-//		Iterable<Event> upcomingEvents = eventService.search(upcomingQb);
-//		List<Event> upresult = IterableUtils.toList(upcomingEvents);
-//		Collections.sort(upresult,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
-//		
-//		QueryBuilder ongoingQb = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("participantList.keyword",params.getString("email")))
-//				.must(QueryBuilders.rangeQuery("startTime").lte(""+new Date().getTime()))
-//				.must(QueryBuilders.rangeQuery("endTime").gte(""+new Date().getTime()));
-//		Iterable<Event> ongoingEvents = eventService.search(ongoingQb);
-//		List<Event> ogresult = IterableUtils.toList(ongoingEvents);
-//		Collections.sort(ogresult,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
-//		
-//
-//		QueryBuilder expiredQb = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("participantList.keyword",params.getString("email")))
-//		.must(QueryBuilders.rangeQuery("endTime").lte(""+new Date().getTime()));
-//		Iterable<Event> expiredEvents = eventService.search(expiredQb);
-//		List<Event> expresult = IterableUtils.toList(expiredEvents);
-//		Collections.sort(expresult,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
-//
-//		
-//		JSONObject output = new JSONObject();
-//		output.put("upcomingEvents", upresult);
-//		output.put("ongoingEvents", ogresult);
-//		output.put("expiredEvents", expresult);
-//		return output;
-//	}
+	@PostMapping("mySessions")
+	public JSONObject mySessions(@RequestBody JSONObject params) throws IOException {
+		Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
+		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
+		                            .ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
+		ZonedDateTime endZonedDateTime = zonedDateTime.with(LocalTime.of ( 23 , 59 ));
+		CollectionReference eventsRef = eventService.getCollectionReference();
+//		.whereArrayContains("participantList", params.getString("email")).whereEqualTo("isParent", false)
+		Query query1 = eventsRef.whereGreaterThan("startTime", ""+zonedDateTime.toInstant().toEpochMilli()).whereArrayContains("participantList", params.getString("email")).whereEqualTo("isParent", false);
+//		zonedDateTime.toInstant().toEpochMilli()
+		Query query2 = eventsRef.whereLessThan("startTime", ""+endZonedDateTime.toInstant().toEpochMilli());
+		
+		ApiFuture<QuerySnapshot> querySnapshot1 = query1.get();
+		ApiFuture<QuerySnapshot> querySnapshot2 = query2.get();
+
+		
+		Set<Event> events1 = new HashSet<>();
+		Set<Event> events2 = new HashSet<>();
+		try {
+			for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
+				events1.add(document.toObject(Event.class));  
+			}
+			for (DocumentSnapshot document : querySnapshot2.get().getDocuments()) {
+				events2.add(document.toObject(Event.class));  
+			}
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		JSONObject paramsForEventByDate = new JSONObject();
+		paramsForEventByDate.put("date", ""+zonedDateTime.toInstant().toEpochMilli());
+		paramsForEventByDate.put("endDate", ""+zonedDateTime.toInstant().toEpochMilli());
+		
+		JSONObject ongoingJSON = getEventsByDate(paramsForEventByDate);
+		JSONObject output = new JSONObject();
+		output.put("upcomingEvents", events1);
+		output.put("ongoingEvents", ongoingJSON.getJSONArray("events"));
+		output.put("expiredEvents", events2);
+		return output;
+	}
 }  
 
