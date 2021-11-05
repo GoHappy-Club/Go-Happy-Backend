@@ -140,7 +140,8 @@ public class EventController {
 
 		ev.setType(StringUtils.isEmpty(event.getString("type"))?"0":event.getString("type"));
 		if(!StringUtils.isEmpty(ev.getCron())) {
-			CronSequenceGenerator generator = new CronSequenceGenerator(ev.getCron());
+			TimeZone tz = TimeZone.getTimeZone("Asia/Kolkata");
+			CronSequenceGenerator generator = new CronSequenceGenerator(ev.getCron(),tz);
 			Date nextExecutionDate = generator.next(Date.from(zonedDateTime.now().toInstant()));
 			ev.setIsParent(true);
 			ev.setEventDate("");
@@ -321,7 +322,7 @@ public class EventController {
 //		.whereArrayContains("participantList", params.getString("email")).whereEqualTo("isParent", false)
 		Query query1 = eventsRef.whereGreaterThan("startTime", ""+zonedDateTime.toInstant().toEpochMilli()).whereArrayContains("participantList", params.getString("email")).whereEqualTo("isParent", false);
 //		zonedDateTime.toInstant().toEpochMilli()
-		Query query2 = eventsRef.whereLessThan("startTime", ""+endZonedDateTime.toInstant().toEpochMilli());
+		Query query2 = eventsRef.whereLessThan("endTime", ""+endZonedDateTime.toInstant().toEpochMilli()).whereArrayContains("participantList", params.getString("email")).whereEqualTo("isParent", false);
 		
 		ApiFuture<QuerySnapshot> querySnapshot1 = query1.get();
 		ApiFuture<QuerySnapshot> querySnapshot2 = query2.get();
@@ -329,6 +330,7 @@ public class EventController {
 		
 		Set<Event> events1 = new HashSet<>();
 		Set<Event> events2 = new HashSet<>();
+		Set<Event> events3 = new HashSet<>();
 		try {
 			for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
 				events1.add(document.toObject(Event.class));  
@@ -346,9 +348,17 @@ public class EventController {
 		
 		JSONObject ongoingJSON = getEventsByDate(paramsForEventByDate);
 		JSONObject output = new JSONObject();
+		ObjectMapper objectMapper = new ObjectMapper();
+		for(Object obj:ongoingJSON.getJSONArray("events")) {
+			Event ev =((Event)obj);
+			if(ev.getParticipantList()!=null && ev.getParticipantList().size()>0 &&  ev.getParticipantList().contains(params.getString("email"))) {
+				events3.add(ev);
+			}
+		}
 		output.put("upcomingEvents", events1);
-		output.put("ongoingEvents", ongoingJSON.getJSONArray("events"));
 		output.put("expiredEvents", events2);
+		output.put("ongoingEvents", events3);
+		
 		return output;
 	}
 }  
