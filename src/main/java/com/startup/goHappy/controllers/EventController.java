@@ -53,6 +53,7 @@ import com.startup.goHappy.entities.repository.EventRepository;
 import com.startup.goHappy.integrations.model.ZoomMeetingObjectDTO;
 import com.startup.goHappy.integrations.service.EmailService;
 import com.startup.goHappy.integrations.service.ZoomService;
+import com.startup.goHappy.utils.TambolaGenerator;
 
 import io.micrometer.core.instrument.util.StringEscapeUtils;
 
@@ -71,6 +72,10 @@ public class EventController {
 	
 	@Autowired
 	EmailService emailService;
+	
+	@Autowired
+	TambolaGenerator tambolaGenerator;
+	
 	String content = "	<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;border:0;border-spacing:0;background:#ffffff;\">\n"
 			+ "		<tr>\n"
 			+ "			<td align=\"center\" style=\"padding:0;\">\n"
@@ -128,7 +133,7 @@ public class EventController {
 
 	@SuppressWarnings("deprecation")
 	@PostMapping("create")
-	public void createEvent(@RequestBody JSONObject event) throws JsonMappingException, JsonProcessingException {
+	public void createEvent(@RequestBody JSONObject event) throws IOException {
 		//eventService.deleteAll();
 		Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
 		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
@@ -160,6 +165,13 @@ public class EventController {
 				childEvent.setCron("");
 				childEvent.setStartTime(""+nextExecutionDate.getTime());
 				childEvent.setEventDate(""+nextExecutionDate.getTime());
+				if(childEvent.getEventName().toLowerCase().contains("tambola")) {
+					List<String> tambolaTickets = new ArrayList<>();
+					for(int j=0;j<childEvent.getSeatsLeft();j++) {
+						tambolaTickets.add("\""+tambolaGenerator.generate()+"\"");
+					}
+					childEvent.setTambolaTickets(tambolaTickets);
+				}
 				long start = nextExecutionDate.getTime();
 				
 				Date newEndTime = new Date(nextExecutionDate.getTime()+duration*60000);

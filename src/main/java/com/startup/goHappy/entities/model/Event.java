@@ -35,6 +35,8 @@ public class Event {
 	private String meetingLink;
 	private String occurance;
 	private List<String> participantList;
+
+	private List<String> tambolaTickets;
 	
 	@Override
 	public String toString() {
