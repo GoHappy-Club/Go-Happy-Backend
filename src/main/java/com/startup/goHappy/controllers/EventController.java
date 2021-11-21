@@ -165,13 +165,13 @@ public class EventController {
 				childEvent.setCron("");
 				childEvent.setStartTime(""+nextExecutionDate.getTime());
 				childEvent.setEventDate(""+nextExecutionDate.getTime());
-				if(childEvent.getEventName().toLowerCase().contains("tambola")) {
-					List<String> tambolaTickets = new ArrayList<>();
-					for(int j=0;j<childEvent.getSeatsLeft();j++) {
-						tambolaTickets.add("\""+tambolaGenerator.generate()+"\"");
-					}
-					childEvent.setTambolaTickets(tambolaTickets);
-				}
+//				if(childEvent.getEventName().toLowerCase().contains("tambola")) {
+//					List<String> tambolaTickets = new ArrayList<>();
+//					for(int j=0;j<childEvent.getSeatsLeft();j++) {
+//						tambolaTickets.add("\""+tambolaGenerator.generate()+"\"");
+//					}
+//					childEvent.setTambolaTickets(tambolaTickets);
+//				}
 				long start = nextExecutionDate.getTime();
 				
 				Date newEndTime = new Date(nextExecutionDate.getTime()+duration*60000);
@@ -281,6 +281,7 @@ public class EventController {
 		CollectionReference eventRef = eventService.getCollectionReference();
 		Optional<Event> oevent = eventService.findById(params.getString("id"));
 		Event event = oevent.get();
+		String ticket = "\""+params.getString("tambolaTicket")+"\"";
 		if(event.getSeatsLeft()<=0) {
 			return "FAILED:FULL";
 		}
@@ -290,10 +291,21 @@ public class EventController {
 			participants = new ArrayList<String>();
 		}
 		participants.add(params.getString("email"));
+		
 		event.setParticipantList(participants);
+		List<String> tambolaTickets = event.getTambolaTickets();
+		if(tambolaTickets==null) {
+			tambolaTickets = new ArrayList<String>();
+		}
+		tambolaTickets.add(ticket);
+		
+		event.setTambolaTickets(tambolaTickets);
+		
+		
 		Map<String, Object> map = new HashMap<>();
 		map.put("participantList",participants);
 		map.put("seatsLeft",event.getSeatsLeft());
+		map.put("tambolaTickets",tambolaTickets);
 		eventRef.document(params.getString("id")).update(map);
 //		content = content.replace("${username}", event.getEventName());
 		
@@ -316,9 +328,19 @@ public class EventController {
 
 		event.setSeatsLeft(event.getSeatsLeft()+1);
 		List<String> participants = event.getParticipantList();
+		int index = participants.indexOf(params.getString("email"));
 		participants.remove(params.getString("email"));
 		event.setParticipantList(participants);
+
 		Map<String, Object> map = new HashMap<>();
+		if(event.getEventName().contains("Tambola")) {
+			List<String> tickets = event.getTambolaTickets();
+			if(tickets!=null) {
+				tickets.remove(index);
+				event.setTambolaTickets(tickets);
+				map.put("tambolaTickets",tickets);
+			}
+		}
 		map.put("participantList",participants);
 		map.put("seatsLeft",event.getSeatsLeft());
 		eventRef.document(params.getString("id")).update(map);
