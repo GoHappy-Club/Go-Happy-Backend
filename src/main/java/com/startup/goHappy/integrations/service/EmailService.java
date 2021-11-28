@@ -164,6 +164,9 @@ public class EmailService {
 	}
 
 	public static MimeMessage createEmail(String to, String from, String subject, String bodyText) throws MessagingException, IOException {
+		if(to==null) {
+			return null;
+		}
 		Properties props = new Properties();
 		Session session = Session.getDefaultInstance(props, null);
 
@@ -187,7 +190,9 @@ public class EmailService {
 		
 		Gmail service = getGmailService();
 		MimeMessage Mimemessage = createEmail(to,"me",subject,text);
-	
+		if(Mimemessage==null) {
+			return;
+		}
 		Message message = createMessageWithEmail(Mimemessage);
 		
 		message = service.users().messages().send("me", message).execute();

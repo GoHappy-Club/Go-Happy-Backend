@@ -53,7 +53,7 @@ public class UserProfileController {
 		up.setEmail(userProfile.getString("email"));
 //		up.setDateOfJoining(new Date().getTime());
 		up.setName(userProfile.getString("name"));
-		up.setPhone(""+userProfile.getLong("phone"));
+		up.setPhone(""+userProfile.getString("phone"));
 		up.setProfileImage(userProfile.getString("profileImage"));
 		up.setSessionsAttended("0");
 		up.setPassword(userProfile.getString("password"));

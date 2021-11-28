@@ -46,7 +46,7 @@ public class AuthController {
 
 		Query query = null;
 		if(StringUtils.isEmpty(params.getString("email"))) {
-			query = userProfiles.whereEqualTo("phone", params.getString("phone"));
+			query = userProfiles.whereEqualTo("phone", ""+params.getString("phone"));
 		}
 		else {
 			query = userProfiles.whereEqualTo("email", params.getString("email"));
