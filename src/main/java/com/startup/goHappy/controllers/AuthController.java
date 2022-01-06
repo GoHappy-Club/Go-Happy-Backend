@@ -45,13 +45,13 @@ public class AuthController {
 		CollectionReference userProfiles = userProfileService.getCollectionReference();
 
 		Query query = null;
-		if(StringUtils.isEmpty(params.getString("email"))) {
-			query = userProfiles.whereEqualTo("phone", ""+params.getString("phone"));
-		}
-		else {
-			query = userProfiles.whereEqualTo("email", params.getString("email"));
-
-		}
+//		if(StringUtils.isEmpty(params.getString("email"))) {
+		query = userProfiles.whereEqualTo("phone", ""+params.getString("phone"));
+//		}
+//		else {
+//			query = userProfiles.whereEqualTo("email", params.getString("email"));
+//
+//		}
 
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
 		UserProfile user = null;
@@ -62,8 +62,7 @@ public class AuthController {
 		if(user!=null) {
 			return user;
 		}
-		else if(StringUtils.isEmpty(params.getString("password")) && 
-				!StringUtils.isEmpty(params.getString("token"))) {
+		else if(!StringUtils.isEmpty(params.getString("token"))) {
 			register(params);
 			ApiFuture<QuerySnapshot> querySnapshot1 = query.get();
 			UserProfile user1 = null;

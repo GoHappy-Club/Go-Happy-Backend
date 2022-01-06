@@ -143,8 +143,7 @@ public class UserProfileController {
 		
 		CollectionReference userProfiles = userProfileService.getCollectionReference();
 
-		Query query = userProfiles.whereEqualTo("email", params.getString("email"))
-				.whereEqualTo("phone", params.getString("phone"));
+		Query query = userProfiles.whereEqualTo("phone", params.getString("phone"));
 
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
 		UserProfile user = null;
