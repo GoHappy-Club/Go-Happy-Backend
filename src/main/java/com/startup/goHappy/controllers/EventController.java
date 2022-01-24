@@ -76,6 +76,9 @@ public class EventController {
 	@Autowired
 	TambolaGenerator tambolaGenerator;
 	
+	@Autowired
+	UserProfileController userProfileController;
+	
 	String content = "	<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;border:0;border-spacing:0;background:#ffffff;\">\n"
 			+ "		<tr>\n"
 			+ "			<td align=\"center\" style=\"padding:0;\">\n"
@@ -277,7 +280,7 @@ public class EventController {
 		return output;
 	}
 	@PostMapping("bookEvent")
-	public String bookEvent(@RequestBody JSONObject params) throws IOException, MessagingException, GeneralSecurityException {
+	public String bookEvent(@RequestBody JSONObject params) throws IOException, MessagingException, GeneralSecurityException, InterruptedException, ExecutionException {
 		CollectionReference eventRef = eventService.getCollectionReference();
 		Optional<Event> oevent = eventService.findById(params.getString("id"));
 		Event event = oevent.get();
@@ -290,7 +293,7 @@ public class EventController {
 		if(participants==null) {
 			participants = new ArrayList<String>();
 		}
-		participants.add(params.getString("email"));
+		participants.add(params.getString("phoneNumber"));
 		
 		event.setParticipantList(participants);
 		List<String> tambolaTickets = event.getTambolaTickets();
@@ -317,7 +320,9 @@ public class EventController {
 		content = content.replace("${zoomLink}", event.getMeetingLink());
 		content = content.replace("${zoomLink}", event.getMeetingLink());
 		content = content.replace("${date}", FOMATTER.format(((GregorianCalendar) calendar).toZonedDateTime()));
-		emailService.sendSimpleMessage(params.getString("email"), "GoHappy Club: Session Booked", content);
+		UserProfile user = userProfileController.getUserByPhone(params).getObject("user", UserProfile.class);
+		if(user!=null && !StringUtils.isEmpty(user.getEmail()))
+			emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", content);
 		return "SUCCESS";
 	}
 	@PostMapping("cancelEvent")
@@ -328,8 +333,8 @@ public class EventController {
 
 		event.setSeatsLeft(event.getSeatsLeft()+1);
 		List<String> participants = event.getParticipantList();
-		int index = participants.indexOf(params.getString("email"));
-		participants.remove(params.getString("email"));
+		int index = participants.indexOf(params.getString("phoneNumber"));
+		participants.remove(params.getString("phoneNumber"));
 		event.setParticipantList(participants);
 
 		Map<String, Object> map = new HashMap<>();

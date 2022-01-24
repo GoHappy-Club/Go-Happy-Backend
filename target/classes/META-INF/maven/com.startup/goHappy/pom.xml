@@ -35,12 +35,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-			<scope>runtime</scope>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
@@ -113,8 +107,20 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.apis/google-api-services-gmail -->
+		<dependency>
+		    <groupId>com.google.apis</groupId>
+		    <artifactId>google-api-services-gmail</artifactId>
+		    <version>v1-rev110-1.25.0</version>
+		</dependency>
+		        
 		
-		     
+<!-- <dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-gcp-starter-storage</artifactId>
+    <version>1.2.8.RELEASE</version>
+</dependency> -->
+
 	</dependencies>
 
 	<build>
@@ -135,10 +141,10 @@
 		        <groupId>com.google.cloud.tools</groupId>
 		        <artifactId>appengine-maven-plugin</artifactId>
 		        <version>2.2.0</version>
-		        <configuration>
+		        <!-- <configuration>
 		          <version>1</version>
 		          <projectId>GCLOUD_CONFIG</projectId>
-		        </configuration>
+		        </configuration> -->
 	      </plugin>
 		</plugins>
 	</build>
