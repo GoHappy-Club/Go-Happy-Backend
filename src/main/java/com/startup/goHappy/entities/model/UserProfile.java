@@ -18,5 +18,6 @@ public class UserProfile {
 	private String profileImage;
 	private String membership;
 	private String lastPaymentDate;
+	private String dob;
 
 }

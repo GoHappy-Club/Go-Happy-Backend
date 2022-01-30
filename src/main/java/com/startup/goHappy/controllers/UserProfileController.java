@@ -97,7 +97,7 @@ public class UserProfileController {
 	public JSONObject getUserByPhone(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
 		CollectionReference userProfiles = userProfileService.getCollectionReference();
 
-		Query query = userProfiles.whereEqualTo("phone", params.getString("phone"));
+		Query query = userProfiles.whereEqualTo("phone", params.getString("phoneNumber"));
 
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
 		UserProfile user = null;
@@ -154,6 +154,8 @@ public class UserProfileController {
 				user.setEmail(params.getString("email"));
 			if(!StringUtils.isEmpty(params.getString("phone")))
 				user.setPhone(""+params.getLong("phone"));
+			if(!StringUtils.isEmpty(params.getString("dob")))
+				user.setDob(""+params.getString("dob"));
 			break;
 		}
 		userProfileService.save(user);

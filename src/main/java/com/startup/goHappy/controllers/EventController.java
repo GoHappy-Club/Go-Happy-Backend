@@ -50,6 +50,7 @@ import com.google.cloud.firestore.QuerySnapshot;
 import com.startup.goHappy.entities.model.Event;
 import com.startup.goHappy.entities.model.UserProfile;
 import com.startup.goHappy.entities.repository.EventRepository;
+import com.startup.goHappy.entities.repository.UserProfileRepository;
 import com.startup.goHappy.integrations.model.ZoomMeetingObjectDTO;
 import com.startup.goHappy.integrations.service.EmailService;
 import com.startup.goHappy.integrations.service.ZoomService;
@@ -78,6 +79,9 @@ public class EventController {
 	
 	@Autowired
 	UserProfileController userProfileController;
+	
+	@Autowired
+	UserProfileRepository userProfileService;
 	
 	String content = "	<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;border:0;border-spacing:0;background:#ffffff;\">\n"
 			+ "		<tr>\n"
@@ -303,7 +307,7 @@ public class EventController {
 		tambolaTickets.add(ticket);
 		
 		event.setTambolaTickets(tambolaTickets);
-		
+		 
 		
 		Map<String, Object> map = new HashMap<>();
 		map.put("participantList",participants);
@@ -321,6 +325,10 @@ public class EventController {
 		content = content.replace("${zoomLink}", event.getMeetingLink());
 		content = content.replace("${date}", FOMATTER.format(((GregorianCalendar) calendar).toZonedDateTime()));
 		UserProfile user = userProfileController.getUserByPhone(params).getObject("user", UserProfile.class);
+		Integer sessionsAttended = Integer.parseInt(user.getSessionsAttended());
+		sessionsAttended++;
+		user.setSessionsAttended(""+sessionsAttended);
+		userProfileService.save(user);
 		if(user!=null && !StringUtils.isEmpty(user.getEmail()))
 			emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", content);
 		return "SUCCESS";
@@ -336,7 +344,7 @@ public class EventController {
 		int index = participants.indexOf(params.getString("phoneNumber"));
 		participants.remove(params.getString("phoneNumber"));
 		event.setParticipantList(participants);
-
+		
 		Map<String, Object> map = new HashMap<>();
 		if(event.getEventName().contains("Tambola")) {
 			List<String> tickets = event.getTambolaTickets();
@@ -349,6 +357,17 @@ public class EventController {
 		map.put("participantList",participants);
 		map.put("seatsLeft",event.getSeatsLeft());
 		eventRef.document(params.getString("id")).update(map);
+		try {
+			JSONObject userJson = userProfileController.getUserByPhone(params);
+			UserProfile user = userJson.getObject("user", UserProfile.class);
+			Integer sessionsAttended = Integer.parseInt(user.getSessionsAttended());
+			sessionsAttended--;
+			user.setSessionsAttended(""+sessionsAttended);
+			userProfileService.save(user);
+		} catch (IOException | InterruptedException | ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return "SUCCESS";
 	}
 	@PostMapping("mySessions")
@@ -359,9 +378,9 @@ public class EventController {
 		ZonedDateTime endZonedDateTime = zonedDateTime.with(LocalTime.of ( 23 , 59 ));
 		CollectionReference eventsRef = eventService.getCollectionReference();
 //		.whereArrayContains("participantList", params.getString("email")).whereEqualTo("isParent", false)
-		Query query1 = eventsRef.whereGreaterThan("startTime", ""+zonedDateTime.toInstant().toEpochMilli()).whereArrayContains("participantList", params.getString("email")).whereEqualTo("isParent", false);
+		Query query1 = eventsRef.whereGreaterThan("startTime", ""+zonedDateTime.toInstant().toEpochMilli()).whereArrayContains("participantList", params.getString("phoneNumber")).whereEqualTo("isParent", false);
 //		zonedDateTime.toInstant().toEpochMilli()
-		Query query2 = eventsRef.whereLessThan("endTime", ""+endZonedDateTime.toInstant().toEpochMilli()).whereArrayContains("participantList", params.getString("email")).whereEqualTo("isParent", false);
+		Query query2 = eventsRef.whereLessThan("endTime", ""+zonedDateTime.toInstant().toEpochMilli()).whereArrayContains("participantList", params.getString("phoneNumber")).whereEqualTo("isParent", false);
 		
 		ApiFuture<QuerySnapshot> querySnapshot1 = query1.get();
 		ApiFuture<QuerySnapshot> querySnapshot2 = query2.get();
@@ -385,12 +404,12 @@ public class EventController {
 		paramsForEventByDate.put("date", ""+zonedDateTime.toInstant().toEpochMilli());
 		paramsForEventByDate.put("endDate", ""+zonedDateTime.toInstant().toEpochMilli());
 		
-		JSONObject ongoingJSON = getEventsByDate(paramsForEventByDate);
+		JSONObject ongoingJSON = getOngoingEvents(paramsForEventByDate);
 		JSONObject output = new JSONObject();
 		ObjectMapper objectMapper = new ObjectMapper();
 		for(Object obj:ongoingJSON.getJSONArray("events")) {
 			Event ev =((Event)obj);
-			if(ev.getParticipantList()!=null && ev.getParticipantList().size()>0 &&  ev.getParticipantList().contains(params.getString("email"))) {
+			if(ev.getParticipantList()!=null && ev.getParticipantList().size()>0 &&  ev.getParticipantList().contains(params.getString("phoneNumber"))) {
 				events3.add(ev);
 			}
 		}
@@ -398,6 +417,53 @@ public class EventController {
 		output.put("expiredEvents", events2);
 		output.put("ongoingEvents", events3);
 		
+		return output;
+	}
+	public JSONObject getOngoingEvents(JSONObject params){
+		System.out.println(params.getString("date"));
+		
+		Instant instance = java.time.Instant.ofEpochMilli(Long.parseLong(params.getString("date")));
+		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
+		                            .ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
+		zonedDateTime = zonedDateTime.with(LocalTime.of ( 23 , 59 ));
+		System.out.println(zonedDateTime);
+
+		System.out.println(zonedDateTime.toInstant().toEpochMilli());
+		CollectionReference eventsRef = eventService.getCollectionReference();
+
+		Query query1 = eventsRef.whereLessThan("startTime", params.getString("date"));
+		Query query2 = eventsRef.whereGreaterThan("endTime", ""+params.getString("endDate"));
+		Query query3 = eventsRef.whereEqualTo("isParent", false);
+
+		ApiFuture<QuerySnapshot> querySnapshot1 = query1.get();
+		ApiFuture<QuerySnapshot> querySnapshot2 = query2.get();
+		ApiFuture<QuerySnapshot> querySnapshot3 = query3.get();
+
+		
+		Set<Event> events1 = new HashSet<>();
+		Set<Event> events2 = new HashSet<>();
+		Set<Event> events3 = new HashSet<>();
+		try {
+			for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
+				events1.add(document.toObject(Event.class));  
+			}
+			for (DocumentSnapshot document : querySnapshot2.get().getDocuments()) {
+				events2.add(document.toObject(Event.class));  
+			}
+			for (DocumentSnapshot document : querySnapshot3.get().getDocuments()) {
+				events3.add(document.toObject(Event.class));  
+			}
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		events1.retainAll(events2);
+		events1.retainAll(events3);
+		List<Event> events = IterableUtils.toList(events1);
+		Collections.sort(events,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+		System.out.println(events.size());
+		JSONObject output = new JSONObject();
+		output.put("events", events);
 		return output;
 	}
 }  
