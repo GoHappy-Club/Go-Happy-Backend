@@ -33,6 +33,7 @@ public class Event {
 	private String parentId;
 	private String cron;
 	private String meetingLink;
+	private String recordingLink;
 	private String occurance;
 	private List<String> participantList;
 
