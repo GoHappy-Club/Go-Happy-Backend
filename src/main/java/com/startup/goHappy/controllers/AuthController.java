@@ -1,6 +1,8 @@
 package com.startup.goHappy.controllers;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -63,6 +65,10 @@ public class AuthController {
 			return user;
 		}
 		else if(!StringUtils.isEmpty(params.getString("token"))) {
+			Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
+			ZonedDateTime zonedDateTime = java.time.ZonedDateTime
+			                            .ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
+			params.put("dateOfJoining", ""+zonedDateTime.toInstant().toEpochMilli());
 			register(params);
 			ApiFuture<QuerySnapshot> querySnapshot1 = query.get();
 			UserProfile user1 = null;
