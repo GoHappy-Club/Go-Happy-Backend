@@ -55,7 +55,7 @@ public class ZoomService {
         settingsDTO.setJoin_before_host(false);
         settingsDTO.setParticipant_video(true);
         settingsDTO.setHost_video(false);
-        settingsDTO.setAuto_recording("cloud");
+//        settingsDTO.setAuto_recording("cloud");
         settingsDTO.setMute_upon_entry(true);
         zoomMeetingObjectDTO.setSettings(settingsDTO);
 

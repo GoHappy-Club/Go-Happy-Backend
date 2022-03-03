@@ -51,7 +51,7 @@ public class UserProfileController {
 		UserProfile up = new UserProfile();
 		up.setId(UUID.randomUUID().toString());
 		up.setEmail(userProfile.getString("email"));
-//		up.setDateOfJoining(new Date().getTime());
+		up.setDateOfJoining(userProfile.getString("dateOfJoining"));
 		up.setName(userProfile.getString("name"));
 		up.setPhone(""+userProfile.getString("phone"));
 		up.setProfileImage(userProfile.getString("profileImage"));

@@ -241,7 +241,13 @@ public class EventController {
 
 		System.out.println(zonedDateTime.toInstant().toEpochMilli());
 		CollectionReference eventsRef = eventService.getCollectionReference();
-
+		Instant instance2 = java.time.Instant.now();
+		ZonedDateTime zonedDateTime2 = java.time.ZonedDateTime
+		                            .ofInstant(instance2,java.time.ZoneId.of("Asia/Kolkata"));
+		String newDate = zonedDateTime2.toInstant().toEpochMilli()+"";
+		if(params.getString("date").compareTo(newDate)<0) {
+			params.put("date", newDate);
+		}
 		Query query1 = eventsRef.whereGreaterThan("startTime", params.getString("date"));
 		Query query2 = null;
 		if(params.getString("endDate")!=null) {
@@ -318,7 +324,7 @@ public class EventController {
 		
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTimeInMillis(Long.parseLong(event.getEventDate()));
-		
+		calendar.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta"));		
 		
 		content = content.replace("${title}", event.getEventName());
 		content = content.replace("${zoomLink}", event.getMeetingLink());
@@ -413,6 +419,7 @@ public class EventController {
 				events3.add(ev);
 			}
 		}
+		events1.removeAll(events3);
 		output.put("upcomingEvents", events1);
 		output.put("expiredEvents", events2);
 		output.put("ongoingEvents", events3);
@@ -430,9 +437,11 @@ public class EventController {
 
 		System.out.println(zonedDateTime.toInstant().toEpochMilli());
 		CollectionReference eventsRef = eventService.getCollectionReference();
-
-		Query query1 = eventsRef.whereLessThan("startTime", params.getString("date"));
-		Query query2 = eventsRef.whereGreaterThan("endTime", ""+params.getString("endDate"));
+		Long newStartTime = Long.parseLong(params.getString("date"))+600000;
+		Long newEndTime = Long.parseLong(params.getString("endDate"))+600000;
+		
+		Query query1 = eventsRef.whereLessThan("startTime", ""+newStartTime);
+		Query query2 = eventsRef.whereGreaterThan("endTime", ""+newEndTime);
 		Query query3 = eventsRef.whereEqualTo("isParent", false);
 
 		ApiFuture<QuerySnapshot> querySnapshot1 = query1.get();
