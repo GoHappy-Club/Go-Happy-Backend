@@ -189,13 +189,13 @@ public class EmailService {
 	public static void sendEmail(String to, String subject, String text) throws IOException, GeneralSecurityException, MessagingException {
 		
 		Gmail service = getGmailService();
-		MimeMessage Mimemessage = createEmail(to,"sessions@gohappyclub.in",subject,text);
+		MimeMessage Mimemessage = createEmail(to,"me",subject,text);
 		if(Mimemessage==null) {
 			return;
 		}
 		Message message = createMessageWithEmail(Mimemessage);
 		
-		message = service.users().messages().send("sessions@gohappyclub.in", message).execute();
+		message = service.users().messages().send("me", message).execute();
 		
 		System.out.println("Message id: " + message.getId());
 		System.out.println(message.toPrettyString());
