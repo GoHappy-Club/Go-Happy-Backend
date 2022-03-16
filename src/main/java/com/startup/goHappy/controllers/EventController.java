@@ -210,6 +210,26 @@ public class EventController {
 			}
 		}
 		else {
+			String newYorkDateTimePattern = "yyyy-MM-dd HH:mm:ssZ";
+			long duration = (Long.parseLong(ev.getEndTime())- Long.parseLong(ev.getStartTime()))/(60000);
+			ZoomMeetingObjectDTO obj = new ZoomMeetingObjectDTO();
+			obj.setTopic(ev.getEventName());
+			obj.setTimezone("Asia/Kolkata");
+			obj.setDuration((int)duration);
+			obj.setType(2);
+			obj.setPassword("212121");
+			Date startDate = new Date(Long.parseLong(ev.getStartTime()));
+			
+			DateTimeFormatter newYorkDateFormatter = DateTimeFormatter.ofPattern(newYorkDateTimePattern);
+			LocalDateTime summerDay = LocalDateTime.of(startDate.getYear()+1900, startDate.getMonth()+1, startDate.getDate(), startDate.getHours(), startDate.getMinutes());
+			String finalDateForZoom = newYorkDateFormatter.format(ZonedDateTime.of(summerDay, ZoneId.of("Asia/Kolkata")));
+			finalDateForZoom = finalDateForZoom.replace(" ", "T");
+
+			obj.setStart_time(finalDateForZoom);
+			
+			String zoomLink = zoomService.createMeeting(obj).getJoin_url();
+			
+			ev.setMeetingLink(zoomLink);
 			eventService.save(ev);
 		}
 		
