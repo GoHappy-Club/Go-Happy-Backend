@@ -189,7 +189,7 @@ public class EventController {
 				obj.setTimezone("Asia/Kolkata");
 				obj.setDuration((int)duration);
 				obj.setType(2);
-				obj.setPassword("212121");
+				obj.setPassword("12345");
 				Date startDate = new Date(start);
 				
 				DateTimeFormatter newYorkDateFormatter = DateTimeFormatter.ofPattern(newYorkDateTimePattern);
