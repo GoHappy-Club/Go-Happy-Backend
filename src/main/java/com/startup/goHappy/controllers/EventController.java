@@ -887,11 +887,12 @@ public class EventController {
 		user.setSessionsAttended(""+sessionsAttended);
 		userProfileService.save(user);
 		if(user!=null && !StringUtils.isEmpty(user.getEmail())) {
-			
-			ExecutorService threadpool = Executors.newCachedThreadPool();
-			ListeningExecutorService service = MoreExecutors.listeningDecorator(threadpool);
-			ListenableFuture<String> guavaFuture = (ListenableFuture<String>) service.submit(()-> sendEmail(user.getEmail(), "GoHappy Club: Session Booked", content));
-			String result = guavaFuture.get();
+//			
+//			ExecutorService threadpool = Executors.newCachedThreadPool();
+//			ListeningExecutorService service = MoreExecutors.listeningDecorator(threadpool);
+//			ListenableFuture<String> guavaFuture = (ListenableFuture<String>) service.submit(()-> sendEmail(user.getEmail(), "GoHappy Club: Session Booked", content));
+//			String result = guavaFuture.get();
+			emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", content);
 			
 		}
 		return "SUCCESS";
