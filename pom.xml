@@ -113,7 +113,11 @@
 		    <artifactId>google-api-services-gmail</artifactId>
 		    <version>v1-rev110-1.25.0</version>
 		</dependency>
-		        
+		<dependency>
+		    <groupId>com.google.guava</groupId>
+		    <artifactId>guava</artifactId>
+		    <version>31.0.1-jre</version>
+		</dependency>        
 		
 <!-- <dependency>
     <groupId>org.springframework.cloud</groupId>

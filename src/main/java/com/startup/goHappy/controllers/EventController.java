@@ -23,13 +23,18 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.mail.MessagingException;
 
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.scheduling.support.CronSequenceGenerator;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,6 +52,9 @@ import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Query;
 import com.google.cloud.firestore.QuerySnapshot;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.startup.goHappy.entities.model.Event;
 import com.startup.goHappy.entities.model.UserProfile;
 import com.startup.goHappy.entities.repository.EventRepository;
@@ -879,22 +887,28 @@ public class EventController {
 		user.setSessionsAttended(""+sessionsAttended);
 		userProfileService.save(user);
 		if(user!=null && !StringUtils.isEmpty(user.getEmail())) {
-			new Thread(new Runnable() {
-			    public void run() {
-					try {
-						emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", content);
-					} catch (MessagingException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
-						e.printStackTrace();
-					} catch (GeneralSecurityException e) {
-						e.printStackTrace();
-					}
-			    }
-			}).start();
+			
+			ExecutorService threadpool = Executors.newCachedThreadPool();
+			ListeningExecutorService service = MoreExecutors.listeningDecorator(threadpool);
+			ListenableFuture<String> guavaFuture = (ListenableFuture<String>) service.submit(()-> sendEmail(user.getEmail(), "GoHappy Club: Session Booked", content));
+			String result = guavaFuture.get();
+			
 		}
 		return "SUCCESS";
 	}
+	
+  public String sendEmail(String email, String subject, String content)  {
+	  try {
+		emailService.sendSimpleMessage(email,subject,content);
+	} catch (MessagingException | IOException | GeneralSecurityException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	  
+    return "SUCCESS"; 
+  }
+	
+	
 	@PostMapping("cancelEvent")
 	public String cancelEvent(@RequestBody JSONObject params) throws IOException {
 		CollectionReference eventRef = eventService.getCollectionReference();
