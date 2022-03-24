@@ -63,7 +63,7 @@ public class EmailService {
 	
 	public static Gmail getGmailService() throws IOException, GeneralSecurityException {
 
-		final String sacc = "{\"web\":{\"client_id\":\"908368396731-209h63dhdr8tsjp7in4k88h1dc2jhc4c.apps.googleusercontent.com\",\"project_id\":\"go-happy-322816\",\"auth_uri\":\"https://accounts.google.com/o/oauth2/auth\",\"token_uri\":\"https://oauth2.googleapis.com/token\",\"auth_provider_x509_cert_url\":\"https://www.googleapis.com/oauth2/v1/certs\",\"client_secret\":\"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\",\"redirect_uris\":[\"http://localhost\"]}}";
+		final String sacc = "{\"web\":{\"client_id\":\"908368396731-8rjaoipdrv43kvrl11874vaku47otl60.apps.googleusercontent.com\",\"project_id\":\"go-happy-322816\",\"auth_uri\":\"https://accounts.google.com/o/oauth2/auth\",\"token_uri\":\"https://oauth2.googleapis.com/token\",\"auth_provider_x509_cert_url\":\"https://www.googleapis.com/oauth2/v1/certs\",\"client_secret\":\"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\",\"redirect_uris\":[\"http://localhost\"]}}";
 	    InputStream in = new ByteArrayInputStream(sacc.getBytes
 	                (Charset.forName("UTF-8")));
 		GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
@@ -76,7 +76,7 @@ public class EmailService {
 				.setClientSecrets(clientSecrets.getDetails().getClientId().toString(),
 						clientSecrets.getDetails().getClientSecret().toString())
 				.build().setAccessToken(getAccessToken()).setRefreshToken(
-						"1//0gg7-7T8HHhi5CgYIARAAGBASNwF-L9IrZzFUGSTlNNmFo8IlGOiSOR3eG5wJzGfn83TS8KZtm3NmXXhEaNNdhi5eC1A8RSRc5_s");//Replace this
+						"1//04q0J-cuX4ezGCgYIARAAGAQSNwF-L9IrvMsQUqWXn8kYgL6JnJlXcoFrVphsXRTEU3xxsQw02wQRwFLh2Fja-3osKrlK-rJOnPE");//Replace this
 
 		// Create Gmail service
 		final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
@@ -91,10 +91,10 @@ public class EmailService {
 		try {
 			Map<String, Object> params = new LinkedHashMap<>();
 			params.put("grant_type", "refresh_token");
-			params.put("client_id", "908368396731-209h63dhdr8tsjp7in4k88h1dc2jhc4c.apps.googleusercontent.com"); //Replace this
-			params.put("client_secret", "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"); //Replace this
+			params.put("client_id", "908368396731-8rjaoipdrv43kvrl11874vaku47otl60.apps.googleusercontent.com"); //Replace this
+			params.put("client_secret", "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"); //Replace this
 			params.put("refresh_token",
-					"1//0gVPUDVkE1XwWCgYIARAAGBASNwF-L9IrNjXmD96Pf0vFcO3zUs6yHFIQmWEMw0tCYrpAhGT3XIHH2ha2BEFahJ_yQiBJZb_KJaA"); //Replace this
+					"1//04q0J-cuX4ezGCgYIARAAGAQSNwF-L9IrvMsQUqWXn8kYgL6JnJlXcoFrVphsXRTEU3xxsQw02wQRwFLh2Fja-3osKrlK-rJOnPE"); //Replace this
 
 			StringBuilder postData = new StringBuilder();
 			for (Map.Entry<String, Object> param : params.entrySet()) {

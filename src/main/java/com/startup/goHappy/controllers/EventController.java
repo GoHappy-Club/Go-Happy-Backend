@@ -489,7 +489,7 @@ public class EventController {
 			+ "        \n"
 			+ "<div align=\"center\">\n"
 			+ "  <!--[if mso]><table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-spacing: 0; border-collapse: collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;font-family:'Open Sans',sans-serif;\"><tr><td style=\"font-family:'Open Sans',sans-serif;\" align=\"center\"><v:roundrect xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:w=\"urn:schemas-microsoft-com:office:word\" href=\"\" style=\"height:43px; v-text-anchor:middle; width:176px;\" arcsize=\"4.5%\" stroke=\"f\" fillcolor=\"#e6a501\"><w:anchorlock/><center style=\"color:#FFFFFF;font-family:'Open Sans',sans-serif;\"><![endif]-->\n"
-			+ "    <a href=\"\" target=\"_blank\" style=\"box-sizing: border-box;display: inline-block;font-family:'Open Sans',sans-serif;text-decoration: none;-webkit-text-size-adjust: none;text-align: center;color: #FFFFFF; background-color: #e6a501; border-radius: 2px;-webkit-border-radius: 2px; -moz-border-radius: 2px; width:auto; max-width:100%; overflow-wrap: break-word; word-break: break-word; word-wrap:break-word; mso-border-alt: none;\">\n"
+			+ "    <a href=\"${zoomLink}\" target=\"_blank\" style=\"box-sizing: border-box;display: inline-block;font-family:'Open Sans',sans-serif;text-decoration: none;-webkit-text-size-adjust: none;text-align: center;color: #FFFFFF; background-color: #e6a501; border-radius: 2px;-webkit-border-radius: 2px; -moz-border-radius: 2px; width:auto; max-width:100%; overflow-wrap: break-word; word-break: break-word; word-wrap:break-word; mso-border-alt: none;\">\n"
 			+ "      <span class=\"v-padding\" style=\"display:block;padding:12px 35px;line-height:120%;\"><span style=\"font-family: Cabin, sans-serif; font-size: 14px; line-height: 16.8px;\"><strong><span style=\"font-size: 16px; line-height: 19.2px;\">Join Session </span></strong></span></span>\n"
 			+ "    </a>\n"
 			+ "  <!--[if mso]></center></v:roundrect></td></tr></table><![endif]-->\n"
@@ -867,7 +867,8 @@ public class EventController {
 		
 		content = content.replace("${title}", event.getEventName());
 		content = content.replace("${zoomLink}", event.getMeetingLink());
-		content = content.replace("${meetingId}", event.getMeetingId());
+		content = content.replace("${zoomLink}", event.getMeetingLink());
+		content = content.replace("${meetingId}", event.getMeetingId()!=null?event.getMeetingId():"");
 		//content = content.replace("${zoomLink}", event.getMeetingLink());
 		content = content.replace("${date}", FOMATTER.format(((GregorianCalendar) calendar).toZonedDateTime()));
 		UserProfile user = userProfileController.getUserByPhone(params).getObject("user", UserProfile.class);
