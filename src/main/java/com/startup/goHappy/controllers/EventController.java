@@ -878,8 +878,21 @@ public class EventController {
 		sessionsAttended++;
 		user.setSessionsAttended(""+sessionsAttended);
 		userProfileService.save(user);
-		if(user!=null && !StringUtils.isEmpty(user.getEmail()))
-			emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", content);
+		if(user!=null && !StringUtils.isEmpty(user.getEmail())) {
+			new Thread(new Runnable() {
+			    public void run() {
+					try {
+						emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", content);
+					} catch (MessagingException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					} catch (GeneralSecurityException e) {
+						e.printStackTrace();
+					}
+			    }
+			}).start();
+		}
 		return "SUCCESS";
 	}
 	@PostMapping("cancelEvent")
