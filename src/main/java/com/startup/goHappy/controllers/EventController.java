@@ -872,16 +872,16 @@ public class EventController {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTimeInMillis(Long.parseLong(event.getStartTime()));
 		calendar.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta"));		
-		
-		content = content.replace("${title}", event.getEventName());
-		content = content.replace("${zoomLink}", event.getMeetingLink());
-		content = content.replace("${zoomLink}", event.getMeetingLink());
-		content = content.replace("${meetingId}", event.getMeetingId()!=null?event.getMeetingId():"");
+		String currentContent = content;
+		currentContent = currentContent.replace("${title}", event.getEventName());
+		currentContent = currentContent.replace("${zoomLink}", event.getMeetingLink());
+		currentContent = currentContent.replace("${zoomLink}", event.getMeetingLink());
+		currentContent = currentContent.replace("${meetingId}", event.getMeetingId()!=null?event.getMeetingId():"");
 		//content = content.replace("${zoomLink}", event.getMeetingLink());
-		content = content.replace("${date}", FOMATTER.format(((GregorianCalendar) calendar).toZonedDateTime()));
+		currentContent = currentContent.replace("${date}", FOMATTER.format(((GregorianCalendar) calendar).toZonedDateTime()));
 		UserProfile user = userProfileController.getUserByPhone(params).getObject("user", UserProfile.class);
-		content = content.replace("${name}",user.getName());
-		content = content.replace("${name}",user.getName());
+		currentContent = currentContent.replace("${name}",user.getName());
+		currentContent = currentContent.replace("${name}",user.getName());
 		Integer sessionsAttended = Integer.parseInt(user.getSessionsAttended());
 		sessionsAttended++;
 		user.setSessionsAttended(""+sessionsAttended);
@@ -892,7 +892,7 @@ public class EventController {
 //			ListeningExecutorService service = MoreExecutors.listeningDecorator(threadpool);
 //			ListenableFuture<String> guavaFuture = (ListenableFuture<String>) service.submit(()-> sendEmail(user.getEmail(), "GoHappy Club: Session Booked", content));
 //			String result = guavaFuture.get();
-			emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", content);
+			emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", currentContent);
 			
 		}
 		return "SUCCESS";
