@@ -1,11 +1,17 @@
 package com.startup.goHappy.integrations.service;
+import org.apache.http.impl.client.HttpClients;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
@@ -22,6 +28,13 @@ import com.google.api.services.gmail.GmailRequest;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.Message;
 import com.google.auth.oauth2.GoogleCredentials;
+
+import okhttp3.Call;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -55,6 +68,12 @@ public class EmailService {
 	@Autowired
     private JavaMailSender emailSender;
 	
+	ClientHttpRequestFactory requestFactory = new     
+		      HttpComponentsClientHttpRequestFactory(HttpClients.createDefault());
+	
+//	@Autowired
+	RestTemplate restTemplate = new RestTemplate(requestFactory);
+	
 	private static final String APPLICATION_NAME = "Gmail API Java Quickstart";
 	private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 	private static final String user = "me";
@@ -76,7 +95,7 @@ public class EmailService {
 				.setClientSecrets(clientSecrets.getDetails().getClientId().toString(),
 						clientSecrets.getDetails().getClientSecret().toString())
 				.build().setAccessToken(getAccessToken()).setRefreshToken(
-						"1//04q0J-cuX4ezGCgYIARAAGAQSNwF-L9IrvMsQUqWXn8kYgL6JnJlXcoFrVphsXRTEU3xxsQw02wQRwFLh2Fja-3osKrlK-rJOnPE");//Replace this
+						"1//04AkQM_ucOTOSCgYIARAAGAQSNwF-L9IrMtsyZACCGzUB5H7jen2SR_WHvMrssK29XHiermSTnoJnuGTsAEcKBu22kr50Nt4TuDc");//Replace this
 
 		// Create Gmail service
 		final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
@@ -94,7 +113,7 @@ public class EmailService {
 			params.put("client_id", "908368396731-8rjaoipdrv43kvrl11874vaku47otl60.apps.googleusercontent.com"); //Replace this
 			params.put("client_secret", "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"); //Replace this
 			params.put("refresh_token",
-					"1//04q0J-cuX4ezGCgYIARAAGAQSNwF-L9IrvMsQUqWXn8kYgL6JnJlXcoFrVphsXRTEU3xxsQw02wQRwFLh2Fja-3osKrlK-rJOnPE"); //Replace this
+					"1//04AkQM_ucOTOSCgYIARAAGAQSNwF-L9IrMtsyZACCGzUB5H7jen2SR_WHvMrssK29XHiermSTnoJnuGTsAEcKBu22kr50Nt4TuDc"); //Replace this
 
 			StringBuilder postData = new StringBuilder();
 			for (Map.Entry<String, Object> param : params.entrySet()) {
@@ -132,18 +151,43 @@ public class EmailService {
 	
     public void sendSimpleMessage(String to, String subject, String text) throws MessagingException, IOException, GeneralSecurityException {
         
-    	sendEmail(to,subject,text);
-//    	MimeMessage msg = emailSender.createMimeMessage();
-//        MimeMessageHelper helper = new MimeMessageHelper(msg, true);
-//		
-//        helper.setTo(to);
-//        helper.setFrom("GoHappy-Club");
-//        helper.setSubject(subject);
-//        helper.setText(text, true);
-//
-//        emailSender.send(msg);      
+//    	sendEmail(to,subject,text);   
+    	sendEmailCloudFunction(to,subject,text);
     }
     
+    private void sendEmailCloudFunction(String to, String subject, String text) {
+    	OkHttpClient client = new OkHttpClient.Builder()
+//    		      .addInterceptor(
+//    		        new DefaultContentTypeInterceptor("application/json"))
+    		      .build();
+    	 RequestBody formBody = new FormBody.Builder()
+    		      .add("to", to)
+    		      .add("Subject", subject)
+    		      .add("Body", text)
+    		      .build();
+
+    		    Request request = new Request.Builder()
+    		      .url("https://europe-west2-go-happy-322816.cloudfunctions.net/email-sender")
+    		      .post(formBody)
+    		      .build();
+
+    		    Call call = client.newCall(request);
+    		    Response response = null;
+    		    try {
+					response = call.execute();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+    		    
+//    	JSONObject requestBody = new JSONObject();
+//    	requestBody.put("to", to);
+//    	requestBody.put("Subject", subject);
+//    	requestBody.put("Body", text);
+//    	HttpEntity<String> request = 
+//    		      new HttpEntity<String>(requestBody.toString());
+//    	String responseEntityPerson = restTemplate.postForObject("https://europe-west2-go-happy-322816.cloudfunctions.net/email-sender", request, String.class);
+    }
     
     public static void sendMessage(Gmail service, String userId, MimeMessage email)
 			throws MessagingException, IOException {
