@@ -991,8 +991,13 @@ public class EventController {
 			}
 		}
 		events1.removeAll(events3);
-		output.put("upcomingEvents", events1);
-		output.put("expiredEvents", events2);
+		ArrayList<Event> events1List = new ArrayList<>(events1);
+		ArrayList<Event> events2List = new ArrayList<>(events2);
+		Collections.sort(events1List,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+		Collections.sort(events2List,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+		Collections.reverse(events2List);
+		output.put("upcomingEvents", events1List);
+		output.put("expiredEvents", events2List);
 		output.put("ongoingEvents", events3);
 		
 		return output;

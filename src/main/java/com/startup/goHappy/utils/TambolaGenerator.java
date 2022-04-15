@@ -6,7 +6,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.stereotype.Service;
 
-import jdk.internal.org.jline.utils.Log;
 
 @Service
 public class TambolaGenerator {
