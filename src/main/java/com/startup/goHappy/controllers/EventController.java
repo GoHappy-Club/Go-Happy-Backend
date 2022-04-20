@@ -795,7 +795,7 @@ public class EventController {
 		if(params.getString("date").compareTo(newDate)<0) {
 			params.put("date", newDate);
 		}
-		Query query1 = eventsRef.whereGreaterThan("startTime", params.getString("date"));
+		Query query1 = eventsRef.whereGreaterThan("endTime", params.getString("date"));
 		Query query2 = null;
 		if(params.getString("endDate")!=null) {
 			query2 = eventsRef.whereLessThan("endTime", ""+params.getString("endDate"));
