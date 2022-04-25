@@ -142,7 +142,9 @@ public class UserProfileController {
 	public UserProfile updateUser(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
 		
 		CollectionReference userProfiles = userProfileService.getCollectionReference();
-
+		if(params.getString("phone").startsWith("+")){
+			params.put("phone",params.getString("phone").substring(1));
+		}
 		Query query = userProfiles.whereEqualTo("phone", params.getString("phone"));
 
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();

@@ -880,20 +880,15 @@ public class EventController {
 		//content = content.replace("${zoomLink}", event.getMeetingLink());
 		currentContent = currentContent.replace("${date}", FOMATTER.format(((GregorianCalendar) calendar).toZonedDateTime()));
 		UserProfile user = userProfileController.getUserByPhone(params).getObject("user", UserProfile.class);
-		currentContent = currentContent.replace("${name}",user.getName());
-		currentContent = currentContent.replace("${name}",user.getName());
-		Integer sessionsAttended = Integer.parseInt(user.getSessionsAttended());
-		sessionsAttended++;
-		user.setSessionsAttended(""+sessionsAttended);
-		userProfileService.save(user);
-		if(user!=null && !StringUtils.isEmpty(user.getEmail())) {
-//			
-//			ExecutorService threadpool = Executors.newCachedThreadPool();
-//			ListeningExecutorService service = MoreExecutors.listeningDecorator(threadpool);
-//			ListenableFuture<String> guavaFuture = (ListenableFuture<String>) service.submit(()-> sendEmail(user.getEmail(), "GoHappy Club: Session Booked", content));
-//			String result = guavaFuture.get();
-			emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", currentContent);
-			
+		if(user!=null) {
+			currentContent = currentContent.replace("${name}",user.getName());
+			currentContent = currentContent.replace("${name}",user.getName());
+			Integer sessionsAttended = Integer.parseInt(user.getSessionsAttended());
+			sessionsAttended++;
+			user.setSessionsAttended(""+sessionsAttended);
+			userProfileService.save(user);
+			if(!StringUtils.isEmpty(user.getEmail()))
+				emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", currentContent);
 		}
 		return "SUCCESS";
 	}
