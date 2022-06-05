@@ -22,3 +22,5 @@ target/classes/application.properties
 target/classes/application.properties
 *.class
 *.class
+*.class
+*.class
