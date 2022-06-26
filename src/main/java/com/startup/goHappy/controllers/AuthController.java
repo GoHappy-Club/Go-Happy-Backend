@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
+import com.startup.goHappy.entities.model.Referral;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,8 +38,29 @@ public class AuthController {
 	UserProfileController userProfileController;
 
 	@PostMapping("register")
-	public void register(@RequestBody JSONObject userProfile) {
+	public void register(@RequestBody JSONObject userProfile, @RequestBody JSONObject referDetails) throws IOException, ExecutionException, InterruptedException {
 		userProfileController.create(userProfile);
+		Referral referObject = new Referral();
+		referObject.setId(UUID.randomUUID().toString());
+		CollectionReference userProfiles = userProfileService.getCollectionReference();
+		Query query = null;
+//		if(StringUtils.isEmpty(params.getString("email"))) {
+		query = userProfiles.whereEqualTo("selfInviteCode", ""+referDetails.getString("referralId"));
+		ApiFuture<QuerySnapshot> querySnapshot = query.get();
+		UserProfile refereeUser = null;
+		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+			refereeUser = document.toObject(UserProfile.class);
+			referObject.setFrom(refereeUser.getPhone());
+
+
+			referObject.setTo(userProfile.getString("phone"));
+			referObject.setTime(""+new Date().getTime());
+			referObject.setHasAttendedSession(false);
+
+			userProfileController.refer(referObject);
+
+			break;
+		}
 		return;
 	}
 	@PostMapping("login")
@@ -69,7 +91,10 @@ public class AuthController {
 			ZonedDateTime zonedDateTime = java.time.ZonedDateTime
 			                            .ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
 			params.put("dateOfJoining", ""+zonedDateTime.toInstant().toEpochMilli());
-			register(params);
+			JSONObject referDetails = new JSONObject();
+			referDetails.put("referralId",params.getString("referralId"));
+			params.remove("referralid");
+			register(params,referDetails);
 			ApiFuture<QuerySnapshot> querySnapshot1 = query.get();
 			UserProfile user1 = null;
 			for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {

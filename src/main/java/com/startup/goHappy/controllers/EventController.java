@@ -30,6 +30,8 @@ import java.util.concurrent.Executors;
 
 import javax.mail.MessagingException;
 
+import com.startup.goHappy.entities.model.Referral;
+import com.startup.goHappy.entities.repository.ReferralRepository;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +77,9 @@ public class EventController {
 
 	@Autowired
 	EventRepository eventService;
+
+	@Autowired
+	ReferralRepository referralService;
 	
 	@Autowired
 	ZoomService zoomService;
@@ -839,6 +844,8 @@ public class EventController {
 	@PostMapping("bookEvent")
 	public String bookEvent(@RequestBody JSONObject params) throws IOException, MessagingException, GeneralSecurityException, InterruptedException, ExecutionException {
 		CollectionReference eventRef = eventService.getCollectionReference();
+		CollectionReference referrals = referralService.getCollectionReference();
+
 		Optional<Event> oevent = eventService.findById(params.getString("id"));
 		Event event = oevent.get();
 		String ticket = "\""+params.getString("tambolaTicket")+"\"";
@@ -887,9 +894,18 @@ public class EventController {
 			sessionsAttended++;
 			user.setSessionsAttended(""+sessionsAttended);
 			userProfileService.save(user);
+			Query query = referrals.whereEqualTo("to", user.getPhone());
+			ApiFuture<QuerySnapshot> querySnapshot = query.get();
+			if(querySnapshot.get().getDocuments().size()!=0){
+				Referral referred = querySnapshot.get().getDocuments().get(0).toObject(Referral.class);
+				referred.setHasAttendedSession(true);
+				referralService.save(referred);
+			}
+
 			if(!StringUtils.isEmpty(user.getEmail()))
 				emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", currentContent);
 		}
+
 		return "SUCCESS";
 	}
 	

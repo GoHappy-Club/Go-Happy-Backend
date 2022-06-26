@@ -2,13 +2,13 @@ package com.startup.goHappy.controllers;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import com.startup.goHappy.entities.model.Referral;
+import com.startup.goHappy.entities.repository.ReferralRepository;
 import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +39,9 @@ public class UserProfileController {
 
 	@Autowired
 	UserProfileRepository userProfileService;
+
+	@Autowired
+	ReferralRepository referralService;
 	
 	
 	@Autowired
@@ -162,5 +165,43 @@ public class UserProfileController {
 		}
 		userProfileService.save(user);
 		return user;
+	}
+	@PostMapping("refer")
+	public void refer(@RequestBody Referral referObject) throws IOException, InterruptedException, ExecutionException {
+		CollectionReference referrals = referralService.getCollectionReference();
+//		Referral refer = new Referral();
+//		refer.setId(UUID.randomUUID().toString());
+//		refer.setFrom(referObject.getFrom());
+//		refer.setTo(referObject.getTo());
+//		refer.setReferralId(referObject.getReferralId());
+
+		Query query = referrals.whereEqualTo("to", referObject.getTo());
+
+		ApiFuture<QuerySnapshot> querySnapshot = query.get();
+		UserProfile user = null;
+		if(querySnapshot.get().getDocuments().size()==0){
+			referralService.save(referObject);
+		}
+	}
+	@GetMapping("setReferIds")
+	public void tempApi() throws ExecutionException, InterruptedException {
+		CollectionReference userProfiles = userProfileService.getCollectionReference();
+		Query query = userProfiles.whereNotEqualTo("phone","rakshit");
+		ApiFuture<QuerySnapshot> querySnapshot = query.get();
+		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+			try {
+				UserProfile user = document.toObject(UserProfile.class);
+				if(user.getSelfInviteCode()!=null){
+					continue;
+				}
+				String selfInviteId = RandomStringUtils.random(6,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+				user.setSelfInviteCode(selfInviteId);
+				userProfileService.save(user);
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+//			break;
+		}
 	}
 }
