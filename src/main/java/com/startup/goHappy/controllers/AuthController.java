@@ -51,7 +51,7 @@ public class AuthController {
 		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
 			refereeUser = document.toObject(UserProfile.class);
 			referObject.setFrom(refereeUser.getPhone());
-
+			referObject.setReferralId(referDetails.getString("referralId"));
 
 			referObject.setTo(userProfile.getString("phone"));
 			referObject.setTime(""+new Date().getTime());
@@ -93,7 +93,7 @@ public class AuthController {
 			params.put("dateOfJoining", ""+zonedDateTime.toInstant().toEpochMilli());
 			JSONObject referDetails = new JSONObject();
 			referDetails.put("referralId",params.getString("referralId"));
-			params.remove("referralid");
+			params.remove("referralId");
 			register(params,referDetails);
 			ApiFuture<QuerySnapshot> querySnapshot1 = query.get();
 			UserProfile user1 = null;

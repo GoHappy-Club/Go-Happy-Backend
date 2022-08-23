@@ -61,6 +61,8 @@ public class UserProfileController {
 		up.setSessionsAttended("0");
 		up.setPassword(userProfile.getString("password"));
 		up.setGoogleSignIn(userProfile.getBoolean("googleSignIn"));
+		String selfInviteId = RandomStringUtils.random(6,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+		up.setSelfInviteCode(selfInviteId);
 		userProfileService.save(up);
 		return;
 	}
