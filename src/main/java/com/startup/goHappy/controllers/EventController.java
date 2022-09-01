@@ -726,10 +726,12 @@ public class EventController {
 				finalDateForZoom = finalDateForZoom.replace(" ", "T");
 
 				obj.setStart_time(finalDateForZoom);
-				
-				String zoomLink = zoomService.createMeeting(obj).getJoin_url();
-				
+				ZoomMeetingObjectDTO zoomData = zoomService.createMeeting(obj);
+				String zoomLink = zoomData.getJoin_url();
+				Long meetingId = zoomData.getId();
+
 				childEvent.setMeetingLink(zoomLink);
+				childEvent.setMeetingId(""+meetingId);
 				eventService.save(childEvent);
 				tempChild=childEvent;
 				nextExecutionDate = generator.next(nextExecutionDate);
