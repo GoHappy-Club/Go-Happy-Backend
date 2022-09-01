@@ -20,4 +20,5 @@ public class UserProfile {
 	private String lastPaymentDate;
 	private String dob;
 	private String selfInviteCode;
+	private String age;
 }

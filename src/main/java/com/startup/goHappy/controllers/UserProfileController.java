@@ -53,6 +53,7 @@ public class UserProfileController {
 	public void create(@RequestBody JSONObject userProfile) {
 		UserProfile up = new UserProfile();
 		up.setId(UUID.randomUUID().toString());
+		up.setAge(userProfile.getString("age"));
 		up.setEmail(userProfile.getString("email"));
 		up.setDateOfJoining(userProfile.getString("dateOfJoining"));
 		up.setName(userProfile.getString("name"));
@@ -115,7 +116,7 @@ public class UserProfileController {
 		output.put("user", user);
 		return output;
 	}
-	
+
 //	@PostMapping("getTotalSessions")
 //	public long totalSessions(@RequestBody JSONObject params) throws IOException {
 //		NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
@@ -123,7 +124,7 @@ public class UserProfileController {
 //				  .build();
 //		long sessionsCount = eventService.count(searchQuery);
 //		return sessionsCount;
-//		
+//
 //	}
 	
 	@PostMapping("setMembership")
@@ -163,6 +164,8 @@ public class UserProfileController {
 				user.setPhone(""+params.getLong("phone"));
 			if(!StringUtils.isEmpty(params.getString("dob")))
 				user.setDob(""+params.getString("dob"));
+			if(!StringUtils.isEmpty(params.getString("age")))
+				user.setAge(""+params.getString("age"));
 			break;
 		}
 		userProfileService.save(user);
@@ -204,6 +207,28 @@ public class UserProfileController {
 				e.printStackTrace();
 			}
 //			break;
+		}
+	}
+	@GetMapping("sessionAttended")
+	public void sessionAttended(@RequestBody JSONObject userDetails) throws ExecutionException, InterruptedException {
+		CollectionReference referrals = referralService.getCollectionReference();
+//		Referral refer = new Referral();
+//		refer.setId(UUID.randomUUID().toString());
+//		refer.setFrom(referObject.getFrom());
+//		refer.setTo(referObject.getTo());
+//		refer.setReferralId(referObject.getReferralId());
+
+		Query query = referrals.whereEqualTo("to", userDetails.getString("phone"));
+
+		ApiFuture<QuerySnapshot> querySnapshot = query.get();
+		Referral referral = null;
+		if(querySnapshot.get().getDocuments().size()!=0){
+			for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+				referral = document.toObject(Referral.class);
+				referral.setHasAttendedSession(true);
+				referralService.save(referral);
+				break;
+			}
 		}
 	}
 }

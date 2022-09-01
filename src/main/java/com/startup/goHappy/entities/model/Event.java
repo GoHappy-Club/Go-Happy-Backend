@@ -13,6 +13,8 @@ import lombok.Data;
 public class Event {
 	@DocumentId
 	private String id;
+	private String costType; //"free" || "paid"
+	private int cost;
 	private String eventName;
 	private String creator;
 	private String modifier;
@@ -24,8 +26,10 @@ public class Event {
 	private String expertImage;
 	private String category;
 	private String description;
+	private String beautifulDescription;
+	private String shareMessage;
 	private Integer seatsLeft=30;
-	private String type; //0:event,1:session
+	private String type; //"session" || "workshop"
 	private String lang; //0:event,1:session
 	private String coverImage;
 	private Boolean isScheduled=false;

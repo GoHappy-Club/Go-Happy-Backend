@@ -677,8 +677,8 @@ public class EventController {
 		Event ev = objectMapper.readValue(event.toJSONString(), Event.class);	
 		ev.setId(UUID.randomUUID().toString());
 		ev.setParticipantList(new ArrayList<String>());
-
-		ev.setType(StringUtils.isEmpty(event.getString("type"))?"0":event.getString("type"));
+		ev.setCostType(StringUtils.isEmpty(event.getString("type"))?"free":"paid");
+		ev.setType(StringUtils.isEmpty(event.getString("type"))?"session":event.getString("type"));
 		if(!StringUtils.isEmpty(ev.getCron())) {
 			TimeZone tz = TimeZone.getTimeZone("Asia/Kolkata");
 			CronSequenceGenerator generator = new CronSequenceGenerator(ev.getCron(),tz);
@@ -783,7 +783,7 @@ public class EventController {
 	}
 	@PostMapping("getEventsByDate")
 	public JSONObject getEventsByDate(@RequestBody JSONObject params){
-		System.out.println(params.getString("date"));
+		System.out.println("date"+params.getString("date"));
 		
 		Instant instance = java.time.Instant.ofEpochMilli(Long.parseLong(params.getString("date")));
 		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
@@ -800,45 +800,73 @@ public class EventController {
 		if(params.getString("date").compareTo(newDate)<0) {
 			params.put("date", newDate);
 		}
-		Query query1 = eventsRef.whereGreaterThan("endTime", params.getString("date"));
-		Query query2 = null;
+//		Query query1 = eventsRef.whereGreaterThan("endTime", params.getString("date"));
+//		Query query1New = eventsRef.whereGreaterThan("endTime", params.getString("date")).whereEqualTo("isParent",false);
+		Query queryNew = eventsRef.whereGreaterThanOrEqualTo("endTime", params.getString("date")).whereEqualTo("isParent",false);
+
+//		Query query2 = null;
+//		Query query2New = null;
 		if(params.getString("endDate")!=null) {
-			query2 = eventsRef.whereLessThan("endTime", ""+params.getString("endDate"));
+//			query2 = eventsRef.whereLessThan("endTime", ""+params.getString("endDate"));
+			queryNew = queryNew.whereLessThanOrEqualTo("endTime", ""+params.getString("endDate"));
+//			query2New = eventsRef.whereLessThan("endTime", ""+params.getString("endDate")).whereEqualTo("isParent",false);
 		}
 		else {
-			query2 = eventsRef.whereLessThan("endTime", ""+zonedDateTime.toInstant().toEpochMilli());
+//			query2 = eventsRef.whereLessThan("endTime", ""+zonedDateTime.toInstant().toEpochMilli());
+			queryNew = queryNew.whereLessThanOrEqualTo("endTime", ""+zonedDateTime.toInstant().toEpochMilli());
+//			query2New = eventsRef.whereLessThan("endTime", ""+zonedDateTime.toInstant().toEpochMilli()).whereEqualTo("isParent",false);
 		}
-		Query query3 = eventsRef.whereEqualTo("isParent", false);
+//		Query query3 = eventsRef.whereEqualTo("isParent", false);
 
-		ApiFuture<QuerySnapshot> querySnapshot1 = query1.get();
-		ApiFuture<QuerySnapshot> querySnapshot2 = query2.get();
-		ApiFuture<QuerySnapshot> querySnapshot3 = query3.get();
-
+//		ApiFuture<QuerySnapshot> querySnapshot1 = query1.get();
+//		ApiFuture<QuerySnapshot> querySnapshot1New = query1New.get();
+//		ApiFuture<QuerySnapshot> querySnapshot2 = query2.get();
+//		ApiFuture<QuerySnapshot> querySnapshot2New = query2New.get();
+//		ApiFuture<QuerySnapshot> querySnapshot3 = query3.get();
+		ApiFuture<QuerySnapshot> querySnapshotNew = queryNew.get();
 		
-		Set<Event> events1 = new HashSet<>();
-		Set<Event> events2 = new HashSet<>();
-		Set<Event> events3 = new HashSet<>();
+//		Set<Event> events1 = new HashSet<>();
+//		Set<Event> events2 = new HashSet<>();
+//		Set<Event> events3 = new HashSet<>();
+//		Set<Event> events1New = new HashSet<>();
+//		Set<Event> events2New = new HashSet<>();
+		Set<Event> eventsNew = new HashSet<>();
 		try {
-			for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
-				events1.add(document.toObject(Event.class));  
+			for (DocumentSnapshot document : querySnapshotNew.get().getDocuments()) {
+				eventsNew.add(document.toObject(Event.class));
 			}
-			for (DocumentSnapshot document : querySnapshot2.get().getDocuments()) {
-				events2.add(document.toObject(Event.class));  
-			}
-			for (DocumentSnapshot document : querySnapshot3.get().getDocuments()) {
-				events3.add(document.toObject(Event.class));  
-			}
+//			for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
+//				events1.add(document.toObject(Event.class));
+//			}
+//			for (DocumentSnapshot document : querySnapshot1New.get().getDocuments()) {
+//				events1New.add(document.toObject(Event.class));
+//			}
+//			for (DocumentSnapshot document : querySnapshot2.get().getDocuments()) {
+//				events2.add(document.toObject(Event.class));
+//			}
+//			for (DocumentSnapshot document : querySnapshot2New.get().getDocuments()) {
+//				events2New.add(document.toObject(Event.class));
+//			}
+//			for (DocumentSnapshot document : querySnapshot3.get().getDocuments()) {
+//				events3.add(document.toObject(Event.class));
+//			}
 		}
 		catch(Exception e) {
 			e.printStackTrace();
 		}
-		events1.retainAll(events2);
-		events1.retainAll(events3);
-		List<Event> events = IterableUtils.toList(events1);
-		Collections.sort(events,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
-		System.out.println(events.size());
+//		events1.retainAll(events2);
+//		events1.retainAll(events3);
+//		events1New.retainAll(events2New);
+//		events1New.retainAll(events3);
+//		List<Event> events = IterableUtils.toList(events1);
+//		List<Event> eventsNewList = IterableUtils.toList(events1New);
+		List<Event> eventsNewBest = IterableUtils.toList(eventsNew);
+//		Collections.sort(events,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+//		Collections.sort(eventsNewList,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+		Collections.sort(eventsNewBest,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+//		System.out.println("Old Approach: "+events.size()+", New Approach: "+eventsNewList.size()+", Another Approach: "+eventsNewBest.size());
 		JSONObject output = new JSONObject();
-		output.put("events", events);
+		output.put("events", eventsNewBest);
 		return output;
 	}
 	@PostMapping("bookEvent")
@@ -894,13 +922,13 @@ public class EventController {
 			sessionsAttended++;
 			user.setSessionsAttended(""+sessionsAttended);
 			userProfileService.save(user);
-			Query query = referrals.whereEqualTo("to", user.getPhone());
-			ApiFuture<QuerySnapshot> querySnapshot = query.get();
-			if(querySnapshot.get().getDocuments().size()!=0){
-				Referral referred = querySnapshot.get().getDocuments().get(0).toObject(Referral.class);
-				referred.setHasAttendedSession(true);
-				referralService.save(referred);
-			}
+//			Query query = referrals.whereEqualTo("to", user.getPhone());
+//			ApiFuture<QuerySnapshot> querySnapshot = query.get();
+//			if(querySnapshot.get().getDocuments().size()!=0){
+//				Referral referred = querySnapshot.get().getDocuments().get(0).toObject(Referral.class);
+//				referred.setHasAttendedSession(true);
+//				referralService.save(referred);
+//			}
 
 			if(!StringUtils.isEmpty(user.getEmail()))
 				emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", currentContent);

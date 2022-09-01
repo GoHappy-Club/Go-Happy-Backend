@@ -26,3 +26,4 @@ target/classes/application.properties
 *.class
 *.xml
 *.iml
+*.class
