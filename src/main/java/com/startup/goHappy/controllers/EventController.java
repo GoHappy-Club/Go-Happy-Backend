@@ -566,7 +566,7 @@ public class EventController {
 			+ "    <!--[if (mso)|(IE)]><td width=\"32\" style=\"width:32px; padding-right: 24px;\" valign=\"top\"><![endif]-->\n"
 			+ "    <table align=\"left\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" width=\"32\" height=\"32\" style=\"border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;margin-right: 24px\">\n"
 			+ "      <tbody><tr style=\"vertical-align: top\"><td align=\"left\" valign=\"middle\" style=\"word-break: break-word;border-collapse: collapse !important;vertical-align: top\">\n"
-			+ "        <a href=\"https://www.linkedin.com/in/gohappy-club-93ab7a233\" title=\"LinkedIn\" target=\"_blank\">\n"
+			+ "        <a href=\"https://www.linkedin.com/company/gohappyclub\" title=\"LinkedIn\" target=\"_blank\">\n"
 			+ "          <img src=\"https://storage.googleapis.com/gohappy-main-bucket/website/images/image-2.png\" alt=\"LinkedIn\" title=\"LinkedIn\" width=\"32\" style=\"outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important\">\n"
 			+ "        </a>\n"
 			+ "      </td></tr>\n"
