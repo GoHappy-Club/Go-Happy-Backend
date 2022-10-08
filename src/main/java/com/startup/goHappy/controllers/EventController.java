@@ -1038,7 +1038,7 @@ public class EventController {
 		Collections.sort(events2List,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
 		Collections.reverse(events2List);
 		output.put("upcomingEvents", events1List);
-		output.put("expiredEvents", events2List);
+		output.put("expiredEvents", events2List.subList(0,events2List.size()>12?12:events2List.size()));
 		output.put("ongoingEvents", events3);
 		
 		return output;
