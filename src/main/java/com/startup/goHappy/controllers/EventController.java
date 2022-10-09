@@ -932,8 +932,9 @@ public class EventController {
 //				referralService.save(referred);
 //			}
 
-			if(!StringUtils.isEmpty(user.getEmail()))
-				emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", currentContent);
+			//commented for temp purpose.
+//			if(!StringUtils.isEmpty(user.getEmail()))
+//				emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", currentContent);
 		}
 
 		return "SUCCESS";
