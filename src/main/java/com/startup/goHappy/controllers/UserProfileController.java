@@ -209,7 +209,7 @@ public class UserProfileController {
 //			break;
 		}
 	}
-	@GetMapping("sessionAttended")
+	@PostMapping("sessionAttended")
 	public void sessionAttended(@RequestBody JSONObject userDetails) throws ExecutionException, InterruptedException {
 		CollectionReference referrals = referralService.getCollectionReference();
 //		Referral refer = new Referral();
