@@ -852,7 +852,9 @@ public class EventController {
 		if(tambolaTickets==null) {
 			tambolaTickets = new ArrayList<String>();
 		}
-		tambolaTickets.add(ticket);
+		if(event.getEventName().contains("Tambola")) {
+			tambolaTickets.add(ticket);
+		}
 		
 		event.setTambolaTickets(tambolaTickets);
 		//TAMBOLA GENERATION-END
@@ -918,14 +920,16 @@ public class EventController {
 		event.setSeatsLeft(event.getSeatsLeft()+1);
 		List<String> participants = event.getParticipantList();
 		int index = participants.indexOf(params.getString("phoneNumber"));
-		participants.remove(params.getString("phoneNumber"));
+//		participants.remove(params.getString("phoneNumber"));
+		participants.set(index,null);
 		event.setParticipantList(participants);
 		
 		Map<String, Object> map = new HashMap<>();
 		if(event.getEventName().contains("Tambola")) {
 			List<String> tickets = event.getTambolaTickets();
 			if(tickets!=null) {
-				tickets.remove(index);
+//				tickets.remove(index);
+				tickets.set(index,null);
 				event.setTambolaTickets(tickets);
 				map.put("tambolaTickets",tickets);
 			}
