@@ -669,7 +669,6 @@ public class EventController {
 	@SuppressWarnings("deprecation")
 	@PostMapping("create")
 	public void createEvent(@RequestBody JSONObject event) throws IOException {
-		//eventService.deleteAll();
 		Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
 		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
 		                            .ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
@@ -802,71 +801,28 @@ public class EventController {
 		if(params.getString("date").compareTo(newDate)<0) {
 			params.put("date", newDate);
 		}
-//		Query query1 = eventsRef.whereGreaterThan("endTime", params.getString("date"));
-//		Query query1New = eventsRef.whereGreaterThan("endTime", params.getString("date")).whereEqualTo("isParent",false);
 		Query queryNew = eventsRef.whereGreaterThanOrEqualTo("endTime", params.getString("date")).whereEqualTo("isParent",false);
 
-//		Query query2 = null;
-//		Query query2New = null;
 		if(params.getString("endDate")!=null) {
-//			query2 = eventsRef.whereLessThan("endTime", ""+params.getString("endDate"));
 			queryNew = queryNew.whereLessThanOrEqualTo("endTime", ""+params.getString("endDate"));
-//			query2New = eventsRef.whereLessThan("endTime", ""+params.getString("endDate")).whereEqualTo("isParent",false);
 		}
 		else {
-//			query2 = eventsRef.whereLessThan("endTime", ""+zonedDateTime.toInstant().toEpochMilli());
 			queryNew = queryNew.whereLessThanOrEqualTo("endTime", ""+zonedDateTime.toInstant().toEpochMilli());
-//			query2New = eventsRef.whereLessThan("endTime", ""+zonedDateTime.toInstant().toEpochMilli()).whereEqualTo("isParent",false);
 		}
-//		Query query3 = eventsRef.whereEqualTo("isParent", false);
-
-//		ApiFuture<QuerySnapshot> querySnapshot1 = query1.get();
-//		ApiFuture<QuerySnapshot> querySnapshot1New = query1New.get();
-//		ApiFuture<QuerySnapshot> querySnapshot2 = query2.get();
-//		ApiFuture<QuerySnapshot> querySnapshot2New = query2New.get();
-//		ApiFuture<QuerySnapshot> querySnapshot3 = query3.get();
 		ApiFuture<QuerySnapshot> querySnapshotNew = queryNew.get();
-		
-//		Set<Event> events1 = new HashSet<>();
-//		Set<Event> events2 = new HashSet<>();
-//		Set<Event> events3 = new HashSet<>();
-//		Set<Event> events1New = new HashSet<>();
-//		Set<Event> events2New = new HashSet<>();
+
 		Set<Event> eventsNew = new HashSet<>();
 		try {
 			for (DocumentSnapshot document : querySnapshotNew.get().getDocuments()) {
 				eventsNew.add(document.toObject(Event.class));
 			}
-//			for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
-//				events1.add(document.toObject(Event.class));
-//			}
-//			for (DocumentSnapshot document : querySnapshot1New.get().getDocuments()) {
-//				events1New.add(document.toObject(Event.class));
-//			}
-//			for (DocumentSnapshot document : querySnapshot2.get().getDocuments()) {
-//				events2.add(document.toObject(Event.class));
-//			}
-//			for (DocumentSnapshot document : querySnapshot2New.get().getDocuments()) {
-//				events2New.add(document.toObject(Event.class));
-//			}
-//			for (DocumentSnapshot document : querySnapshot3.get().getDocuments()) {
-//				events3.add(document.toObject(Event.class));
-//			}
 		}
 		catch(Exception e) {
 			e.printStackTrace();
 		}
-//		events1.retainAll(events2);
-//		events1.retainAll(events3);
-//		events1New.retainAll(events2New);
-//		events1New.retainAll(events3);
-//		List<Event> events = IterableUtils.toList(events1);
-//		List<Event> eventsNewList = IterableUtils.toList(events1New);
 		List<Event> eventsNewBest = IterableUtils.toList(eventsNew);
-//		Collections.sort(events,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
-//		Collections.sort(eventsNewList,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+
 		Collections.sort(eventsNewBest,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
-//		System.out.println("Old Approach: "+events.size()+", New Approach: "+eventsNewList.size()+", Another Approach: "+eventsNewBest.size());
 		JSONObject output = new JSONObject();
 		output.put("events", eventsNewBest);
 		return output;
@@ -890,6 +846,8 @@ public class EventController {
 		participants.add(params.getString("phoneNumber"));
 		
 		event.setParticipantList(participants);
+
+		//TAMBOLA GENERATION-START
 		List<String> tambolaTickets = event.getTambolaTickets();
 		if(tambolaTickets==null) {
 			tambolaTickets = new ArrayList<String>();
@@ -897,7 +855,7 @@ public class EventController {
 		tambolaTickets.add(ticket);
 		
 		event.setTambolaTickets(tambolaTickets);
-		 
+		//TAMBOLA GENERATION-END
 		
 		Map<String, Object> map = new HashMap<>();
 		map.put("participantList",participants);
@@ -932,7 +890,6 @@ public class EventController {
 //				referralService.save(referred);
 //			}
 
-			//commented for temp purpose.
 			if(!StringUtils.isEmpty(user.getEmail()))
 				emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", currentContent);
 		}

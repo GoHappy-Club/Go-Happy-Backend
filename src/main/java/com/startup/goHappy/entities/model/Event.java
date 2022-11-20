@@ -4,6 +4,7 @@ package com.startup.goHappy.entities.model;
 
 import java.util.*;
 
+import com.google.firebase.database.utilities.Pair;
 import org.springframework.context.annotation.Primary;
 
 
@@ -43,6 +44,10 @@ public class Event {
 	private List<String> participantList;
 
 	private List<String> tambolaTickets;
+
+	private String sameDayEventId;
+
+//	private Map<Pair<String,String>,String> tambolaTicketsMapping;
 	
 	@Override
 	public String toString() {
