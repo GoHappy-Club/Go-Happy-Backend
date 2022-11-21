@@ -893,7 +893,7 @@ public class EventController {
 //			}
 
 			if(!StringUtils.isEmpty(user.getEmail()))
-				emailService.sendSimpleMessage(user.getEmail(), "GoHappy Club: Session Booked", currentContent);
+				emailService.sendSimpleMessage(user.getEmail(), event.getEventName(), currentContent);
 		}
 
 		return "SUCCESS";
