@@ -798,9 +798,9 @@ public class EventController {
 		ZonedDateTime zonedDateTime2 = java.time.ZonedDateTime
 		                            .ofInstant(instance2,java.time.ZoneId.of("Asia/Kolkata"));
 		String newDate = zonedDateTime2.toInstant().toEpochMilli()+"";
-		if(params.getString("date").compareTo(newDate)<0) {
-			params.put("date", newDate);
-		}
+//		if(params.getString("date").compareTo(newDate)<0) {
+//			params.put("date", newDate);
+//		}
 		Query queryNew = eventsRef.whereGreaterThanOrEqualTo("endTime", params.getString("date")).whereEqualTo("isParent",false);
 
 		if(params.getString("endDate")!=null) {
