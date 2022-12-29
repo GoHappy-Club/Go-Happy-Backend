@@ -231,4 +231,19 @@ public class UserProfileController {
 			}
 		}
 	}
+	@PostMapping("referralsList")
+	public JSONObject referralsList(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+		CollectionReference referrals = referralService.getCollectionReference();
+		Query query = referrals.whereEqualTo("from", params.getString("from"));
+		List<Referral> referralsList = new ArrayList<>();
+		ApiFuture<QuerySnapshot> querySnapshot = query.get();
+		if(querySnapshot.get().getDocuments().size()!=0){
+			for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+				referralsList.add(document.toObject(Referral.class));
+			}
+		}
+		JSONObject output = new JSONObject();
+		output.put("referrals",referralsList);
+		return output;
+	}
 }
