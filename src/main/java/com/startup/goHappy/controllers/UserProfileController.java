@@ -11,6 +11,8 @@ import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -244,6 +246,49 @@ public class UserProfileController {
 		}
 		JSONObject output = new JSONObject();
 		output.put("referrals",referralsList);
+		return output;
+	}
+
+	@PostMapping("topReferrals")
+	public JSONObject topReferrals(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+		CollectionReference referrals = referralService.getCollectionReference();
+		Integer top = params.getInteger("top");
+		Query query = referrals.whereGreaterThanOrEqualTo("time", params.getString("time"));
+		if(!StringUtils.isEmpty(params.getString("hasAttendedSession"))) {
+			query = query.whereEqualTo("hasAttendedSession", params.getBoolean("hasAttendedSession"));
+		}
+		HashMap<String,Integer> ranking = new HashMap<>();
+		List<Referral> referralsList = new ArrayList<>();
+		ApiFuture<QuerySnapshot> querySnapshot = query.get();
+		if(querySnapshot.get().getDocuments().size()!=0){
+			for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+				Referral referral = document.toObject(Referral.class);
+				if(ranking.containsKey(referral.getFrom()))
+					ranking.put(referral.getFrom(),ranking.get(referral.getFrom())+1);
+				else
+					ranking.put(referral.getFrom(),1);
+				referralsList.add(document.toObject(Referral.class));
+			}
+		}
+
+		List<Pair<String,Integer>> sorted = new ArrayList<>();
+		for(String key:ranking.keySet()){
+			Pair<String,Integer> pair = new MutablePair<>(key,ranking.get(key));
+			sorted.add(pair);
+		}
+		sorted.sort(new Comparator<Pair<String,Integer>>() {
+			@Override
+			public int compare(Pair<String,Integer> m1, Pair<String,Integer> m2) {
+				if(m1.getRight() == m2.getRight()){
+					return 0;
+				}
+				return m1.getRight()>m2.getRight() ? -1 : 1;
+			}
+		});
+		sorted.subList(0,top>sorted.size()?sorted.size():top);
+
+		JSONObject output = new JSONObject();
+		output.put("referrals",sorted);
 		return output;
 	}
 }
