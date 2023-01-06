@@ -285,7 +285,7 @@ public class UserProfileController {
 				return m1.getRight()>m2.getRight() ? -1 : 1;
 			}
 		});
-		sorted.subList(0,top>sorted.size()?sorted.size():top);
+		sorted = sorted.subList(0,top>=sorted.size()?sorted.size():top);
 
 		JSONObject output = new JSONObject();
 		output.put("referrals",sorted);
