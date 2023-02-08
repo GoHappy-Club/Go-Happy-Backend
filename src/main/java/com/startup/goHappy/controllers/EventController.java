@@ -748,8 +748,13 @@ public class EventController {
 			obj.setType(2);
 			obj.setPassword("12345");
 
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss+0530");
-			String finalDateForZoom = sdf.format(new Date(Long.parseLong(ev.getStartTime())));
+
+			String newYorkDateTimePattern = "yyyy-MM-dd HH:mm:ssZ";
+			DateTimeFormatter newYorkDateFormatter = DateTimeFormatter.ofPattern(newYorkDateTimePattern);
+			Instant startTimeInstance = Instant.ofEpochMilli(Long.parseLong(ev.getStartTime()));
+			LocalDateTime localDateTime = LocalDateTime
+					.ofInstant(startTimeInstance, ZoneId.of("Asia/Kolkata"));
+			String finalDateForZoom = newYorkDateFormatter.format(ZonedDateTime.of(localDateTime, ZoneId.of("Asia/Kolkata")));
 			finalDateForZoom = finalDateForZoom.replace(" ", "T");
 
 			obj.setStart_time(finalDateForZoom);
