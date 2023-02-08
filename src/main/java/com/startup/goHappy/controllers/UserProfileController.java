@@ -129,17 +129,17 @@ public class UserProfileController {
 //
 //	}
 	
-	@PostMapping("setMembership")
-	public void setMembership(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+	@PostMapping("setPaymentData")
+	public void setPaymentData(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
 		CollectionReference userProfiles = userProfileService.getCollectionReference();
 
-		Query query = userProfiles.whereEqualTo("email", params.getString("email"));
+		Query query = userProfiles.whereEqualTo("phone", params.getString("phoneNumber"));
 
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
 		UserProfile user = null;
 		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
 			user = document.toObject(UserProfile.class);  
-			user.setMembership(params.getString("planName"));
+			user.setLastPaymentAmount(Integer.parseInt(params.getString("amount")));
 			user.setLastPaymentDate(""+new Date().getTime());
 			break;
 		}		
