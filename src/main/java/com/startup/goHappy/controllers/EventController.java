@@ -718,11 +718,12 @@ public class EventController {
 				obj.setDuration((int)duration);
 				obj.setType(2);
 				obj.setPassword("12345");
-				Date startDate = new Date(start);
-				
+
 				DateTimeFormatter newYorkDateFormatter = DateTimeFormatter.ofPattern(newYorkDateTimePattern);
-				LocalDateTime summerDay = LocalDateTime.of(startDate.getYear()+1900, startDate.getMonth()+1, startDate.getDate(), startDate.getHours(), startDate.getMinutes());
-				String finalDateForZoom = newYorkDateFormatter.format(ZonedDateTime.of(summerDay, ZoneId.of("Asia/Kolkata")));
+				Instant startTimeInstance = Instant.ofEpochMilli(start);
+				LocalDateTime localDateTime = LocalDateTime
+						.ofInstant(startTimeInstance, ZoneId.of("Asia/Kolkata"));
+				String finalDateForZoom = newYorkDateFormatter.format(ZonedDateTime.of(localDateTime, ZoneId.of("Asia/Kolkata")));
 				finalDateForZoom = finalDateForZoom.replace(" ", "T");
 
 				obj.setStart_time(finalDateForZoom);
