@@ -189,6 +189,27 @@ public class UserProfileController {
 		userProfileService.save(user);
 		return user;
 	}
+
+	@PostMapping("updateProfileImage")
+	public UserProfile updateProfileImage(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+
+		CollectionReference userProfiles = userProfileService.getCollectionReference();
+		if(params.getString("phoneNumber").startsWith("+")){
+			params.put("phone",params.getString("phoneNumber").substring(1));
+		}
+		Query query = userProfiles.whereEqualTo("phone", params.getString("phoneNumber"));
+
+		ApiFuture<QuerySnapshot> querySnapshot = query.get();
+		UserProfile user = null;
+		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+			user = document.toObject(UserProfile.class);
+			user.setProfileImage(params.getString("profileImage"));
+			break;
+		}
+		userProfileService.save(user);
+		return user;
+	}
+
 	@PostMapping("refer")
 	public void refer(@RequestBody Referral referObject) throws IOException, InterruptedException, ExecutionException {
 		CollectionReference referrals = referralService.getCollectionReference();
