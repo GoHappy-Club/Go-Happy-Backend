@@ -31,7 +31,9 @@ import java.util.concurrent.Executors;
 
 import javax.mail.MessagingException;
 
+import com.startup.goHappy.entities.model.PaymentLog;
 import com.startup.goHappy.entities.model.Referral;
+import com.startup.goHappy.entities.repository.PaymentLogRepository;
 import com.startup.goHappy.entities.repository.ReferralRepository;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -96,6 +98,9 @@ public class EventController {
 	
 	@Autowired
 	UserProfileRepository userProfileService;
+
+	@Autowired
+	PaymentLogRepository paymentLogService;
 	
 	String content = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional //EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n"
 			+ "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\">\n"
@@ -869,6 +874,17 @@ public class EventController {
 		map.put("tambolaTickets",tambolaTickets);
 		eventRef.document(params.getString("id")).update(map);
 //		content = content.replace("${username}", event.getEventName());
+
+//		Update Payment Log, if required
+		if(StringUtils.equals(event.getCostType(),"paid")){
+			PaymentLog log = new PaymentLog();
+			log.setPaymentDate(""+new Date().getTime());
+			log.setPhone(params.getString("phoneNumber"));
+			log.setId(UUID.randomUUID().toString());
+			log.setAmount(event.getCost());
+			log.setType("workshop");
+			paymentLogService.save(log);
+		}
 		
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTimeInMillis(Long.parseLong(event.getStartTime()));

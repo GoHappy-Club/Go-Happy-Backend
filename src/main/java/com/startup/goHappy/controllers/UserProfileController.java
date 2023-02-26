@@ -152,6 +152,7 @@ public class UserProfileController {
 			log.setPhone(user.getPhone());
 			log.setId(UUID.randomUUID().toString());
 			log.setAmount(user.getLastPaymentAmount());
+			log.setType("contribution");
 			paymentLogService.save(log);
 
 

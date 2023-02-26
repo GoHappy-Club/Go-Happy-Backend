@@ -9,4 +9,5 @@ public class PaymentLog {
 	private String phone;
 	private String paymentDate;
 	private Integer amount;
+	private String type; //contribution, workshop
 }
