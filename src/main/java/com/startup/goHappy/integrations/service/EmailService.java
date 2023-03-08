@@ -1,5 +1,6 @@
 package com.startup.goHappy.integrations.service;
 import org.apache.http.impl.client.HttpClients;
+import org.jetbrains.annotations.TestOnly;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -79,7 +80,12 @@ public class EmailService {
 	private static final String user = "me";
 	private static Gmail service = null;
 	private static String filePath = "";
-	
+
+	@TestOnly
+	public EmailService(JavaMailSender emailSender) {
+		this.emailSender = emailSender;
+	}
+
 	public static Gmail getGmailService() throws IOException, GeneralSecurityException {
 
 		final String sacc = "{\"web\":{\"client_id\":\"908368396731-8rjaoipdrv43kvrl11874vaku47otl60.apps.googleusercontent.com\",\"project_id\":\"go-happy-322816\",\"auth_uri\":\"https://accounts.google.com/o/oauth2/auth\",\"token_uri\":\"https://oauth2.googleapis.com/token\",\"auth_provider_x509_cert_url\":\"https://www.googleapis.com/oauth2/v1/certs\",\"client_secret\":\"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\",\"redirect_uris\":[\"http://localhost\"]}}";

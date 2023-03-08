@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.TestOnly;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,8 +54,15 @@ public class UserProfileController {
 	
 	@Autowired
 	FirestoreConfig firestoreConfig;
-	
 
+	public UserProfileController() {
+
+	}
+
+	@TestOnly
+	public UserProfileController(UserProfileRepository userProfileService) {
+		this.userProfileService = userProfileService;
+	}
 
 	@PostMapping("create")
 	public void create(@RequestBody JSONObject userProfile) {
