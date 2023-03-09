@@ -5,7 +5,9 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import com.startup.goHappy.entities.model.PaymentLog;
 import com.startup.goHappy.entities.model.Referral;
+import com.startup.goHappy.entities.repository.PaymentLogRepository;
 import com.startup.goHappy.entities.repository.ReferralRepository;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -13,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.TestOnly;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,13 +46,23 @@ public class UserProfileController {
 	UserProfileRepository userProfileService;
 
 	@Autowired
+	PaymentLogRepository paymentLogService;
+
+	@Autowired
 	ReferralRepository referralService;
 	
 	
 	@Autowired
 	FirestoreConfig firestoreConfig;
-	
 
+	public UserProfileController() {
+
+	}
+
+	@TestOnly
+	public UserProfileController(UserProfileRepository userProfileService) {
+		this.userProfileService = userProfileService;
+	}
 
 	@PostMapping("create")
 	public void create(@RequestBody JSONObject userProfile) {
@@ -129,21 +142,32 @@ public class UserProfileController {
 //
 //	}
 	
-	@PostMapping("setMembership")
-	public void setMembership(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+	@PostMapping("setPaymentData")
+	public void setPaymentData(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
 		CollectionReference userProfiles = userProfileService.getCollectionReference();
 
-		Query query = userProfiles.whereEqualTo("email", params.getString("email"));
+		Query profileQuery = userProfiles.whereEqualTo("phone", params.getString("phoneNumber"));
 
-		ApiFuture<QuerySnapshot> querySnapshot = query.get();
+		ApiFuture<QuerySnapshot> querySnapshot1 = profileQuery.get();
 		UserProfile user = null;
-		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+		for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
 			user = document.toObject(UserProfile.class);  
-			user.setMembership(params.getString("planName"));
+			user.setLastPaymentAmount(Integer.parseInt(params.getString("amount")));
 			user.setLastPaymentDate(""+new Date().getTime());
+
+			PaymentLog log = new PaymentLog();
+			log.setPaymentDate(user.getLastPaymentDate());
+			log.setPhone(user.getPhone());
+			log.setId(UUID.randomUUID().toString());
+			log.setAmount(user.getLastPaymentAmount());
+			log.setType("contribution");
+			paymentLogService.save(log);
+
+
 			break;
 		}		
 		userProfileService.save(user);
+
 	}
 	
 	@PostMapping("update")
@@ -173,6 +197,27 @@ public class UserProfileController {
 		userProfileService.save(user);
 		return user;
 	}
+
+	@PostMapping("updateProfileImage")
+	public UserProfile updateProfileImage(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+
+		CollectionReference userProfiles = userProfileService.getCollectionReference();
+		if(params.getString("phoneNumber").startsWith("+")){
+			params.put("phone",params.getString("phoneNumber").substring(1));
+		}
+		Query query = userProfiles.whereEqualTo("phone", params.getString("phoneNumber"));
+
+		ApiFuture<QuerySnapshot> querySnapshot = query.get();
+		UserProfile user = null;
+		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+			user = document.toObject(UserProfile.class);
+			user.setProfileImage(params.getString("profileImage"));
+			break;
+		}
+		userProfileService.save(user);
+		return user;
+	}
+
 	@PostMapping("refer")
 	public void refer(@RequestBody Referral referObject) throws IOException, InterruptedException, ExecutionException {
 		CollectionReference referrals = referralService.getCollectionReference();

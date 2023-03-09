@@ -7,6 +7,8 @@ import java.util.UUID;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
+import org.jetbrains.annotations.TestOnly;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -20,7 +22,6 @@ import com.startup.goHappy.integrations.model.ZoomMeetingObjectDTO;
 import com.startup.goHappy.integrations.model.ZoomMeetingSettingsDTO;
 
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 
 
@@ -37,6 +38,18 @@ public class ZoomService {
     private String zoomApiKey;
 	@Value("${zoom.apiSecret}")
     private String zoomApiSecret;
+
+    private RestTemplate restTemplate;
+
+    public ZoomService() {
+        this.restTemplate = new RestTemplate();
+    }
+
+    // used for testing
+    @TestOnly
+    public ZoomService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
 	public ZoomMeetingObjectDTO createMeeting(ZoomMeetingObjectDTO zoomMeetingObjectDTO) {
        // replace zoomUserId with your user ID
@@ -59,7 +72,6 @@ public class ZoomService {
         settingsDTO.setMute_upon_entry(true);
         zoomMeetingObjectDTO.setSettings(settingsDTO);
 
-        RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer "+generateZoomJWTTOken());
         headers.add("content-type", "application/json");
@@ -79,7 +91,6 @@ public class ZoomService {
 	
     public ZoomMeetingObjectDTO getZoomMeetingById(String meetingId) {
         String getMeetingUrl = "https://api.zoom.us/v2/meetings/" + meetingId;
-        RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + generateZoomJWTTOken());
         headers.add("content-type", "application/json");
@@ -95,7 +106,7 @@ public class ZoomService {
     
     public String getRecordingById(String meetingId) {
         String getMeetingUrl = "https://api.zoom.us/v2/meetings/" + meetingId + "/recordings";
-        RestTemplate restTemplate = new RestTemplate();
+//        RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + generateZoomJWTTOken());
         headers.add("content-type", "application/json");
@@ -103,7 +114,7 @@ public class ZoomService {
         ResponseEntity<JSONObject> zoomEntityRes =  restTemplate
             .exchange(getMeetingUrl, HttpMethod.GET, requestEntity, JSONObject.class);
         if(zoomEntityRes.getStatusCodeValue() == 200) {
-                return zoomEntityRes.getBody().getString("share_url");
+            return zoomEntityRes.getBody().getString("share_url");
         } else if (zoomEntityRes.getStatusCodeValue() == 404) {
         }
         return null;
