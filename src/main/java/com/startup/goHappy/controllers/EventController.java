@@ -978,21 +978,21 @@ public class EventController {
 		ZonedDateTime endZonedDateTime = zonedDateTime.with(LocalTime.of ( 23 , 59 ));
 		CollectionReference eventsRef = eventService.getCollectionReference();
 //		.whereArrayContains("participantList", params.getString("email")).whereEqualTo("isParent", false)
-		Query query1 = eventsRef.whereGreaterThan("startTime", ""+zonedDateTime.toInstant().toEpochMilli()).whereArrayContains("participantList", params.getString("phoneNumber")).whereEqualTo("isParent", false);
+//		Query query1 = eventsRef.whereGreaterThan("startTime", ""+zonedDateTime.toInstant().toEpochMilli()).whereArrayContains("participantList", params.getString("phoneNumber")).whereEqualTo("isParent", false);
 //		zonedDateTime.toInstant().toEpochMilli()
 		Query query2 = eventsRef.whereLessThan("endTime", ""+zonedDateTime.toInstant().toEpochMilli()).whereArrayContains("participantList", params.getString("phoneNumber")).whereEqualTo("isParent", false);
 		
-		ApiFuture<QuerySnapshot> querySnapshot1 = query1.get();
+//		ApiFuture<QuerySnapshot> querySnapshot1 = query1.get();
 		ApiFuture<QuerySnapshot> querySnapshot2 = query2.get();
 
 		
-		Set<Event> events1 = new HashSet<>();
+//		Set<Event> events1 = new HashSet<>();
 		Set<Event> events2 = new HashSet<>();
-		Set<Event> events3 = new HashSet<>();
+//		Set<Event> events3 = new HashSet<>();
 		try {
-			for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
-				events1.add(document.toObject(Event.class));  
-			}
+//			for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
+//				events1.add(document.toObject(Event.class));
+//			}
 			for (DocumentSnapshot document : querySnapshot2.get().getDocuments()) {
 				events2.add(document.toObject(Event.class));  
 			}
@@ -1004,24 +1004,24 @@ public class EventController {
 		paramsForEventByDate.put("date", ""+zonedDateTime.toInstant().toEpochMilli());
 		paramsForEventByDate.put("endDate", ""+zonedDateTime.toInstant().toEpochMilli());
 		
-		JSONObject ongoingJSON = getOngoingEvents(paramsForEventByDate);
+//		JSONObject ongoingJSON = getOngoingEvents(paramsForEventByDate);
 		JSONObject output = new JSONObject();
 		ObjectMapper objectMapper = new ObjectMapper();
-		for(Object obj:ongoingJSON.getJSONArray("events")) {
-			Event ev =((Event)obj);
-			if(ev.getParticipantList()!=null && ev.getParticipantList().size()>0 &&  ev.getParticipantList().contains(params.getString("phoneNumber"))) {
-				events3.add(ev);
-			}
-		}
-		events1.removeAll(events3);
-		ArrayList<Event> events1List = new ArrayList<>(events1);
+//		for(Object obj:ongoingJSON.getJSONArray("events")) {
+//			Event ev =((Event)obj);
+//			if(ev.getParticipantList()!=null && ev.getParticipantList().size()>0 &&  ev.getParticipantList().contains(params.getString("phoneNumber"))) {
+//				events3.add(ev);
+//			}
+//		}
+//		events1.removeAll(events3);
+//		ArrayList<Event> events1List = new ArrayList<>(events1);
 		ArrayList<Event> events2List = new ArrayList<>(events2);
-		Collections.sort(events1List,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+//		Collections.sort(events1List,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
 		Collections.sort(events2List,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
 		Collections.reverse(events2List);
-		output.put("upcomingEvents", events1List);
+		output.put("upcomingEvents", new ArrayList());
 		output.put("expiredEvents", events2List.subList(0,events2List.size()>12?12:events2List.size()));
-		output.put("ongoingEvents", events3);
+		output.put("ongoingEvents", new ArrayList());
 		
 		return output;
 	}
