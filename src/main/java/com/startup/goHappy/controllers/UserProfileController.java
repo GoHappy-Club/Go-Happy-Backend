@@ -1,10 +1,10 @@
 package com.startup.goHappy.controllers;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import com.google.cloud.firestore.*;
 import com.startup.goHappy.entities.model.PaymentLog;
 import com.startup.goHappy.entities.model.Referral;
 import com.startup.goHappy.entities.repository.PaymentLogRepository;
@@ -24,17 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.api.core.ApiFuture;
-import com.google.cloud.Timestamp;
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.Query;
-import com.google.cloud.firestore.QuerySnapshot;
-import com.google.cloud.firestore.v1.FirestoreClient;
 import com.startup.goHappy.config.Firestore.FirestoreConfig;
-import com.startup.goHappy.entities.model.Event;
 import com.startup.goHappy.entities.model.UserProfile;
-import com.startup.goHappy.entities.repository.EventRepository;
 import com.startup.goHappy.entities.repository.UserProfileRepository;
 
 @RestController
@@ -53,7 +44,9 @@ public class UserProfileController {
 	
 	@Autowired
 	FirestoreConfig firestoreConfig;
-	
+
+//	@Autowired
+//	UserProfileManager userProfileManager;
 
 
 	@PostMapping("create")
@@ -180,8 +173,8 @@ public class UserProfileController {
 				user.setEmail(params.getString("email"));
 			if(!StringUtils.isEmpty(params.getString("phone")))
 				user.setPhone(""+params.getLong("phone"));
-			if(!StringUtils.isEmpty(params.getString("dob")))
-				user.setDob(""+params.getString("dob"));
+//			if(!StringUtils.isEmpty(params.getString("dob")))
+//				user.setDob(""+params.getString("dob"));
 			if(!StringUtils.isEmpty(params.getString("age")))
 				user.setAge(""+params.getString("age"));
 			break;
@@ -274,13 +267,49 @@ public class UserProfileController {
 	public JSONObject referralsList(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
 		CollectionReference referrals = referralService.getCollectionReference();
 		Query query = referrals.whereEqualTo("from", params.getString("from"));
+//		Query query = referrals.whereEqualTo("from", "919427876625");
 		List<Referral> referralsList = new ArrayList<>();
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
-		if(querySnapshot.get().getDocuments().size()!=0){
-			for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
-				referralsList.add(document.toObject(Referral.class));
+		List<String> userIds = new ArrayList<>();
+		List<QueryDocumentSnapshot> referralsSnapshot = querySnapshot.get().getDocuments();
+		if(referralsSnapshot.size()!=0){
+			for (DocumentSnapshot document : referralsSnapshot) {
+				Referral obj = document.toObject(Referral.class);
+				userIds.add(obj.getTo());
+				referralsList.add(obj);
 			}
 		}
+
+		CollectionReference userProfiles = userProfileService.getCollectionReference();
+		Query userQuery = userProfiles.whereIn("phone",userIds);
+		ApiFuture<QuerySnapshot> userQuerySnapshot = userQuery.get();
+		List<QueryDocumentSnapshot> usersSnapshot =userQuerySnapshot.get().getDocuments();
+		for (Referral ref:referralsList) {
+			try {
+				for(DocumentSnapshot userDocument : usersSnapshot) {
+					UserProfile user = userDocument.toObject(UserProfile.class);
+					if(StringUtils.equals(ref.getTo(),user.getPhone())==true) {
+						ref.setToName(user.getName());
+						ref.setToProfileImage(user.getProfileImage());
+						break;
+					}
+				}
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+
+		referralsList.sort(new Comparator<Referral>() {
+			@Override
+			public int compare(Referral m1,Referral m2) {
+				if(m1.getTime() == m2.getTime()){
+					return 0;
+				}
+				return Long.parseLong(m1.getTime())> Long.parseLong(m2.getTime()) ? -1 : 1;
+			}
+		});
+
 		JSONObject output = new JSONObject();
 		output.put("referrals",referralsList);
 		return output;
