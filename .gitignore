@@ -27,3 +27,5 @@ target/classes/application.properties
 *.xml
 *.iml
 *.class
+service-account-prod-file.json
+service-account-dev-file.json

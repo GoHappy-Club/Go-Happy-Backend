@@ -19,7 +19,6 @@ public class UserProfile {
 	private String membership;
 	private String lastPaymentDate;
 	private Integer lastPaymentAmount;
-	private String dob;
 	private String selfInviteCode;
 	private String age;
 }

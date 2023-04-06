@@ -110,6 +110,11 @@
 		    <scope>runtime</scope>
 		</dependency>
 		<dependency>
+			<groupId>io.github.cdimascio</groupId>
+			<artifactId>dotenv-java</artifactId>
+			<version>2.2.0</version>
+		</dependency>
+		<dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
@@ -129,6 +134,7 @@
 		    <artifactId>okhttp</artifactId>
 		    <version>4.9.1</version>
 		</dependency>
+
 
 		<!--  test dependencies -->
 		<dependency>
@@ -161,6 +167,25 @@
     <artifactId>spring-cloud-gcp-starter-storage</artifactId>
     <version>1.2.8.RELEASE</version>
 </dependency> -->
+
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger2</artifactId>
+			<version>2.9.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger-ui</artifactId>
+			<version>2.9.2</version>
+		</dependency>
+
+
+		<!-- <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-gcp-starter-storage</artifactId>
+            <version>1.2.8.RELEASE</version>
+        </dependency> -->
 
 	</dependencies>
 
