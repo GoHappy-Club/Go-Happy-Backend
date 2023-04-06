@@ -49,7 +49,6 @@ class UserProfileControllerTest {
         user1.setEmail("test@gmail.com");
         user1.setName("abc");
         user1.setPhone("123456789");
-        user1.setDob("1/12/1999");
         user1.setSessionsAttended("23");
         user1.setDateOfJoining("1/2/2022");
         user1.setSelfInviteCode("23");
@@ -66,7 +65,6 @@ class UserProfileControllerTest {
         user2.setEmail("test1@gmail.com");
         user2.setName("Ibu");
         user2.setPhone("9876579874");
-        user2.setDob("1/12/1970");
         user2.setSessionsAttended("9");
         user2.setDateOfJoining("11/2/2021");
         user2.setSelfInviteCode("xdjif3");
