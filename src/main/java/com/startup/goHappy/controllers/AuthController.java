@@ -9,6 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import com.startup.goHappy.entities.model.Referral;
+import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,7 @@ public class AuthController {
 	@Autowired
 	UserProfileController userProfileController;
 
+	@ApiOperation(value = "To register the user on the platform")
 	@PostMapping("register")
 	public void register(@RequestBody JSONObject userProfile, @RequestBody JSONObject referDetails) throws IOException, ExecutionException, InterruptedException {
 		userProfileController.create(userProfile);
@@ -63,6 +65,8 @@ public class AuthController {
 		}
 		return;
 	}
+
+	@ApiOperation(value = "To login the user and generate token")
 	@PostMapping("login")
 	public UserProfile login(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
 		
@@ -91,6 +95,7 @@ public class AuthController {
 			ZonedDateTime zonedDateTime = java.time.ZonedDateTime
 			                            .ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
 			params.put("dateOfJoining", ""+zonedDateTime.toInstant().toEpochMilli());
+			params.put("dateOfJoiningDateObject", ""+zonedDateTime.toLocalDateTime().toString());
 			JSONObject referDetails = new JSONObject();
 			referDetails.put("referralId",params.getString("referralId"));
 			params.remove("referralId");
