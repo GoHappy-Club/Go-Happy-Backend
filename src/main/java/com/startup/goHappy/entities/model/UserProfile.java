@@ -10,6 +10,7 @@ public class UserProfile {
 	private String id;
 	private String name;
 	private String dateOfJoining;
+	private String dateOfJoiningDateObject;
 	private String email;
 	private String phone;
 	private String sessionsAttended;

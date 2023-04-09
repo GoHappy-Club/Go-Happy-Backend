@@ -29,8 +29,8 @@ public class SwaggerConfig extends WebMvcConfigurationSupport {
 
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder()
-                .title("Your API Title")
-                .description("Your API Description")
+                .title("GoHappy Club API's")
+                .description("This contains all the APIS used by GoHappy Club application.")
                 .version("1.0")
                 .build();
     }

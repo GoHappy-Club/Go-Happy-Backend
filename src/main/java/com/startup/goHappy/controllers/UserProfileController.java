@@ -66,6 +66,7 @@ public class UserProfileController {
 		up.setAge(userProfile.getString("age"));
 		up.setEmail(userProfile.getString("email"));
 		up.setDateOfJoining(userProfile.getString("dateOfJoining"));
+		up.setDateOfJoiningDateObject(userProfile.getString("dateOfJoiningDateObject"));
 		up.setName(userProfile.getString("name"));
 		up.setPhone(""+userProfile.getString("phone"));
 		up.setProfileImage(userProfile.getString("profileImage"));

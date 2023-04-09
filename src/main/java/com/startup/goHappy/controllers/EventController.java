@@ -35,6 +35,7 @@ import com.startup.goHappy.entities.model.PaymentLog;
 import com.startup.goHappy.entities.model.Referral;
 import com.startup.goHappy.entities.repository.PaymentLogRepository;
 import com.startup.goHappy.entities.repository.ReferralRepository;
+import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -673,6 +674,7 @@ public class EventController {
 			+ "</html>";
 
 	@SuppressWarnings("deprecation")
+	@ApiOperation(value = "To create an event (can be a single or a recurring event)")
 	@PostMapping("create")
 	public void createEvent(@RequestBody JSONObject event) throws IOException {
 		Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
@@ -777,12 +779,16 @@ public class EventController {
 		
 		return;
 	}
+
+	@ApiOperation(value = "To delete an event")
 	@PostMapping("delete")
 	public void deleteEvent(@RequestBody JSONObject params) {
 		String id = params.getString("id");
 		eventService.delete(eventService.get(id).get());
 		return;
 	}
+
+	@ApiOperation(value = "To get all the events (not recommended to run)")
 	@PostMapping("findAll")
 	public JSONObject findAll() {
 		Iterable<Event> events = eventService.retrieveAll();
@@ -791,6 +797,7 @@ public class EventController {
 		output.put("events", result);
 		return output;
 	}
+	@ApiOperation(value = "Get events by date range (used when user clicks a date on the app)")
 	@PostMapping("getEventsByDate")
 	public JSONObject getEventsByDate(@RequestBody JSONObject params){
 		System.out.println("date"+params.getString("date"));
@@ -836,6 +843,7 @@ public class EventController {
 		output.put("events", eventsNewBest);
 		return output;
 	}
+	@ApiOperation(value = "To book an event")
 	@PostMapping("bookEvent")
 	public String bookEvent(@RequestBody JSONObject params) throws IOException, MessagingException, GeneralSecurityException, InterruptedException, ExecutionException {
 		CollectionReference eventRef = eventService.getCollectionReference();
@@ -929,8 +937,8 @@ public class EventController {
 	  
     return "SUCCESS"; 
   }
-	
-	
+
+	@ApiOperation(value = "To cancel an event")
 	@PostMapping("cancelEvent")
 	public String cancelEvent(@RequestBody JSONObject params) throws IOException {
 		CollectionReference eventRef = eventService.getCollectionReference();
@@ -970,6 +978,7 @@ public class EventController {
 		}
 		return "SUCCESS";
 	}
+	@ApiOperation(value = "Get list of past sessions attended by a user")
 	@PostMapping("mySessions")
 	public JSONObject mySessions(@RequestBody JSONObject params) throws IOException {
 		Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
