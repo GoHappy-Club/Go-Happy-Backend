@@ -78,20 +78,6 @@ public class UserProfileController {
 		userProfileService.save(up);
 		return;
 	}
-	@PostMapping("delete")
-	public void delete(@RequestBody JSONObject params) {
-		String id = params.getString("id");
-		userProfileService.delete(userProfileService.get(id).get());
-		return;
-	}
-	@PostMapping("findAll")
-	public JSONObject findAll() {
-		Iterable<UserProfile> users = userProfileService.retrieveAll();
-		List<UserProfile> result = IterableUtils.toList(users);
-		JSONObject output = new JSONObject();
-		output.put("users", result);
-		return output;
-	}
 	@PostMapping("getUserByEmail")
 	public JSONObject getUserByEmail(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
 		CollectionReference userProfiles = userProfileService.getCollectionReference();
@@ -128,15 +114,6 @@ public class UserProfileController {
 		return output;
 	}
 
-//	@PostMapping("getTotalSessions")
-//	public long totalSessions(@RequestBody JSONObject params) throws IOException {
-//		NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
-//				  .withQuery(QueryBuilders.termQuery("participantList.keyword",params.getString("email")))
-//				  .build();
-//		long sessionsCount = eventService.count(searchQuery);
-//		return sessionsCount;
-//
-//	}
 	
 	@PostMapping("setPaymentData")
 	public void setPaymentData(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
@@ -217,12 +194,6 @@ public class UserProfileController {
 	@PostMapping("refer")
 	public void refer(@RequestBody Referral referObject) throws IOException, InterruptedException, ExecutionException {
 		CollectionReference referrals = referralService.getCollectionReference();
-//		Referral refer = new Referral();
-//		refer.setId(UUID.randomUUID().toString());
-//		refer.setFrom(referObject.getFrom());
-//		refer.setTo(referObject.getTo());
-//		refer.setReferralId(referObject.getReferralId());
-
 		Query query = referrals.whereEqualTo("to", referObject.getTo());
 
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
