@@ -1,0 +1,6 @@
+steps:
+- name: 'gcr.io/cloud-builders/mvn:3.6.3-jdk-11'
+  entrypoint: 'mvn'
+  args: ['clean', 'install', '-DskipTests=true']
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: ['app', 'deploy']
