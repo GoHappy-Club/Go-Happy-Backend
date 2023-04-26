@@ -249,6 +249,9 @@ public class UserProfileController {
 	public JSONObject referralsList(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
 		CollectionReference referrals = referralService.getCollectionReference();
 		Query query = referrals.whereEqualTo("from", params.getString("from"));
+		if(!StringUtils.isEmpty(params.getString("hasAttendedSession"))) {
+			query = query.whereEqualTo("hasAttendedSession", params.getBoolean("hasAttendedSession"));
+		}
 //		Query query = referrals.whereEqualTo("from", "919427876625");
 		List<Referral> referralsList = new ArrayList<>();
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
