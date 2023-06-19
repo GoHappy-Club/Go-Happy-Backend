@@ -1,10 +1,12 @@
 package com.startup.goHappy.controllers;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import com.google.cloud.firestore.*;
+import com.opencsv.CSVWriter;
 import com.startup.goHappy.entities.model.PaymentLog;
 import com.startup.goHappy.entities.model.Referral;
 import com.startup.goHappy.entities.repository.PaymentLogRepository;
@@ -17,17 +19,16 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.TestOnly;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.api.core.ApiFuture;
 import com.startup.goHappy.config.Firestore.FirestoreConfig;
 import com.startup.goHappy.entities.model.UserProfile;
 import com.startup.goHappy.entities.repository.UserProfileRepository;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+
+import javax.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("user")
@@ -112,6 +113,48 @@ public class UserProfileController {
 		JSONObject output = new JSONObject();
 		output.put("user", user);
 		return output;
+	}
+
+	@GetMapping("/download")
+	public StreamingResponseBody downloadCsv(@RequestParam String dateOfJoining, HttpServletResponse response) throws IOException, ExecutionException, InterruptedException {
+		response.setContentType("text/csv");
+		response.setHeader("Content-Disposition", "attachment; filename=\"users.csv\"");
+
+		CollectionReference userProfiles = userProfileService.getCollectionReference();
+
+		Query query = userProfiles.whereGreaterThanOrEqualTo("dateOfJoining", dateOfJoining);
+
+		ApiFuture<QuerySnapshot> querySnapshot = query.get();
+		List<String[]> users = new ArrayList();
+		String[] columnNames = {"ID", "Name","Age","Email","Phone Number",
+				"Last Payment Date", "Invite Code","Sessions Attended",
+				"Date Of Joining", "Date of Joining (Date Format)",
+				"Profile Image","Membership","Last Payment Amount"};
+		users.add(columnNames);
+		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+			UserProfile user = document.toObject(UserProfile.class);
+			String[] userData = {
+					user.getId(),
+					user.getName(),
+					user.getAge(),
+					user.getEmail(),
+					user.getPhone(),
+					user.getLastPaymentDate(),
+					user.getSelfInviteCode(),
+					user.getSessionsAttended(),
+					user.getDateOfJoining(),
+					user.getDateOfJoiningDateObject(),
+					user.getProfileImage(),
+					user.getMembership(),
+					user.getLastPaymentAmount()!=null?user.getLastPaymentAmount().toString():""
+			};
+			users.add(userData);
+		}
+		CSVWriter csvWriter = new CSVWriter(new OutputStreamWriter(response.getOutputStream()));
+		csvWriter.writeAll(users);
+		csvWriter.close();
+
+		return outputStream -> outputStream.flush();
 	}
 
 	
