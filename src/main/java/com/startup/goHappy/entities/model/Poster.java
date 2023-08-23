@@ -12,6 +12,7 @@ public class Poster {
     private String imageUrl;
     private Boolean isExternal;
     private String url;
+    private String params;
     private Boolean isActive;
     private Integer order;
 }
