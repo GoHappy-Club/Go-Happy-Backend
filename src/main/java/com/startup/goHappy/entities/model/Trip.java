@@ -19,6 +19,7 @@ public class Trip {
 	private String title;
 	private String description;
 	private List<String> hotels;
+	private List<String> cities;
 
 	@Override
 	public String toString() {

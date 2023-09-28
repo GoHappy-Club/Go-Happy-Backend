@@ -28,6 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.time.Duration;
 
 import javax.mail.MessagingException;
 
@@ -71,6 +72,7 @@ import com.startup.goHappy.integrations.service.ZoomService;
 import com.startup.goHappy.utils.TambolaGenerator;
 
 import io.micrometer.core.instrument.util.StringEscapeUtils;
+
 
 @RestController
 @RequestMapping("event")
@@ -673,6 +675,15 @@ public class EventController {
 			+ "\n"
 			+ "</html>";
 
+
+	public long calculateDuration(long t1, long t2){
+		ZonedDateTime zonedDateTime1 = java.time.ZonedDateTime
+				.ofInstant(java.time.Instant.ofEpochMilli(t1),java.time.ZoneId.of("Asia/Kolkata"));
+		ZonedDateTime zonedDateTime2 = java.time.ZonedDateTime
+				.ofInstant(java.time.Instant.ofEpochMilli(t2),java.time.ZoneId.of("Asia/Kolkata"));
+		return Math.abs(java.time.temporal.ChronoUnit.MINUTES.between(zonedDateTime1.toLocalTime(),zonedDateTime2.toLocalTime()));
+	}
+
 	@SuppressWarnings("deprecation")
 	@ApiOperation(value = "To create an event (can be a single or a recurring event)")
 	@PostMapping("create")
@@ -693,7 +704,9 @@ public class EventController {
 			ev.setIsParent(true);
 			ev.setEventDate("");
 			eventService.save(ev);
-			long duration = (Long.parseLong(ev.getEndTime())- nextExecutionDate.getTime())/(60000);
+			long duration = calculateDuration(Long.parseLong(ev.getEndTime()), nextExecutionDate.getTime());
+			//long duration = (Long.parseLong(ev.getEndTime())- nextExecutionDate.getTime())/(60000);
+
 			int i=0;
 			String newYorkDateTimePattern = "yyyy-MM-dd HH:mm:ssZ";
 //			Date d = new Date(ev.getStartTime());
@@ -707,15 +720,8 @@ public class EventController {
 				childEvent.setCron("");
 				childEvent.setStartTime(""+nextExecutionDate.getTime());
 				childEvent.setEventDate(""+nextExecutionDate.getTime());
-//				if(childEvent.getEventName().toLowerCase().contains("tambola")) {
-//					List<String> tambolaTickets = new ArrayList<>();
-//					for(int j=0;j<childEvent.getSeatsLeft();j++) {
-//						tambolaTickets.add("\""+tambolaGenerator.generate()+"\"");
-//					}
-//					childEvent.setTambolaTickets(tambolaTickets);
-//				}
 				long start = nextExecutionDate.getTime();
-				
+				System.out.println(duration);
 				Date newEndTime = new Date(nextExecutionDate.getTime()+duration*60000);
 				childEvent.setEndTime(""+newEndTime.getTime());				
 				
