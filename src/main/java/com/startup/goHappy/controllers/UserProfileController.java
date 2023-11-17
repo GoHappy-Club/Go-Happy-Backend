@@ -205,8 +205,10 @@ public class UserProfileController {
 				user.setEmail(params.getString("email"));
 			if(!StringUtils.isEmpty(params.getString("phone")))
 				user.setPhone(""+params.getLong("phone"));
-//			if(!StringUtils.isEmpty(params.getString("dob")))
-//				user.setDob(""+params.getString("dob"));
+			if(!StringUtils.isEmpty(params.getString("city")))
+				user.setCity(""+params.getString("city"));
+			if(!StringUtils.isEmpty(params.getString("emergencyContact")))
+				user.setEmergencyContact(""+params.getLong("emergencyContact"));
 			if(!StringUtils.isEmpty(params.getString("age")))
 				user.setAge(""+params.getString("age"));
 			break;

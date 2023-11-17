@@ -23,4 +23,6 @@ public class UserProfile {
 	private String selfInviteCode;
 	private String age;
 	private String source;
+	private String city;
+	private String emergencyContact;
 }
