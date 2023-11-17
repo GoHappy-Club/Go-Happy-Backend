@@ -7,6 +7,9 @@ import java.util.UUID;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
+import com.alibaba.fastjson.JSON;
+import io.netty.handler.codec.base64.Base64Encoder;
+import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.TestOnly;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,12 +35,10 @@ public class ZoomService {
     private String zoomUserId;
 	@Value("${zoom.accountId}")
     private String accountId;
-	@Value("${zoom.password}")
-    private String yourPass;
-	@Value("${zoom.apiKey}")
-    private String zoomApiKey;
-	@Value("${zoom.apiSecret}")
-    private String zoomApiSecret;
+	@Value("${zoom.clientId}")
+    private String clientId;
+	@Value("${zoom.clientSecret}")
+    private String clientSecret;
 
     private RestTemplate restTemplate;
 
@@ -52,10 +53,6 @@ public class ZoomService {
     }
 
 	public ZoomMeetingObjectDTO createMeeting(ZoomMeetingObjectDTO zoomMeetingObjectDTO) {
-       // replace zoomUserId with your user ID
-//		String accountId = "7002431600";
-//		String zoomUserId = "kathuria.soham96@gmail.com";
-//		String yourPass = "Always@2022@kind";
         String apiUrl = "https://api.zoom.us/v2/users/"+zoomUserId+"/meetings";
         String apiUrl2 = "https://api.zoom.us/v2/meetings/6361126516";
       // replace with your password or method
@@ -73,7 +70,7 @@ public class ZoomService {
         zoomMeetingObjectDTO.setSettings(settingsDTO);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer "+generateZoomJWTTOken());
+        headers.add("Authorization", "Bearer "+generateZoomOAuth());
         headers.add("content-type", "application/json");
         HttpEntity<ZoomMeetingObjectDTO> httpEntity = new HttpEntity<ZoomMeetingObjectDTO>(zoomMeetingObjectDTO, headers);
         ResponseEntity<ZoomMeetingObjectDTO> zEntity = restTemplate.exchange(apiUrl, HttpMethod.POST, httpEntity, ZoomMeetingObjectDTO.class);
@@ -92,7 +89,7 @@ public class ZoomService {
     public ZoomMeetingObjectDTO getZoomMeetingById(String meetingId) {
         String getMeetingUrl = "https://api.zoom.us/v2/meetings/" + meetingId;
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + generateZoomJWTTOken());
+        headers.add("Authorization", "Bearer " + generateZoomOAuth());
         headers.add("content-type", "application/json");
         HttpEntity<?> requestEntity = new HttpEntity<>(headers);
         ResponseEntity<ZoomMeetingObjectDTO> zoomEntityRes =  restTemplate
@@ -108,7 +105,8 @@ public class ZoomService {
         String getMeetingUrl = "https://api.zoom.us/v2/meetings/" + meetingId + "/recordings";
 //        RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + generateZoomJWTTOken());
+        //headers.add("Authorization", "Bearer " + generateZoomOAuth());
+        headers.add("Authorization", "Bearer ");
         headers.add("content-type", "application/json");
         HttpEntity<?> requestEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONObject> zoomEntityRes =  restTemplate
@@ -120,28 +118,23 @@ public class ZoomService {
         return null;
     }
 	
-	private String generateZoomJWTTOken() {
-		
-//		String zoomApiKey = "ixMflExhTP2akOqgsFQ9eg";
-//        String zoomApiSecret = "JGh6f5RX1SQfsw8iabdT0l6RUcFnj2MVAHUi";
-        String id = UUID.randomUUID().toString().replace("-", "");
-        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
+	private String generateZoomOAuth() {
+        String getTokenUrl = "https://zoom.us/oauth/token?grant_type=account_credentials&account_id=" + accountId;
+//        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        String auth = clientId+":"+clientSecret;
+        //headers.add("Authorization", "Bearer " + generateZoomOAuth());
+        headers.add("Authorization", "Basic "+ new String(Base64.encodeBase64(auth.getBytes())));
 
-        Date creation = new Date(System.currentTimeMillis());
+        headers.add("content-type", "application/json");
+        HttpEntity<?> requestEntity = new HttpEntity<>(headers);
 
-        Date tokenExpiry = new Date(System.currentTimeMillis() + (1000 * 60 * 60));
-
-        //We will sign our JWT with our ApiKey secret
-        byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(zoomApiSecret);
-        Key signingKey = new SecretKeySpec(zoomApiSecret.getBytes(),signatureAlgorithm.getJcaName());
-        return Jwts.builder()
-                .setId(id)
-                .setIssuer(zoomApiKey)
-                .setIssuedAt(creation)
-                .setSubject("")
-                .setExpiration(tokenExpiry)
-                .signWith(signatureAlgorithm, signingKey)
-                .compact();
+        ResponseEntity<JSONObject> oauthResult = restTemplate.exchange(getTokenUrl, HttpMethod.POST, requestEntity, JSONObject.class);
+        if (oauthResult.getStatusCodeValue() == 200) {
+            return oauthResult.getBody().getString("access_token");
+        } else {
+            System.out.println("Some Issue with Zoom Token API");
+            return "Some Issue with Zoom Token API";
+        }
     }
-
 }
