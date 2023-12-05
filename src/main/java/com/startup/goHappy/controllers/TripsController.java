@@ -38,6 +38,7 @@ public class TripsController {
 		output.put("trips", result);
 		return output;
 	}
+
 	@GetMapping("upcoming")
 	public JSONObject upcoming() throws Exception {
 		CollectionReference tripsRef = tripRepository.getCollectionReference();
@@ -94,5 +95,27 @@ public class TripsController {
 		tripRepository.save(trip);
 
 		return ;
+	}
+
+	@GetMapping("getDetails/{id}")
+	public JSONObject details(@PathVariable String id) throws Exception {
+		CollectionReference tripsRef = tripRepository.getCollectionReference();
+		Instant instance2 = java.time.Instant.now();
+		Query queryNew = tripsRef.whereEqualTo("id", id);
+
+		ApiFuture<QuerySnapshot> querySnapshotNew = queryNew.get();
+
+		Trip trip = null;
+		try {
+			for (DocumentSnapshot document : querySnapshotNew.get().getDocuments()) {
+				trip = document.toObject(Trip.class);
+				break;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		JSONObject output = new JSONObject();
+		output.put("details", trip);
+		return output;
 	}
 }

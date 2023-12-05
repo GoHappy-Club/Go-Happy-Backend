@@ -17,9 +17,10 @@ public class Trip {
 	private Integer seatsLeft=30;
 	private String location;
 	private String title;
-	private String description;
+	private String beautifulDescription;
 	private List<String> hotels;
 	private List<String> cities;
+	private List<String> attractions;
 
 	@Override
 	public String toString() {
@@ -33,7 +34,7 @@ public class Trip {
 				", seatsLeft=" + seatsLeft +
 				", location='" + location + '\'' +
 				", title='" + title + '\'' +
-				", description='" + description + '\'' +
+				", beautifulDescription='" + beautifulDescription + '\'' +
 				", hotels=" + hotels +
 				'}';
 	}
