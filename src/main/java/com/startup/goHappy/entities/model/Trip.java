@@ -17,25 +17,18 @@ public class Trip {
 	private Integer seatsLeft=30;
 	private String location;
 	private String title;
-	private String beautifulDescription;
-	private List<String> hotels;
 	private List<String> cities;
-	private List<String> attractions;
+	private String aboutTheLocation;
+	private String highlights;
+	private String itinerary;
+	private String inclusion;
+	private String exclusion;
+	private String paymentPlan;
+	private String docsRequired;
+	private String cancellationPolicy = "default policy";
+	private String termsAndConditions = "default";
+	private String inquireNowLink = "https%3A%2F%2Fwa.me%2F7888384477%3Ftext%3DHi%20GoHappy%20Club%20Team%2C%20%0AI%20am%20interested%20in%20%24%7Btrip%7D%20trip.%20Please%20share%20more%20details.";
+	private String memoryImage;
+	private String memoryVideoUrl;
 
-	@Override
-	public String toString() {
-		return "Trip{" +
-				"id='" + id + '\'' +
-				", cost=" + cost +
-				", startTime='" + startTime + '\'' +
-				", endTime='" + endTime + '\'' +
-				", coverImages=" + coverImages +
-				", participantList=" + participantList +
-				", seatsLeft=" + seatsLeft +
-				", location='" + location + '\'' +
-				", title='" + title + '\'' +
-				", beautifulDescription='" + beautifulDescription + '\'' +
-				", hotels=" + hotels +
-				'}';
-	}
 }
