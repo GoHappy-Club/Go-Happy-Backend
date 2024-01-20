@@ -11,4 +11,5 @@ public class Properties {
     @DocumentId
     private String id;
     private String whatsappLink;
+    private String appVersion;
 }
