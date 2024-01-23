@@ -22,6 +22,7 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("trips")
@@ -92,6 +93,7 @@ public class TripsController {
 	public void add(@RequestBody JSONObject tripObject) throws Exception {
 		ObjectMapper objectMapper = new ObjectMapper();
 		Trip trip = objectMapper.readValue(tripObject.toJSONString(), Trip.class);
+		trip.setId(UUID.randomUUID().toString());
 		tripRepository.save(trip);
 
 		return ;
