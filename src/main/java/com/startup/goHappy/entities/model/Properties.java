@@ -12,4 +12,5 @@ public class Properties {
     private String id;
     private String whatsappLink;
     private String appVersion;
+    private Boolean forceUpdate;
 }
