@@ -849,6 +849,31 @@ public class EventController {
 		output.put("events", eventsNewBest);
 		return output;
 	}
+
+	@ApiOperation(value = "Get event by ID")
+	@PostMapping("getEvent")
+	public JSONObject getEventById(@RequestBody JSONObject params){
+		String id = params.getString("id");
+
+		CollectionReference eventsRef = eventService.getCollectionReference();
+		Query query = eventsRef.whereEqualTo("id", id);
+
+		ApiFuture<QuerySnapshot> querySnapshotNew = query.get();
+
+		Event event = null;
+		try {
+			for (DocumentSnapshot document : querySnapshotNew.get().getDocuments()) {
+				event = document.toObject(Event.class);
+			}
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+
+		JSONObject output = new JSONObject();
+		output.put("event", event);
+		return output;
+	}
 	@ApiOperation(value = "To book an event")
 	@PostMapping("bookEvent")
 	public String bookEvent(@RequestBody JSONObject params) throws IOException, MessagingException, GeneralSecurityException, InterruptedException, ExecutionException {
