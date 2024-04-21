@@ -254,38 +254,11 @@ public class UserProfileController {
 			referralService.save(referObject);
 		}
 	}
-	@GetMapping("setReferIds")
-	public void tempApi() throws ExecutionException, InterruptedException {
-		CollectionReference userProfiles = userProfileService.getCollectionReference();
-		Query query = userProfiles.whereNotEqualTo("phone","rakshit");
-		ApiFuture<QuerySnapshot> querySnapshot = query.get();
-		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
-			try {
-				UserProfile user = document.toObject(UserProfile.class);
-				if(user.getSelfInviteCode()!=null){
-					continue;
-				}
-				String selfInviteId = RandomStringUtils.random(6,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
-				user.setSelfInviteCode(selfInviteId);
-				userProfileService.save(user);
-			}
-			catch(Exception e){
-				e.printStackTrace();
-			}
-//			break;
-		}
-	}
+
 	@PostMapping("sessionAttended")
 	public void sessionAttended(@RequestBody JSONObject userDetails) throws ExecutionException, InterruptedException {
 		CollectionReference referrals = referralService.getCollectionReference();
-//		Referral refer = new Referral();
-//		refer.setId(UUID.randomUUID().toString());
-//		refer.setFrom(referObject.getFrom());
-//		refer.setTo(referObject.getTo());
-//		refer.setReferralId(referObject.getReferralId());
-
 		Query query = referrals.whereEqualTo("to", userDetails.getString("phone"));
-
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
 		Referral referral = null;
 		if(querySnapshot.get().getDocuments().size()!=0){
