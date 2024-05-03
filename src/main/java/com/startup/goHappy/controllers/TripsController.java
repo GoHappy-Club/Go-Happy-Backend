@@ -19,10 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("trips")
@@ -60,6 +57,7 @@ public class TripsController {
 			e.printStackTrace();
 		}
 		List<Trip> result = IterableUtils.toList(trips);
+		result.sort(Comparator.comparing(Trip::getStartTime));
 		JSONObject output = new JSONObject();
 		output.put("trips", result);
 		return output;
@@ -84,6 +82,7 @@ public class TripsController {
 			e.printStackTrace();
 		}
 		List<Trip> result = IterableUtils.toList(trips);
+		result.sort(Comparator.comparing(Trip::getStartTime));
 		JSONObject output = new JSONObject();
 		output.put("trips", result);
 		return output;
