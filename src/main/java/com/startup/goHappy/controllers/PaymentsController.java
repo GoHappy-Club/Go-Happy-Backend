@@ -55,7 +55,6 @@ public class PaymentsController {
 	public StreamingResponseBody downloadCsv(@RequestParam(required = false) String phone,
 											 @RequestParam(required = false) String type,
 											 @RequestParam(required = false) String paymentDate,
-											 @RequestParam(required = false)int amount,
 											 HttpServletResponse response)
 			throws ExecutionException, InterruptedException, IOException {
 		response.setContentType("text/csv");
@@ -67,14 +66,29 @@ public class PaymentsController {
 			query = paymentLogs.whereEqualTo("phone", phone);
 		}
 		if(!StringUtils.isEmpty(type)) {
-			query = paymentLogs.whereEqualTo("type", type);
+			if(query!=null) {
+				query = query.whereEqualTo("type", type);
+			}
+			else{
+				query = paymentLogs.whereEqualTo("type", type);
+			}
 		}
 		if(!StringUtils.isEmpty(paymentDate)) {
-			query = paymentLogs.whereGreaterThanOrEqualTo("paymentDate", paymentDate);
+			if(query!=null) {
+				query = query.whereGreaterThanOrEqualTo("paymentDate", paymentDate);
+			}
+			else {
+				query = paymentLogs.whereGreaterThanOrEqualTo("paymentDate", paymentDate);
+			}
 		}
-		if(Integer.valueOf(amount)!=null) {
-			query = paymentLogs.whereGreaterThanOrEqualTo("amount", amount);
-		}
+//		if(Integer.valueOf(amount)!=null) {
+//			if(query!=null) {
+//				query = query.whereGreaterThanOrEqualTo("amount", amount);
+//			}
+//			else {
+//				query = paymentLogs.whereGreaterThanOrEqualTo("amount", amount);
+//			}
+//		}
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
 		List<String[]> payments = new ArrayList<>();
 		String[] columnNames = {"ID", "Phone","Amount","Payment Date","Type"};
