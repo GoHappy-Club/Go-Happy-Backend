@@ -13,4 +13,5 @@ public class Properties {
     private String whatsappLink;
     private String appVersion;
     private Boolean forceUpdate;
+    private int buildNumber;
 }
