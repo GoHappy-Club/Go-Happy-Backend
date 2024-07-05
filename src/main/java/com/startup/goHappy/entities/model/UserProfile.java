@@ -25,4 +25,5 @@ public class UserProfile {
 	private String source;
 	private String city;
 	private String emergencyContact;
+	private String fcmToken;
 }

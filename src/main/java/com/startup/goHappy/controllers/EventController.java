@@ -850,6 +850,30 @@ public class EventController {
 		return output;
 	}
 
+	@ApiOperation(value = "Get events by within date range")
+	@PostMapping("getEventsWithinDateRange")
+	public List<Event> getEventsWithinDateRange(@RequestBody JSONObject params){
+		CollectionReference eventsRef = eventService.getCollectionReference();
+		Query queryNew = eventsRef.whereGreaterThanOrEqualTo("startTime", params.getString("minDate")).whereEqualTo("isParent",false);
+		queryNew = queryNew.whereLessThanOrEqualTo("startTime", params.getString("maxDate"));
+
+		ApiFuture<QuerySnapshot> querySnapshotNew = queryNew.get();
+
+		Set<Event> eventsNew = new HashSet<>();
+		try {
+			for (DocumentSnapshot document : querySnapshotNew.get().getDocuments()) {
+				eventsNew.add(document.toObject(Event.class));
+			}
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		List<Event> eventsNewBest = IterableUtils.toList(eventsNew);
+
+		Collections.sort(eventsNewBest,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+		return eventsNewBest;
+	}
+
 	@ApiOperation(value = "Get event by ID")
 	@PostMapping("getEvent")
 	public JSONObject getEventById(@RequestBody JSONObject params){
@@ -916,13 +940,13 @@ public class EventController {
 
 //		Update Payment Log, if required
 		if(StringUtils.equals(event.getCostType(),"paid")){
-			PaymentLog log = new PaymentLog();
-			log.setPaymentDate(""+new Date().getTime());
-			log.setPhone(params.getString("phoneNumber"));
-			log.setId(UUID.randomUUID().toString());
-			log.setAmount(event.getCost());
-			log.setType("workshop");
-			paymentLogService.save(log);
+			PaymentLog plog = new PaymentLog();
+			plog.setPaymentDate(""+new Date().getTime());
+			plog.setPhone(params.getString("phoneNumber"));
+			plog.setId(UUID.randomUUID().toString());
+			plog.setAmount(event.getCost());
+			plog.setType("workshop");
+			paymentLogService.save(plog);
 		}
 		
 		Calendar calendar = Calendar.getInstance();

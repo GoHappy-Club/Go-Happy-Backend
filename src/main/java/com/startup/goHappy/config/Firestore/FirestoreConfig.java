@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Scanner;
+
+import com.google.firebase.messaging.FirebaseMessaging;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -42,5 +44,25 @@ public class FirestoreConfig {
 		FirestoreOptions options1 = FirestoreOptions.newBuilder()
 				.setCredentials(credentials).build();
 		return options1.getService();
+	}
+
+	@Bean
+	FirebaseApp firebaseApp() throws IOException {
+		Dotenv dotenv = Dotenv.load();
+		String serviceAccountPath = dotenv.get("GOOGLE_APPLICATION_CREDENTIALS");
+
+		FileInputStream serviceAccount = new FileInputStream(serviceAccountPath);
+		GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
+		FirebaseOptions firebaseOptions = FirebaseOptions.builder()
+				.setCredentials(credentials)
+				.setProjectId("go-happy-322816")
+				.setDatabaseUrl("http://localhost:9000/")
+				.build();
+
+		return FirebaseApp.initializeApp(firebaseOptions);
+	}
+	@Bean
+	FirebaseMessaging firebaseMessaging(FirebaseApp firebaseApp) {
+		return FirebaseMessaging.getInstance(firebaseApp);
 	}
 }

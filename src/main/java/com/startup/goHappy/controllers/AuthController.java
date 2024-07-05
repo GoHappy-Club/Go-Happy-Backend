@@ -73,13 +73,7 @@ public class AuthController {
 		CollectionReference userProfiles = userProfileService.getCollectionReference();
 
 		Query query = null;
-//		if(StringUtils.isEmpty(params.getString("email"))) {
 		query = userProfiles.whereEqualTo("phone", ""+params.getString("phone"));
-//		}
-//		else {
-//			query = userProfiles.whereEqualTo("email", params.getString("email"));
-//
-//		}
 
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
 		UserProfile user = null;
@@ -88,6 +82,10 @@ public class AuthController {
 			break;
 		}		
 		if(user!=null) {
+			if(!StringUtils.isEmpty(params.getString("fcmToken"))) {
+				user.setFcmToken(params.getString("fcmToken"));
+				userProfileService.save(user);
+			}
 			return user;
 		}
 		else if(!StringUtils.isEmpty(params.getString("token"))) {

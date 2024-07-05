@@ -48,9 +48,6 @@ public class UserProfileController {
 	FirestoreConfig firestoreConfig;
 
 
-//	@Autowired
-//	UserProfileManager userProfileManager;
-
 	public UserProfileController() {
 
 	}
@@ -75,6 +72,7 @@ public class UserProfileController {
 		up.setPassword(userProfile.getString("password"));
 		up.setGoogleSignIn(userProfile.getBoolean("googleSignIn"));
 		up.setSource(userProfile.getString("source"));
+		up.setFcmToken(userProfile.getString("fcmToken"));
 		String selfInviteId = RandomStringUtils.random(6,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
 		up.setSelfInviteCode(selfInviteId);
 		userProfileService.save(up);
@@ -205,8 +203,9 @@ public class UserProfileController {
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
 		UserProfile user = null;
 		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
-			user = document.toObject(UserProfile.class);  
-			user.setName(params.getString("name"));
+			user = document.toObject(UserProfile.class);
+			if(!StringUtils.isEmpty(params.getString("name")))
+				user.setName(params.getString("name"));
 			if(!StringUtils.isEmpty(params.getString("email")))
 				user.setEmail(params.getString("email"));
 			if(!StringUtils.isEmpty(params.getString("phone")))
@@ -217,6 +216,8 @@ public class UserProfileController {
 				user.setEmergencyContact(""+params.getLong("emergencyContact"));
 			if(!StringUtils.isEmpty(params.getString("age")))
 				user.setAge(""+params.getString("age"));
+			if(!StringUtils.isEmpty(params.getString("fcmToken")))
+				user.setFcmToken(params.getString("fcmToken"));
 			break;
 		}
 		userProfileService.save(user);

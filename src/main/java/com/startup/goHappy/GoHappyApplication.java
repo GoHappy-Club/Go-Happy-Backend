@@ -1,16 +1,16 @@
 package com.startup.goHappy;
 
-import org.apache.commons.logging.Log;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
 
 @EnableEncryptableProperties
 @SpringBootApplication
+@EnableScheduling
 public class GoHappyApplication {
 
 	public static void main(String[] args) {
