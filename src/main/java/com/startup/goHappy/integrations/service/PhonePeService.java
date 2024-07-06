@@ -43,18 +43,25 @@ public class PhonePeService {
 	@Value("${phonePe.apiEndPoint}")
 	private String apiEndPoint;
 
-	public JSONObject generatePayload(String phone,Integer amount) throws JsonProcessingException {
-		String merchantTransactionId = UUID.randomUUID().toString().replace("-", "");
+	public JSONObject generatePayload(String phone,Integer amount,String paymentType) throws JsonProcessingException {
+		System.out.println("paymentType ==> "+paymentType);
+		String uuid = UUID.randomUUID().toString().replace("-", "").substring(0,26);
+		String merchantTransactionId = uuid+phone;
 		JSONObject requestBody = new JSONObject();
 		requestBody.put("merchantId",merchantId);
 		requestBody.put("merchantTransactionId",merchantTransactionId);
 		requestBody.put("mobileNumber",phone);
 		requestBody.put("amount",amount);
-		requestBody.put("callbackUrl","https://webhook.site/callback-url");
+		if (paymentType.equals("contribution")) {
+			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentData");
+		}else{
+			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataWorkshop");
+		}
 		requestBody.put("merchantUserId",phone);
 		JSONObject paymentInstrument = new JSONObject();
 		paymentInstrument.put("type","PAY_PAGE");
 		requestBody.put("paymentInstrument",paymentInstrument);
+		System.out.println(requestBody);
 		ObjectMapper objectMapper = new ObjectMapper();
 		byte[] bytes = objectMapper.writeValueAsBytes(requestBody);
 		String base64Encoded = Base64.getEncoder().encodeToString(bytes);
