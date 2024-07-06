@@ -34,338 +34,375 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping("user")
 public class UserProfileController {
 
-	@Autowired
-	UserProfileRepository userProfileService;
+    @Autowired
+    UserProfileRepository userProfileService;
 
-	@Autowired
-	PaymentLogRepository paymentLogService;
+    @Autowired
+    PaymentLogRepository paymentLogService;
 
-	@Autowired
-	ReferralRepository referralService;
-	
-	
-	@Autowired
-	FirestoreConfig firestoreConfig;
+    @Autowired
+    ReferralRepository referralService;
+
+
+    @Autowired
+    FirestoreConfig firestoreConfig;
 
 
 	public UserProfileController() {
 
 	}
 
-	@TestOnly
-	public UserProfileController(UserProfileRepository userProfileService) {
-		this.userProfileService = userProfileService;
-	}
+    @TestOnly
+    public UserProfileController(UserProfileRepository userProfileService) {
+        this.userProfileService = userProfileService;
+    }
 
-	@PostMapping("create")
-	public void create(@RequestBody JSONObject userProfile) {
-		UserProfile up = new UserProfile();
-		up.setId(UUID.randomUUID().toString());
-		up.setAge(userProfile.getString("age"));
-		up.setEmail(userProfile.getString("email"));
-		up.setDateOfJoining(userProfile.getString("dateOfJoining"));
-		up.setDateOfJoiningDateObject(userProfile.getString("dateOfJoiningDateObject"));
-		up.setName(userProfile.getString("name"));
-		up.setPhone(""+userProfile.getString("phone"));
-		up.setProfileImage(userProfile.getString("profileImage"));
-		up.setSessionsAttended("0");
-		up.setPassword(userProfile.getString("password"));
-		up.setGoogleSignIn(userProfile.getBoolean("googleSignIn"));
-		up.setSource(userProfile.getString("source"));
-		up.setFcmToken(userProfile.getString("fcmToken"));
-		String selfInviteId = RandomStringUtils.random(6,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
-		up.setSelfInviteCode(selfInviteId);
-		userProfileService.save(up);
-		return;
-	}
-	@PostMapping("getUserByEmail")
-	public JSONObject getUserByEmail(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
-		CollectionReference userProfiles = userProfileService.getCollectionReference();
+    @PostMapping("create")
+    public void create(@RequestBody JSONObject userProfile) {
+        UserProfile up = new UserProfile();
+        up.setId(UUID.randomUUID().toString());
+        up.setAge(userProfile.getString("age"));
+        up.setEmail(userProfile.getString("email"));
+        up.setDateOfJoining(userProfile.getString("dateOfJoining"));
+        up.setDateOfJoiningDateObject(userProfile.getString("dateOfJoiningDateObject"));
+        up.setName(userProfile.getString("name"));
+        up.setPhone("" + userProfile.getString("phone"));
+        up.setProfileImage(userProfile.getString("profileImage"));
+        up.setSessionsAttended("0");
+        up.setPassword(userProfile.getString("password"));
+        up.setGoogleSignIn(userProfile.getBoolean("googleSignIn"));
+        up.setSource(userProfile.getString("source"));
+        up.setFcmToken(userProfile.getString("fcmToken"));
+        String selfInviteId = RandomStringUtils.random(6, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+        up.setSelfInviteCode(selfInviteId);
+        userProfileService.save(up);
+        return;
+    }
 
-		Query query = userProfiles.whereEqualTo("email", params.getString("email"));
+    @PostMapping("getUserByEmail")
+    public JSONObject getUserByEmail(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+        CollectionReference userProfiles = userProfileService.getCollectionReference();
 
-		ApiFuture<QuerySnapshot> querySnapshot = query.get();
-		UserProfile user = null;
-		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
-			user = document.toObject(UserProfile.class);  
-			break;
-		}		
+        Query query = userProfiles.whereEqualTo("email", params.getString("email"));
+
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+        UserProfile user = null;
+        for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+            user = document.toObject(UserProfile.class);
+            break;
+        }
 //		List<UserProfile> result = IterableUtils.toList(user);
-		JSONObject output = new JSONObject();
-		output.put("user", user);
-		return output;
-	}
-	
-	@PostMapping("getUserByPhone")
-	public JSONObject getUserByPhone(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
-		CollectionReference userProfiles = userProfileService.getCollectionReference();
+        JSONObject output = new JSONObject();
+        output.put("user", user);
+        return output;
+    }
 
-		Query query = userProfiles.whereEqualTo("phone", params.getString("phoneNumber"));
+    @PostMapping("getUserByPhone")
+    public JSONObject getUserByPhone(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+        CollectionReference userProfiles = userProfileService.getCollectionReference();
 
-		ApiFuture<QuerySnapshot> querySnapshot = query.get();
-		UserProfile user = null;
-		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
-			user = document.toObject(UserProfile.class);  
-			break;
-		}		
-		
-		JSONObject output = new JSONObject();
-		output.put("user", user);
-		return output;
-	}
+        Query query = userProfiles.whereEqualTo("phone", params.getString("phoneNumber"));
 
-	@GetMapping("/download")
-	public StreamingResponseBody downloadCsv(@RequestParam String dateOfJoining, HttpServletResponse response) throws IOException, ExecutionException, InterruptedException {
-		response.setContentType("text/csv");
-		response.setHeader("Content-Disposition", "attachment; filename=\"users.csv\"");
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+        UserProfile user = null;
+        for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+            user = document.toObject(UserProfile.class);
+            break;
+        }
 
-		CollectionReference userProfiles = userProfileService.getCollectionReference();
+        JSONObject output = new JSONObject();
+        output.put("user", user);
+        return output;
+    }
 
-		Query query = userProfiles.whereGreaterThanOrEqualTo("dateOfJoining", dateOfJoining);
+    @GetMapping("/download")
+    public StreamingResponseBody downloadCsv(@RequestParam String dateOfJoining, HttpServletResponse response) throws IOException, ExecutionException, InterruptedException {
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition", "attachment; filename=\"users.csv\"");
 
-		ApiFuture<QuerySnapshot> querySnapshot = query.get();
-		List<String[]> users = new ArrayList();
-		String[] columnNames = {"ID", "Name","Age","Email","Phone Number",
-				"Last Payment Date", "Invite Code","Sessions Attended",
-				"Date Of Joining", "Date of Joining (Date Format)",
-				"Profile Image","Membership","Last Payment Amount"};
-		users.add(columnNames);
-		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
-			UserProfile user = document.toObject(UserProfile.class);
-			if(user==null){
-				continue;
-			}
-			String[] userData = {
-					user.getId(),
-					user.getName(),
-					user.getAge(),
-					user.getEmail(),
-					user.getPhone(),
-					user.getLastPaymentDate(),
-					user.getSelfInviteCode(),
-					user.getSessionsAttended(),
-					user.getDateOfJoining(),
-					user.getDateOfJoiningDateObject(),
-					user.getProfileImage(),
-					user.getMembership(),
-					user.getLastPaymentAmount()!=null?user.getLastPaymentAmount().toString():"",
-					user.getCity(),
-					user.getEmergencyContact(),
+        CollectionReference userProfiles = userProfileService.getCollectionReference();
 
-			};
-			users.add(userData);
-		}
-		CSVWriter csvWriter = new CSVWriter(new OutputStreamWriter(response.getOutputStream()));
-		csvWriter.writeAll(users);
-		csvWriter.close();
+        Query query = userProfiles.whereGreaterThanOrEqualTo("dateOfJoining", dateOfJoining);
 
-		return outputStream -> outputStream.flush();
-	}
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+        List<String[]> users = new ArrayList();
+        String[] columnNames = {"ID", "Name", "Age", "Email", "Phone Number",
+                "Last Payment Date", "Invite Code", "Sessions Attended",
+                "Date Of Joining", "Date of Joining (Date Format)",
+                "Profile Image", "Membership", "Last Payment Amount"};
+        users.add(columnNames);
+        for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+            UserProfile user = document.toObject(UserProfile.class);
+            if (user == null) {
+                continue;
+            }
+            String[] userData = {
+                    user.getId(),
+                    user.getName(),
+                    user.getAge(),
+                    user.getEmail(),
+                    user.getPhone(),
+                    user.getLastPaymentDate(),
+                    user.getSelfInviteCode(),
+                    user.getSessionsAttended(),
+                    user.getDateOfJoining(),
+                    user.getDateOfJoiningDateObject(),
+                    user.getProfileImage(),
+                    user.getMembership(),
+                    user.getLastPaymentAmount() != null ? user.getLastPaymentAmount().toString() : "",
+                    user.getCity(),
+                    user.getEmergencyContact(),
 
-	
-	@PostMapping("setPaymentData")
-	public void setPaymentData(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
-		CollectionReference userProfiles = userProfileService.getCollectionReference();
+            };
+            users.add(userData);
+        }
+        CSVWriter csvWriter = new CSVWriter(new OutputStreamWriter(response.getOutputStream()));
+        csvWriter.writeAll(users);
+        csvWriter.close();
 
-		Query profileQuery = userProfiles.whereEqualTo("phone", params.getString("phoneNumber"));
-
-		ApiFuture<QuerySnapshot> querySnapshot1 = profileQuery.get();
-		UserProfile user = null;
-		for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
-			user = document.toObject(UserProfile.class);  
-			user.setLastPaymentAmount(Integer.parseInt(params.getString("amount")));
-			user.setLastPaymentDate(""+new Date().getTime());
-
-			PaymentLog log = new PaymentLog();
-			log.setPaymentDate(user.getLastPaymentDate());
-			log.setPhone(user.getPhone());
-			log.setId(UUID.randomUUID().toString());
-			log.setAmount(user.getLastPaymentAmount());
-			log.setType("contribution");
-			paymentLogService.save(log);
+        return outputStream -> outputStream.flush();
+    }
 
 
-			break;
-		}		
-		userProfileService.save(user);
+    @PostMapping("setPaymentData")
+    public void setPaymentData(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+        CollectionReference userProfiles = userProfileService.getCollectionReference();
+        JSONObject data = params.getJSONObject("data");
+        String merchantTransactionId = data.getString("merchantTransactionId");
+        int amount = data.getInteger("amount");
+        //extract last 12 chars of this merchant transaction id i.e. the phone number of the user
+        String phoneNumber = merchantTransactionId.substring(merchantTransactionId.length() - 12);
+        Query profileQuery = userProfiles.whereEqualTo("phone", phoneNumber);
 
-	}
-	
-	@PostMapping("update")
-	public UserProfile updateUser(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
-		
-		CollectionReference userProfiles = userProfileService.getCollectionReference();
-		if(params.getString("phone").startsWith("+")){
-			params.put("phone",params.getString("phone").substring(1));
-		}
-		Query query = userProfiles.whereEqualTo("phone", params.getString("phone"));
+        ApiFuture<QuerySnapshot> querySnapshot1 = profileQuery.get();
+        UserProfile user = null;
+        for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
+            user = document.toObject(UserProfile.class);
+            user.setLastPaymentAmount(amount);
+            user.setLastPaymentDate("" + new Date().getTime());
 
-		ApiFuture<QuerySnapshot> querySnapshot = query.get();
-		UserProfile user = null;
-		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
-			user = document.toObject(UserProfile.class);
-			if(!StringUtils.isEmpty(params.getString("name")))
-				user.setName(params.getString("name"));
-			if(!StringUtils.isEmpty(params.getString("email")))
-				user.setEmail(params.getString("email"));
-			if(!StringUtils.isEmpty(params.getString("phone")))
-				user.setPhone(""+params.getLong("phone"));
-			if(!StringUtils.isEmpty(params.getString("city")))
-				user.setCity(""+params.getString("city"));
-			if(!StringUtils.isEmpty(params.getString("emergencyContact")))
-				user.setEmergencyContact(""+params.getLong("emergencyContact"));
-			if(!StringUtils.isEmpty(params.getString("age")))
-				user.setAge(""+params.getString("age"));
-			if(!StringUtils.isEmpty(params.getString("fcmToken")))
-				user.setFcmToken(params.getString("fcmToken"));
-			break;
-		}
-		userProfileService.save(user);
-		return user;
-	}
+            PaymentLog log = new PaymentLog();
+            log.setPaymentDate(user.getLastPaymentDate());
+            log.setPhone(user.getPhone());
+            log.setId(merchantTransactionId);
+            log.setAmount(user.getLastPaymentAmount());
+            log.setType("contribution");
+            paymentLogService.save(log);
 
-	@PostMapping("updateProfileImage")
-	public UserProfile updateProfileImage(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
 
-		CollectionReference userProfiles = userProfileService.getCollectionReference();
-		if(params.getString("phoneNumber").startsWith("+")){
-			params.put("phone",params.getString("phoneNumber").substring(1));
-		}
-		Query query = userProfiles.whereEqualTo("phone", params.getString("phoneNumber"));
+            break;
+        }
+        userProfileService.save(user);
 
-		ApiFuture<QuerySnapshot> querySnapshot = query.get();
-		UserProfile user = null;
-		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
-			user = document.toObject(UserProfile.class);
-			user.setProfileImage(params.getString("profileImage"));
-			break;
-		}
-		userProfileService.save(user);
-		return user;
-	}
+    }
 
-	@PostMapping("refer")
-	public void refer(@RequestBody Referral referObject) throws IOException, InterruptedException, ExecutionException {
-		CollectionReference referrals = referralService.getCollectionReference();
-		Query query = referrals.whereEqualTo("to", referObject.getTo());
+    @PostMapping("setPaymentDataWorkshop")
+    public void setPaymentDataWorkshop(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+        CollectionReference userProfiles = userProfileService.getCollectionReference();
+        JSONObject data = params.getJSONObject("data");
+        String merchantTransactionId = data.getString("merchantTransactionId");
+        int amount = data.getInteger("amount");
+        //extract last 12 chars of this merchant transaction id i.e. the phone number of the user
+        String phoneNumber = merchantTransactionId.substring(merchantTransactionId.length() - 12);
+        Query profileQuery = userProfiles.whereEqualTo("phone", phoneNumber);
 
-		ApiFuture<QuerySnapshot> querySnapshot = query.get();
-		UserProfile user = null;
-		if(querySnapshot.get().getDocuments().size()==0){
-			referralService.save(referObject);
-		}
-	}
+        ApiFuture<QuerySnapshot> querySnapshot1 = profileQuery.get();
+        UserProfile user = null;
+        for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
+            user = document.toObject(UserProfile.class);
+            user.setLastPaymentAmount(amount);
+            user.setLastPaymentDate("" + new Date().getTime());
 
-	@PostMapping("sessionAttended")
-	public void sessionAttended(@RequestBody JSONObject userDetails) throws ExecutionException, InterruptedException {
-		CollectionReference referrals = referralService.getCollectionReference();
-		Query query = referrals.whereEqualTo("to", userDetails.getString("phone"));
-		ApiFuture<QuerySnapshot> querySnapshot = query.get();
-		Referral referral = null;
-		if(querySnapshot.get().getDocuments().size()!=0){
-			for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
-				referral = document.toObject(Referral.class);
-				referral.setHasAttendedSession(true);
-				referralService.save(referral);
-				break;
-			}
-		}
-	}
-	@PostMapping("referralsList")
-	public JSONObject referralsList(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
-		CollectionReference referrals = referralService.getCollectionReference();
-		Query query = referrals.whereEqualTo("from", params.getString("from"));
-		if(!StringUtils.isEmpty(params.getString("hasAttendedSession"))) {
-			query = query.whereEqualTo("hasAttendedSession", params.getBoolean("hasAttendedSession"));
-		}
+            PaymentLog log = new PaymentLog();
+            log.setPaymentDate(user.getLastPaymentDate());
+            log.setPhone(user.getPhone());
+            log.setId(merchantTransactionId);
+            log.setAmount(user.getLastPaymentAmount());
+            log.setType("workshop");
+            paymentLogService.save(log);
+
+
+            break;
+        }
+        userProfileService.save(user);
+
+    }
+
+    @PostMapping("update")
+    public UserProfile updateUser(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+
+        CollectionReference userProfiles = userProfileService.getCollectionReference();
+        if (params.getString("phone").startsWith("+")) {
+            params.put("phone", params.getString("phone").substring(1));
+        }
+        Query query = userProfiles.whereEqualTo("phone", params.getString("phone"));
+
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+        UserProfile user = null;
+        for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+            user = document.toObject(UserProfile.class);
+            if (!StringUtils.isEmpty(params.getString("name")))
+                user.setName(params.getString("name"));
+            if (!StringUtils.isEmpty(params.getString("email")))
+                user.setEmail(params.getString("email"));
+            if (!StringUtils.isEmpty(params.getString("phone")))
+                user.setPhone("" + params.getLong("phone"));
+            if (!StringUtils.isEmpty(params.getString("city")))
+                user.setCity("" + params.getString("city"));
+            if (!StringUtils.isEmpty(params.getString("emergencyContact")))
+                user.setEmergencyContact("" + params.getLong("emergencyContact"));
+            if (!StringUtils.isEmpty(params.getString("age")))
+                user.setAge("" + params.getString("age"));
+            if (!StringUtils.isEmpty(params.getString("fcmToken")))
+                user.setFcmToken(params.getString("fcmToken"));
+            break;
+        }
+        userProfileService.save(user);
+        return user;
+    }
+
+    @PostMapping("updateProfileImage")
+    public UserProfile updateProfileImage(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+
+        CollectionReference userProfiles = userProfileService.getCollectionReference();
+        if (params.getString("phoneNumber").startsWith("+")) {
+            params.put("phone", params.getString("phoneNumber").substring(1));
+        }
+        Query query = userProfiles.whereEqualTo("phone", params.getString("phoneNumber"));
+
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+        UserProfile user = null;
+        for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+            user = document.toObject(UserProfile.class);
+            user.setProfileImage(params.getString("profileImage"));
+            break;
+        }
+        userProfileService.save(user);
+        return user;
+    }
+
+    @PostMapping("refer")
+    public void refer(@RequestBody Referral referObject) throws IOException, InterruptedException, ExecutionException {
+        CollectionReference referrals = referralService.getCollectionReference();
+        Query query = referrals.whereEqualTo("to", referObject.getTo());
+
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+        UserProfile user = null;
+        if (querySnapshot.get().getDocuments().size() == 0) {
+            referralService.save(referObject);
+        }
+    }
+
+    @PostMapping("sessionAttended")
+    public void sessionAttended(@RequestBody JSONObject userDetails) throws ExecutionException, InterruptedException {
+        CollectionReference referrals = referralService.getCollectionReference();
+        Query query = referrals.whereEqualTo("to", userDetails.getString("phone"));
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+        Referral referral = null;
+        if (querySnapshot.get().getDocuments().size() != 0) {
+            for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+                referral = document.toObject(Referral.class);
+                referral.setHasAttendedSession(true);
+                referralService.save(referral);
+                break;
+            }
+        }
+    }
+
+    @PostMapping("referralsList")
+    public JSONObject referralsList(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+        CollectionReference referrals = referralService.getCollectionReference();
+        Query query = referrals.whereEqualTo("from", params.getString("from"));
+        if (!StringUtils.isEmpty(params.getString("hasAttendedSession"))) {
+            query = query.whereEqualTo("hasAttendedSession", params.getBoolean("hasAttendedSession"));
+        }
 //		Query query = referrals.whereEqualTo("from", "919427876625");
-		List<Referral> referralsList = new ArrayList<>();
-		ApiFuture<QuerySnapshot> querySnapshot = query.get();
-		List<String> userIds = new ArrayList<>();
-		List<QueryDocumentSnapshot> referralsSnapshot = querySnapshot.get().getDocuments();
-		if(referralsSnapshot.size()!=0){
-			for (DocumentSnapshot document : referralsSnapshot) {
-				Referral obj = document.toObject(Referral.class);
-				userIds.add(obj.getTo());
-				referralsList.add(obj);
-			}
-		}
+        List<Referral> referralsList = new ArrayList<>();
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+        List<String> userIds = new ArrayList<>();
+        List<QueryDocumentSnapshot> referralsSnapshot = querySnapshot.get().getDocuments();
+        if (referralsSnapshot.size() != 0) {
+            for (DocumentSnapshot document : referralsSnapshot) {
+                Referral obj = document.toObject(Referral.class);
+                userIds.add(obj.getTo());
+                referralsList.add(obj);
+            }
+        }
 
-		CollectionReference userProfiles = userProfileService.getCollectionReference();
-		Query userQuery = userProfiles.whereIn("phone",userIds);
-		ApiFuture<QuerySnapshot> userQuerySnapshot = userQuery.get();
-		List<QueryDocumentSnapshot> usersSnapshot =userQuerySnapshot.get().getDocuments();
-		for (Referral ref:referralsList) {
-			try {
-				for(DocumentSnapshot userDocument : usersSnapshot) {
-					UserProfile user = userDocument.toObject(UserProfile.class);
-					if(StringUtils.equals(ref.getTo(),user.getPhone())==true) {
-						ref.setToName(user.getName());
-						ref.setToProfileImage(user.getProfileImage());
-						break;
-					}
-				}
-			}
-			catch(Exception e){
-				e.printStackTrace();
-			}
-		}
+        CollectionReference userProfiles = userProfileService.getCollectionReference();
+        Query userQuery = userProfiles.whereIn("phone", userIds);
+        ApiFuture<QuerySnapshot> userQuerySnapshot = userQuery.get();
+        List<QueryDocumentSnapshot> usersSnapshot = userQuerySnapshot.get().getDocuments();
+        for (Referral ref : referralsList) {
+            try {
+                for (DocumentSnapshot userDocument : usersSnapshot) {
+                    UserProfile user = userDocument.toObject(UserProfile.class);
+                    if (StringUtils.equals(ref.getTo(), user.getPhone()) == true) {
+                        ref.setToName(user.getName());
+                        ref.setToProfileImage(user.getProfileImage());
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
-		referralsList.sort(new Comparator<Referral>() {
-			@Override
-			public int compare(Referral m1,Referral m2) {
-				if(m1.getTime() == m2.getTime()){
-					return 0;
-				}
-				return Long.parseLong(m1.getTime())> Long.parseLong(m2.getTime()) ? -1 : 1;
-			}
-		});
+        referralsList.sort(new Comparator<Referral>() {
+            @Override
+            public int compare(Referral m1, Referral m2) {
+                if (m1.getTime() == m2.getTime()) {
+                    return 0;
+                }
+                return Long.parseLong(m1.getTime()) > Long.parseLong(m2.getTime()) ? -1 : 1;
+            }
+        });
 
-		JSONObject output = new JSONObject();
-		output.put("referrals",referralsList);
-		return output;
-	}
+        JSONObject output = new JSONObject();
+        output.put("referrals", referralsList);
+        return output;
+    }
 
-	@PostMapping("topReferrals")
-	public JSONObject topReferrals(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
-		CollectionReference referrals = referralService.getCollectionReference();
-		Integer top = params.getInteger("top");
-		Query query = referrals.whereGreaterThanOrEqualTo("time", params.getString("time"));
-		if(!StringUtils.isEmpty(params.getString("hasAttendedSession"))) {
-			query = query.whereEqualTo("hasAttendedSession", params.getBoolean("hasAttendedSession"));
-		}
-		HashMap<String,Integer> ranking = new HashMap<>();
-		List<Referral> referralsList = new ArrayList<>();
-		ApiFuture<QuerySnapshot> querySnapshot = query.get();
-		if(querySnapshot.get().getDocuments().size()!=0){
-			for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
-				Referral referral = document.toObject(Referral.class);
-				if(ranking.containsKey(referral.getFrom()))
-					ranking.put(referral.getFrom(),ranking.get(referral.getFrom())+1);
-				else
-					ranking.put(referral.getFrom(),1);
-				referralsList.add(document.toObject(Referral.class));
-			}
-		}
+    @PostMapping("topReferrals")
+    public JSONObject topReferrals(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+        CollectionReference referrals = referralService.getCollectionReference();
+        Integer top = params.getInteger("top");
+        Query query = referrals.whereGreaterThanOrEqualTo("time", params.getString("time"));
+        if (!StringUtils.isEmpty(params.getString("hasAttendedSession"))) {
+            query = query.whereEqualTo("hasAttendedSession", params.getBoolean("hasAttendedSession"));
+        }
+        HashMap<String, Integer> ranking = new HashMap<>();
+        List<Referral> referralsList = new ArrayList<>();
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+        if (querySnapshot.get().getDocuments().size() != 0) {
+            for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+                Referral referral = document.toObject(Referral.class);
+                if (ranking.containsKey(referral.getFrom()))
+                    ranking.put(referral.getFrom(), ranking.get(referral.getFrom()) + 1);
+                else
+                    ranking.put(referral.getFrom(), 1);
+                referralsList.add(document.toObject(Referral.class));
+            }
+        }
 
-		List<Pair<String,Integer>> sorted = new ArrayList<>();
-		for(String key:ranking.keySet()){
-			Pair<String,Integer> pair = new MutablePair<>(key,ranking.get(key));
-			sorted.add(pair);
-		}
-		sorted.sort(new Comparator<Pair<String,Integer>>() {
-			@Override
-			public int compare(Pair<String,Integer> m1, Pair<String,Integer> m2) {
-				if(m1.getRight() == m2.getRight()){
-					return 0;
-				}
-				return m1.getRight()>m2.getRight() ? -1 : 1;
-			}
-		});
-		sorted = sorted.subList(0,top>=sorted.size()?sorted.size():top);
+        List<Pair<String, Integer>> sorted = new ArrayList<>();
+        for (String key : ranking.keySet()) {
+            Pair<String, Integer> pair = new MutablePair<>(key, ranking.get(key));
+            sorted.add(pair);
+        }
+        sorted.sort(new Comparator<Pair<String, Integer>>() {
+            @Override
+            public int compare(Pair<String, Integer> m1, Pair<String, Integer> m2) {
+                if (m1.getRight() == m2.getRight()) {
+                    return 0;
+                }
+                return m1.getRight() > m2.getRight() ? -1 : 1;
+            }
+        });
+        sorted = sorted.subList(0, top >= sorted.size() ? sorted.size() : top);
 
-		JSONObject output = new JSONObject();
-		output.put("referrals",sorted);
-		return output;
-	}
+        JSONObject output = new JSONObject();
+        output.put("referrals", sorted);
+        return output;
+    }
 }
