@@ -44,7 +44,6 @@ public class PhonePeService {
 	private String apiEndPoint;
 
 	public JSONObject generatePayload(String phone,Integer amount,String paymentType) throws JsonProcessingException {
-		System.out.println("paymentType ==> "+paymentType);
 		String uuid = UUID.randomUUID().toString().replace("-", "").substring(0,26);
 		String merchantTransactionId = uuid+phone;
 		JSONObject requestBody = new JSONObject();
@@ -52,8 +51,8 @@ public class PhonePeService {
 		requestBody.put("merchantTransactionId",merchantTransactionId);
 		requestBody.put("mobileNumber",phone);
 		requestBody.put("amount",amount);
-		if (paymentType.equals("contribution")) {
-			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentData");
+		if ("contribution".equals(paymentType)) {
+			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataContribution");
 		}else{
 			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataWorkshop");
 		}
@@ -61,7 +60,6 @@ public class PhonePeService {
 		JSONObject paymentInstrument = new JSONObject();
 		paymentInstrument.put("type","PAY_PAGE");
 		requestBody.put("paymentInstrument",paymentInstrument);
-		System.out.println(requestBody);
 		ObjectMapper objectMapper = new ObjectMapper();
 		byte[] bytes = objectMapper.writeValueAsBytes(requestBody);
 		String base64Encoded = Base64.getEncoder().encodeToString(bytes);

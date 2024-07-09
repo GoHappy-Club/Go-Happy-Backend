@@ -163,9 +163,36 @@ public class UserProfileController {
         return outputStream -> outputStream.flush();
     }
 
-
     @PostMapping("setPaymentData")
     public void setPaymentData(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+        CollectionReference userProfiles = userProfileService.getCollectionReference();
+
+        Query profileQuery = userProfiles.whereEqualTo("phone", params.getString("phoneNumber"));
+
+        ApiFuture<QuerySnapshot> querySnapshot1 = profileQuery.get();
+        UserProfile user = null;
+        for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
+            user = document.toObject(UserProfile.class);
+            user.setLastPaymentAmount(Integer.parseInt(params.getString("amount")));
+            user.setLastPaymentDate(""+new Date().getTime());
+
+            PaymentLog log = new PaymentLog();
+            log.setPaymentDate(user.getLastPaymentDate());
+            log.setPhone(user.getPhone());
+            log.setId(UUID.randomUUID().toString());
+            log.setAmount(user.getLastPaymentAmount());
+            log.setType("contribution");
+            paymentLogService.save(log);
+
+
+            break;
+        }
+        userProfileService.save(user);
+
+    }
+
+    @PostMapping("setPaymentDataContribution")
+    public void setPaymentDataContribution(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
         CollectionReference userProfiles = userProfileService.getCollectionReference();
         JSONObject data = params.getJSONObject("data");
         String merchantTransactionId = data.getString("merchantTransactionId");
