@@ -43,14 +43,19 @@ public class PhonePeService {
 	@Value("${phonePe.apiEndPoint}")
 	private String apiEndPoint;
 
-	public JSONObject generatePayload(String phone,Integer amount) throws JsonProcessingException {
-		String merchantTransactionId = UUID.randomUUID().toString().replace("-", "");
+	public JSONObject generatePayload(String phone,Integer amount,String paymentType) throws JsonProcessingException {
+		String uuid = UUID.randomUUID().toString().replace("-", "").substring(0,26);
+		String merchantTransactionId = uuid+phone;
 		JSONObject requestBody = new JSONObject();
 		requestBody.put("merchantId",merchantId);
 		requestBody.put("merchantTransactionId",merchantTransactionId);
 		requestBody.put("mobileNumber",phone);
 		requestBody.put("amount",amount);
-		requestBody.put("callbackUrl","https://webhook.site/callback-url");
+		if ("contribution".equals(paymentType)) {
+			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataContribution");
+		}else{
+			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataWorkshop");
+		}
 		requestBody.put("merchantUserId",phone);
 		JSONObject paymentInstrument = new JSONObject();
 		paymentInstrument.put("type","PAY_PAGE");
