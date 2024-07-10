@@ -5,6 +5,8 @@ import java.io.OutputStreamWriter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.firestore.*;
 import com.opencsv.CSVWriter;
 import com.startup.goHappy.entities.model.PaymentLog;
@@ -194,10 +196,20 @@ public class UserProfileController {
     @PostMapping("setPaymentDataContribution")
     public void setPaymentDataContribution(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
         CollectionReference userProfiles = userProfileService.getCollectionReference();
-        JSONObject data = params.getJSONObject("data");
-        String merchantTransactionId = data.getString("merchantTransactionId");
-        int amount = data.getInteger("amount");
-        //extract last 12 chars of this merchant transaction id i.e. the phone number of the user
+        String encodedResponse = params.getString("response");
+
+        byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
+        String decodedString = new String(decodedBytes);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode decodedJson = objectMapper.readTree(decodedString);
+
+        JsonNode dataNode = decodedJson.get("data");
+        String merchantTransactionId = dataNode.get("merchantTransactionId").asText();
+        int amountInPaisa = dataNode.get("amount").asInt();
+        int amount = amountInPaisa/100;
+
+        // Extract last 12 characters of merchantTransactionId (phone number)
         String phoneNumber = merchantTransactionId.substring(merchantTransactionId.length() - 12);
         Query profileQuery = userProfiles.whereEqualTo("phone", phoneNumber);
 
@@ -226,10 +238,21 @@ public class UserProfileController {
     @PostMapping("setPaymentDataWorkshop")
     public void setPaymentDataWorkshop(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
         CollectionReference userProfiles = userProfileService.getCollectionReference();
-        JSONObject data = params.getJSONObject("data");
-        String merchantTransactionId = data.getString("merchantTransactionId");
-        int amount = data.getInteger("amount");
-        //extract last 12 chars of this merchant transaction id i.e. the phone number of the user
+        String encodedResponse = params.getString("response");
+
+        byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
+        String decodedString = new String(decodedBytes);
+        System.out.println("decodedString ==>"+decodedString);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode decodedJson = objectMapper.readTree(decodedString);
+
+        JsonNode dataNode = decodedJson.get("data");
+        String merchantTransactionId = dataNode.get("merchantTransactionId").asText();
+        int amountInPaisa = dataNode.get("amount").asInt();
+        int amount = amountInPaisa/100;
+
+        // Extract last 12 characters of merchantTransactionId (phone number)
         String phoneNumber = merchantTransactionId.substring(merchantTransactionId.length() - 12);
         Query profileQuery = userProfiles.whereEqualTo("phone", phoneNumber);
 
