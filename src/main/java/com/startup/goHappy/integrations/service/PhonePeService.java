@@ -34,14 +34,14 @@ import io.jsonwebtoken.Jwts;
 
 @Service
 public class PhonePeService {
-	@Value("${phonePe.key}")
+    @Value("${phonePe.key}")
     private String key;
-	@Value("${phonePe.keyIndex}")
+    @Value("${phonePe.keyIndex}")
     private Integer keyIndex;
-	@Value("${phonePe.merchantId}")
-	private String merchantId;
-	@Value("${phonePe.apiEndPoint}")
-	private String apiEndPoint;
+    @Value("${phonePe.merchantId}")
+    private String merchantId;
+    @Value("${phonePe.apiEndPoint}")
+    private String apiEndPoint;
 
 	public JSONObject generatePayload(String phone,Integer amount,String paymentType) throws JsonProcessingException {
 		String uuid = UUID.randomUUID().toString().replace("-", "").substring(0,26);
@@ -71,26 +71,27 @@ public class PhonePeService {
 		return payload;
     }
 
-	private String generateChecksum(String base64Body){
+    private String generateChecksum(String base64Body) {
         return calculateSha256(base64Body + apiEndPoint + key) + "###" + keyIndex;
-	}
-	private static String calculateSha256(String input) {
-		try {
-			MessageDigest digest = MessageDigest.getInstance("SHA-256");
-			byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+    }
 
-			// Convert the byte array to a hexadecimal string
-			StringBuilder hexString = new StringBuilder();
-			for (byte b : hash) {
-				String hex = Integer.toHexString(0xff & b);
-				if (hex.length() == 1) {
-					hexString.append('0');
-				}
-				hexString.append(hex);
-			}
-			return hexString.toString();
-		} catch (Exception e) {
-			return null;
-		}
-	}
+    private static String calculateSha256(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+
+            // Convert the byte array to a hexadecimal string
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }
