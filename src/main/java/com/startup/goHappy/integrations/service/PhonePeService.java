@@ -53,8 +53,10 @@ public class PhonePeService {
 		requestBody.put("amount",amount);
 		if ("contribution".equals(paymentType)) {
 			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataContribution");
+            requestBody.put("redirectUrl","https://www.gohappyclub.in/contribute");
 		}else{
 			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataWorkshop");
+            requestBody.put("redirectUrl","https://www.gohappyclub.in/free_sessions");
 		}
 		requestBody.put("merchantUserId",phone);
 		JSONObject paymentInstrument = new JSONObject();
