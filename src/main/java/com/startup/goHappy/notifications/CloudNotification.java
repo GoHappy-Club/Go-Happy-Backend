@@ -65,9 +65,10 @@ public class CloudNotification {
         long newTime = epochMillisIndia + 10 * 60 * 1000; //* 100 is additional
         params.put("maxDate",""+newTime);
         List<Event> events = eventController.getEventsWithinDateRange(params);
+        long ISTOffset = calendar.getTimeZone().getRawOffset();
         for(Event event: events){
             SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
-            Date date = new Date(Long.parseLong(event.getStartTime()));
+            Date date = new Date(Long.parseLong(event.getStartTime())+ISTOffset);
             String formattedTime = dateFormat.format(date);
             System.out.println(formattedTime);
             List<String> phones = event.getParticipantList();
