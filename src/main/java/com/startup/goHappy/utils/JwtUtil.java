@@ -1,41 +1,31 @@
 package com.startup.goHappy.utils;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.SignatureAlgorithm;
-
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-
 import javax.crypto.SecretKey;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class JwtUtil {
 
-
+    private static final String SECRET_KEY = "TaK+HaV^uvCHEFsEVfypW#7g9^k*Z8$Vfewjhh^fjdhf%$";
     private final SecretKey key;
 
-    public JwtUtil(@Value("${jwt.secret}") String secret_key) {
-        this.key = Keys.hmacShaKeyFor(secret_key.getBytes());
+    public JwtUtil() {
+        this.key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     }
 
+    public String extractUsername(String token) {
+        return extractAllClaims(token).getSubject();
+    }
 
     public Date extractExpiration(String token) {
         return extractAllClaims(token).getExpiration();
-    }
-
-    public  String ExpiryDate(String token) {
-        long milliseconds = extractExpiration(token).toInstant().toEpochMilli();
-        Instant instant = Instant.ofEpochMilli(milliseconds);
-        ZonedDateTime zonedDateTime = instant.atZone(ZoneId.systemDefault());
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return zonedDateTime.format(formatter);
     }
 
     private Claims extractAllClaims(String token) {
@@ -46,23 +36,12 @@ public class JwtUtil {
                 .getBody();
     }
 
-    public List<String> extractRoles(String token) {
-        Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
-        return claims.get("roles", List.class);
-    }
-
-
-    public String extractUsername(String token) {
-        return extractAllClaims(token).get("username", String.class);
-    }
-
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(String username, List<String> roles) {
+    public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", roles);
         return createToken(claims, username);
     }
 
@@ -71,22 +50,17 @@ public class JwtUtil {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 5))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 20))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public Boolean validateToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
-            if (isTokenExpired(token)) {
-                return false;
-            }
-            List<String> roles = claims.get("roles", List.class);
-            return roles != null && !roles.isEmpty();
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            return !isTokenExpired(token);
         } catch (Exception e) {
             return false;
         }
     }
-
 }
