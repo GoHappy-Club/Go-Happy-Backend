@@ -44,7 +44,7 @@ public class PhonePeService {
     private String apiEndPoint;
 
 	public JSONObject generatePayload(String phone,Integer amount,String paymentType) throws JsonProcessingException {
-		String uuid = UUID.randomUUID().toString().replace("-", "").substring(0,26);
+		String uuid = UUID.randomUUID().toString().replace("-", "").substring(0,22);
 		String merchantTransactionId = uuid+phone;
 		JSONObject requestBody = new JSONObject();
 		requestBody.put("merchantId",merchantId);
