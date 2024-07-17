@@ -1,6 +1,6 @@
 package com.startup.goHappy;
 
-import com.startup.goHappy.entities.service.OperationsTeamService;
+import com.startup.goHappy.services.OperationsTeamService;
 import com.startup.goHappy.utils.JwtFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -46,6 +46,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable()
                 .authorizeRequests()
                 .antMatchers("/authenticate").permitAll()
+                .antMatchers("/").hasRole("USER")
+                .antMatchers("/home/overview").hasRole("ADMIN")
                 .anyRequest().authenticated()
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
