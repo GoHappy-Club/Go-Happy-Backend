@@ -1,9 +1,11 @@
-package com.startup.goHappy.entities.service;
+package com.startup.goHappy.services;
 
 import com.startup.goHappy.entities.model.OperationsTeam;
 import com.startup.goHappy.entities.repository.OperationsTeamRepository;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -30,18 +34,20 @@ public class OperationsTeamService implements UserDetailsService {
         if (!operationsTeamOptional.isPresent()) {
             throw new UsernameNotFoundException("User not found");
         }
-
         OperationsTeam operationsTeam = operationsTeamOptional.get();
-        return new User(operationsTeam.getUsername(), operationsTeam.getPassword(), new ArrayList<>());
+        String role = operationsTeam.getRole();
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(role));
+        return new User(operationsTeam.getUsername(), operationsTeam.getPassword(), authorities);
     }
 
-    public boolean authenticate(@NotNull String username, String password) {
+    public String authenticate(@NotNull String username, String password) {
         try {
 //            UserDetails userDetails = loadUserByUsername(username);
 //            return passwordEncoder.matches(password, userDetails.getPassword());
-            return username.equals("admin") && password.equals("admin");
+            return username.equals("admin") && password.equals("admin") ? "ADMIN" : "USER";
         } catch (UsernameNotFoundException e) {
-            return false;
+            return null;
         }
     }
 }
