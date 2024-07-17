@@ -8,20 +8,16 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.SignatureAlgorithm;
 
 import javax.crypto.SecretKey;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class JwtUtil {
 
-    private static final String SECRET_KEY = "TaK+HaV^uvCHEFsEVfypW#7g9^k*Z8$Vfewjhh^fjdhf%";
-    //    @Value("${jwt.secret}")
-    //    private String SECRET_KEY;
+
     private final SecretKey key;
 
-    public JwtUtil() {
-        this.key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    public JwtUtil(@Value("${jwt.secret}") String secret_key) {
+        this.key = Keys.hmacShaKeyFor(secret_key.getBytes());
     }
 
 
@@ -36,9 +32,10 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
-    public String extractRole(String token) {
+
+    public List<String> extractRoles(String token) {
         Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
-        return claims.get("role", String.class);
+        return claims.get("roles", List.class);
     }
 
 
@@ -50,9 +47,9 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(String username, String role) {
+    public String generateToken(String username, List<String> roles) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role","ROLE_"+role);
+        claims.put("roles",roles);
         return createToken(claims, username);
     }
 
@@ -61,7 +58,7 @@ public class JwtUtil {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 15))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 20))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -72,8 +69,8 @@ public class JwtUtil {
             if (isTokenExpired(token)) {
                 return false;
             }
-            String role = claims.get("role", String.class);
-            return role != null && !role.isEmpty();
+            List<String> roles = claims.get("roles", List.class);
+            return roles != null && !roles.isEmpty();
         } catch (Exception e) {
             return false;
         }
