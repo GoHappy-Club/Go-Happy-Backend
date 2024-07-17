@@ -2,10 +2,12 @@ package com.startup.goHappy.entities.model;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
-public class OperationsTeam {
+public class UserRoles {
     @DocumentId
     private String username;
     private String password;
-    private String role;
+    private List<String> roles;
 }

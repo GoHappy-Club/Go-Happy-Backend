@@ -1,6 +1,7 @@
 package com.startup.goHappy;
 
-import com.startup.goHappy.services.OperationsTeamService;
+import com.startup.goHappy.services.UserRolesService;
+import com.startup.goHappy.services.CustomPasswordEncoder;
 import com.startup.goHappy.utils.JwtFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -11,7 +12,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -20,19 +20,19 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
-    private OperationsTeamService operationsTeamService;
+    private UserRolesService userRolesService;
 
     @Autowired
     private JwtFilter jwtFilter;
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(operationsTeamService).passwordEncoder(passwordEncoder());
+        auth.userDetailsService(userRolesService).passwordEncoder(passwordEncoder());
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new CustomPasswordEncoder();
     }
 
     @Bean
@@ -46,9 +46,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable()
                 .authorizeRequests()
                 .antMatchers("/authenticate").permitAll()
-                .antMatchers("/").hasRole("USER")
-                .antMatchers("/home/overview").hasRole("ADMIN")
-                .anyRequest().authenticated()
+                .antMatchers("/user/setPaymentDataWorkshop", "/user/setPaymentDataContribution").permitAll()
+                .antMatchers("/payments/download").hasAnyRole("ADMIN", "PAYMENT_MANAGER")
+                .antMatchers("/event/create", "/event/delete").hasAnyRole("ADMIN", "EVENT_MANAGER")
+                .antMatchers("/notifications/**").hasAnyRole("ADMIN", "NOTIFICATION_MANAGER")
+                .antMatchers("/trips/add").hasAnyRole("ADMIN", "TRIP_MANAGER")
+                .anyRequest().hasAnyRole("ADMIN", "USER")
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
