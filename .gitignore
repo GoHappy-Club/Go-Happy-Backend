@@ -31,3 +31,4 @@ service-account-prod-file.json
 .env
 target/
 *.properties
+service-account-dev-file.json
