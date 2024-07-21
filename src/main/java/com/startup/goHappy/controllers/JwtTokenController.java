@@ -28,7 +28,7 @@ public class JwtTokenController {
 
         if (roles != null && !roles.isEmpty()) {
             final String jwt = jwtUtil.generateToken(username, roles);
-            return ResponseEntity.ok(Map.of("token", jwt));
+            return ResponseEntity.ok(Map.of("token", jwt, "expiry", jwtUtil.ExpiryDate(jwt)));
         } else {
             return ResponseEntity.badRequest().body("Invalid username or password");
         }
