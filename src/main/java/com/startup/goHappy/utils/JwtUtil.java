@@ -7,6 +7,11 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.SignatureAlgorithm;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
 import javax.crypto.SecretKey;
 import java.util.*;
 
@@ -23,6 +28,14 @@ public class JwtUtil {
 
     public Date extractExpiration(String token) {
         return extractAllClaims(token).getExpiration();
+    }
+
+    public  String ExpiryDate(String token) {
+        long milliseconds = extractExpiration(token).toInstant().toEpochMilli();
+        Instant instant = Instant.ofEpochMilli(milliseconds);
+        ZonedDateTime zonedDateTime = instant.atZone(ZoneId.systemDefault());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return zonedDateTime.format(formatter);
     }
 
     private Claims extractAllClaims(String token) {
@@ -49,7 +62,7 @@ public class JwtUtil {
 
     public String generateToken(String username, List<String> roles) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("roles",roles);
+        claims.put("roles", roles);
         return createToken(claims, username);
     }
 
@@ -58,7 +71,7 @@ public class JwtUtil {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 20))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 5))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
