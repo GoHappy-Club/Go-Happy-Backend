@@ -43,19 +43,18 @@ public class PhonePeService {
     @Value("${phonePe.apiEndPoint}")
     private String apiEndPoint;
 
-	public JSONObject generatePayload(String phone,Integer amount,String paymentType) throws JsonProcessingException {
-		String uuid = UUID.randomUUID().toString().replace("-", "").substring(0,22);
-		String merchantTransactionId = uuid+phone;
+	public JSONObject generatePayload(String phone,Integer amount,String paymentType,String orderId,String tambolaTicket) throws JsonProcessingException {
+		String merchantTransactionId = UUID.randomUUID().toString().replace("-", "");
 		JSONObject requestBody = new JSONObject();
 		requestBody.put("merchantId",merchantId);
 		requestBody.put("merchantTransactionId",merchantTransactionId);
 		requestBody.put("mobileNumber",phone);
 		requestBody.put("amount",amount);
 		if ("contribution".equals(paymentType)) {
-			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataContribution");
+			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataContribution?phoneNumber="+phone);
             requestBody.put("redirectUrl","https://www.gohappyclub.in/contribute");
 		}else if("workshop".equals(paymentType)){
-			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataWorkshop");
+			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataWorkshop?phoneNumber="+phone+"&orderId="+orderId+"&tambolaTicket="+tambolaTicket);
             requestBody.put("redirectUrl","https://www.gohappyclub.in/free_sessions");
 		}
 		requestBody.put("merchantUserId",phone);

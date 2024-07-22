@@ -2,6 +2,7 @@ package com.startup.goHappy.controllers;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -30,6 +31,7 @@ import com.startup.goHappy.entities.model.UserProfile;
 import com.startup.goHappy.entities.repository.UserProfileRepository;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletResponse;
 
 @RestController
@@ -49,10 +51,13 @@ public class UserProfileController {
     @Autowired
     FirestoreConfig firestoreConfig;
 
+    @Autowired
+    EventController eventController;
 
-	public UserProfileController() {
 
-	}
+    public UserProfileController() {
+
+    }
 
     @TestOnly
     public UserProfileController(UserProfileRepository userProfileService) {
@@ -176,7 +181,7 @@ public class UserProfileController {
         for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
             user = document.toObject(UserProfile.class);
             user.setLastPaymentAmount(Integer.parseInt(params.getString("amount")));
-            user.setLastPaymentDate(""+new Date().getTime());
+            user.setLastPaymentDate("" + new Date().getTime());
 
             PaymentLog log = new PaymentLog();
             log.setPaymentDate(user.getLastPaymentDate());
@@ -194,23 +199,21 @@ public class UserProfileController {
     }
 
     @PostMapping("setPaymentDataContribution")
-    public void setPaymentDataContribution(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+    public void setPaymentDataContribution(@RequestParam String phoneNumber, @RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
         CollectionReference userProfiles = userProfileService.getCollectionReference();
         String encodedResponse = params.getString("response");
 
         byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
         String decodedString = new String(decodedBytes);
-
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode decodedJson = objectMapper.readTree(decodedString);
 
         JsonNode dataNode = decodedJson.get("data");
         String merchantTransactionId = dataNode.get("merchantTransactionId").asText();
         int amountInPaisa = dataNode.get("amount").asInt();
-        int amount = amountInPaisa/100;
-
-        // Extract last 12 characters of merchantTransactionId (phone number)
-        String phoneNumber = merchantTransactionId.substring(merchantTransactionId.length() - 12);
+        int amount = amountInPaisa / 100;
+        String code = decodedJson.get("code").asText();
+        if ("PAYMENT_ERROR".equals(code)) return;
         Query profileQuery = userProfiles.whereEqualTo("phone", phoneNumber);
 
         ApiFuture<QuerySnapshot> querySnapshot1 = profileQuery.get();
@@ -236,45 +239,23 @@ public class UserProfileController {
     }
 
     @PostMapping("setPaymentDataWorkshop")
-    public void setPaymentDataWorkshop(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
-        CollectionReference userProfiles = userProfileService.getCollectionReference();
+    public void setPaymentDataWorkshop(@RequestParam String phoneNumber, @RequestParam String orderId,@RequestParam String tambolaTicket,@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException, MessagingException, GeneralSecurityException {
         String encodedResponse = params.getString("response");
 
         byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
         String decodedString = new String(decodedBytes);
-        System.out.println("decodedString ==>"+decodedString);
 
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode decodedJson = objectMapper.readTree(decodedString);
+        String code = decodedJson.get("code").asText();
+        if ("PAYMENT_ERROR".equals(code)) return;
 
-        JsonNode dataNode = decodedJson.get("data");
-        String merchantTransactionId = dataNode.get("merchantTransactionId").asText();
-        int amountInPaisa = dataNode.get("amount").asInt();
-        int amount = amountInPaisa/100;
+        JSONObject bookEventParams = new JSONObject();
+        bookEventParams.put("id",orderId);
+        bookEventParams.put("phoneNumber",phoneNumber);
+        bookEventParams.put("tambolaTicket",tambolaTicket);
 
-        // Extract last 12 characters of merchantTransactionId (phone number)
-        String phoneNumber = merchantTransactionId.substring(merchantTransactionId.length() - 12);
-        Query profileQuery = userProfiles.whereEqualTo("phone", phoneNumber);
-
-        ApiFuture<QuerySnapshot> querySnapshot1 = profileQuery.get();
-        UserProfile user = null;
-        for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
-            user = document.toObject(UserProfile.class);
-            user.setLastPaymentAmount(amount);
-            user.setLastPaymentDate("" + new Date().getTime());
-
-            PaymentLog log = new PaymentLog();
-            log.setPaymentDate(user.getLastPaymentDate());
-            log.setPhone(user.getPhone());
-            log.setId(merchantTransactionId);
-            log.setAmount(user.getLastPaymentAmount());
-            log.setType("workshop");
-            paymentLogService.save(log);
-
-
-            break;
-        }
-        userProfileService.save(user);
+        eventController.bookEvent(bookEventParams);
 
     }
 
