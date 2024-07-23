@@ -2,7 +2,6 @@ package com.startup.goHappy.entities.model;
 
 
 import lombok.Data;
-
 import java.util.List;
 
 @Data
@@ -27,7 +26,7 @@ public class Trip {
 	private String docsRequired;
 	private String cancellationPolicy = "default policy";
 	private String termsAndConditions = "default";
-	private String inquireNowLink = "https%3A%2F%2Fwa.me%2F7888384477%3Ftext%3DHi%20GoHappy%20Club%20Team%2C%20%0AI%20am%20interested%20in%20%24%7Btrip%7D%20trip.%20Please%20share%20more%20details.";
+	private String inquireNowLink = "https://wa.me/7888384477?text=Hi%20GoHappy%20Club%20Team%2C%20%20I%20am%20interested%20in%20%24%7Btrip%7D%20trip.%20Please%20share%20more%20details.";
 	private String memoryImage;
 	private String memoryVideoUrl;
 
