@@ -1,5 +1,7 @@
 package com.startup.goHappy.integrations.service;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.MessageDigest;
@@ -43,18 +45,21 @@ public class PhonePeService {
     @Value("${phonePe.apiEndPoint}")
     private String apiEndPoint;
 
-	public JSONObject generatePayload(String phone,Integer amount,String paymentType,String orderId,String tambolaTicket) throws JsonProcessingException {
+	public JSONObject generatePayload(String phone,Integer amount,String paymentType,String orderId,String tambolaTicket) throws JsonProcessingException, UnsupportedEncodingException {
 		String merchantTransactionId = UUID.randomUUID().toString().replace("-", "");
 		JSONObject requestBody = new JSONObject();
 		requestBody.put("merchantId",merchantId);
 		requestBody.put("merchantTransactionId",merchantTransactionId);
 		requestBody.put("mobileNumber",phone);
 		requestBody.put("amount",amount);
+        String encodedPhoneNumber = URLEncoder.encode(phone, "UTF-8");
+        String encodedOrderId = URLEncoder.encode(orderId, "UTF-8");
+        String encodedTambolaTicket = URLEncoder.encode(tambolaTicket, "UTF-8");
 		if ("contribution".equals(paymentType)) {
-			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataContribution?phoneNumber="+phone);
+			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataContribution?phoneNumber="+encodedPhoneNumber);
             requestBody.put("redirectUrl","https://www.gohappyclub.in/contribute");
 		}else if("workshop".equals(paymentType)){
-			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataWorkshop?phoneNumber="+phone+"&orderId="+orderId+"&tambolaTicket="+tambolaTicket);
+			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataWorkshop?phoneNumber="+encodedPhoneNumber+"&orderId="+encodedOrderId+"&tambolaTicket="+encodedTambolaTicket);
             requestBody.put("redirectUrl","https://www.gohappyclub.in/free_sessions");
 		}
 		requestBody.put("merchantUserId",phone);
