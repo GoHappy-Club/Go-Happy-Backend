@@ -52,9 +52,9 @@ public class PhonePeService {
 		requestBody.put("merchantTransactionId",merchantTransactionId);
 		requestBody.put("mobileNumber",phone);
 		requestBody.put("amount",amount);
-        String encodedPhoneNumber = URLEncoder.encode(phone, "UTF-8");
-        String encodedOrderId = URLEncoder.encode(orderId, "UTF-8");
-        String encodedTambolaTicket = URLEncoder.encode(tambolaTicket, "UTF-8");
+        String encodedPhoneNumber = phone != null ? URLEncoder.encode(phone, "UTF-8") : "";
+        String encodedOrderId = orderId != null ? URLEncoder.encode(orderId, "UTF-8") : "";
+        String encodedTambolaTicket = tambolaTicket != null ? URLEncoder.encode(tambolaTicket, "UTF-8") : "";
 		if ("contribution".equals(paymentType)) {
 			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataContribution?phoneNumber="+encodedPhoneNumber);
             requestBody.put("redirectUrl","https://www.gohappyclub.in/contribute");
