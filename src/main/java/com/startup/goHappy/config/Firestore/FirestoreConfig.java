@@ -42,7 +42,7 @@ public class FirestoreConfig {
 		FileInputStream serviceAccount = new FileInputStream(serviceAccountPath);
 		GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
 		FirestoreOptions options1 = FirestoreOptions.newBuilder()
-				.setCredentials(credentials).build();
+				.setCredentials(credentials).setDatabaseId(dotenv.get("DATABASE_ID")).build();
 		return options1.getService();
 	}
 
