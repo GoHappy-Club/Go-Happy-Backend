@@ -28,4 +28,7 @@ target/classes/application.properties
 *.iml
 *.class
 service-account-prod-file.json
+.env
+target/
+*.properties
 service-account-dev-file.json

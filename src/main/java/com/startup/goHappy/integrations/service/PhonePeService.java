@@ -44,6 +44,8 @@ public class PhonePeService {
     private String merchantId;
     @Value("${phonePe.apiEndPoint}")
     private String apiEndPoint;
+    @Value("${base.url}")
+    private String baseUrl;
 
 	public JSONObject generatePayload(String phone,Integer amount,String paymentType,String orderId,String tambolaTicket) throws JsonProcessingException, UnsupportedEncodingException {
 		String merchantTransactionId = UUID.randomUUID().toString().replace("-", "");
@@ -56,10 +58,10 @@ public class PhonePeService {
         String encodedOrderId = orderId != null ? URLEncoder.encode(orderId, "UTF-8") : "";
         String encodedTambolaTicket = tambolaTicket != null ? URLEncoder.encode(tambolaTicket, "UTF-8") : "";
 		if ("contribution".equals(paymentType)) {
-			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataContribution?phoneNumber="+encodedPhoneNumber);
+			requestBody.put("callbackUrl",baseUrl+"/user/setPaymentDataContribution?phoneNumber="+encodedPhoneNumber);
             requestBody.put("redirectUrl","https://www.gohappyclub.in/contribute");
 		}else if("workshop".equals(paymentType)){
-			requestBody.put("callbackUrl","https://go-happy-322816.nw.r.appspot.com/user/setPaymentDataWorkshop?phoneNumber="+encodedPhoneNumber+"&orderId="+encodedOrderId+"&tambolaTicket="+encodedTambolaTicket);
+			requestBody.put("callbackUrl",baseUrl+"/user/setPaymentDataWorkshop?phoneNumber="+encodedPhoneNumber+"&orderId="+encodedOrderId+"&tambolaTicket="+encodedTambolaTicket);
             requestBody.put("redirectUrl","https://www.gohappyclub.in/free_sessions");
 		}
 		requestBody.put("merchantUserId",phone);
