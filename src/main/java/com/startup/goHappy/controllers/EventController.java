@@ -1,5 +1,8 @@
 package com.startup.goHappy.controllers;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
@@ -30,6 +33,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.time.Duration;
 
+import javax.imageio.ImageIO;
 import javax.mail.MessagingException;
 
 import com.startup.goHappy.entities.model.PaymentLog;
@@ -41,6 +45,8 @@ import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.scheduling.support.CronSequenceGenerator;
@@ -1088,6 +1094,89 @@ public class EventController {
 		output.put("ongoingEvents", new ArrayList());
 		
 		return output;
+	}
+
+	@ApiOperation(value = "get Tambola ticket by ticket number and event ID")
+	@PostMapping("getTambolaTicket")
+	public ResponseEntity<byte[]> getTambolaTicket(@RequestBody JSONObject params) throws IOException {
+		ObjectMapper objectMapper = new ObjectMapper();
+		Optional<Event> oevent = eventService.findById(params.getString("eventId"));
+		Event event = oevent.get();
+		List<String> tickets = event.getTambolaTickets();
+		String ticket = tickets.get(Integer.parseInt(params.getString("ticketNumber")));
+		JSONObject output = new JSONObject();
+		output.put("ticket", ticket);
+		if (ticket != null) {
+			int[][] ticketArray = parseTicketString(ticket);
+			BufferedImage image = createTicketImage(ticketArray);
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			ImageIO.write(image, "png", baos);
+			byte[] imageBytes = baos.toByteArray();
+
+			return ResponseEntity
+					.ok()
+					.contentType(MediaType.IMAGE_PNG)
+					.body(imageBytes);
+		}
+		return ResponseEntity
+				.ok()
+				.contentType(MediaType.APPLICATION_JSON)
+				.body("{\"message\":\"Ticket not found\"}".getBytes());
+	}
+
+	private int[][] parseTicketString(String ticketString) throws IOException {
+		// Remove the extra quotes at the beginning and end
+		ticketString = ticketString.replaceAll("^\"|\"$", "");
+
+		ObjectMapper objectMapper = new ObjectMapper();
+		List<List<Integer>> ticketList = objectMapper.readValue(ticketString,
+				new com.fasterxml.jackson.core.type.TypeReference<List<List<Integer>>>() {
+				});
+
+		// Convert List<List<Integer>> to int[][]
+		int[][] ticket = new int[ticketList.size()][];
+		for (int i = 0; i < ticketList.size(); i++) {
+			List<Integer> row = ticketList.get(i);
+			ticket[i] = row.stream().mapToInt(Integer::intValue).toArray();
+		}
+
+		return ticket;
+	}
+
+	private BufferedImage createTicketImage(int[][] ticket) {
+		int width = 450;
+		int height = 150;
+		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		Graphics2D g2d = image.createGraphics();
+
+		// Set background
+		g2d.setColor(Color.WHITE);
+		g2d.fillRect(0, 0, width, height);
+
+		// Draw grid
+		g2d.setColor(Color.BLACK);
+		for (int i = 0; i <= 3; i++) {
+			g2d.drawLine(0, i * 50, width, i * 50);
+		}
+		for (int i = 0; i <= 9; i++) {
+			g2d.drawLine(i * 50, 0, i * 50, height);
+		}
+
+		// Draw numbers
+		g2d.setFont(new Font("Arial", Font.BOLD, 20));
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 9; j++) {
+				if (ticket[i][j] != 0) {
+					String number = String.valueOf(ticket[i][j]);
+					int x = j * 50 + 25 - (g2d.getFontMetrics().stringWidth(number) / 2);
+					int y = i * 50 + 30;
+					g2d.drawString(number, x, y);
+				}
+			}
+		}
+
+		g2d.dispose();
+		return image;
 	}
 	public JSONObject getOngoingEvents(JSONObject params){
 		System.out.println(params.getString("date"));
