@@ -42,6 +42,8 @@ public class Event {
 	private String recordingLink;
 	private String occurance;
 	private List<String> participantList;
+	private List<Integer> tambolaNumberCaller;
+	private Map<String,Integer> liveTambola;
 
 	private List<String> tambolaTickets;
 
@@ -54,7 +56,7 @@ public class Event {
 		return "Event [id=" + id + ", eventName=" + eventName + ", creator=" + creator + ", modifier=" + modifier
 				+ ", lastUpdated=" + lastUpdated + ", startTime=" + startTime + ", endTime=" + endTime + ", eventDate="
 				+ eventDate + ", expertName=" + expertName + ", category=" + category + ", description=" + description
-				+ ", seatsLeft=" + seatsLeft + ", type=" + type + ", coverImage=" + coverImage + "]";
+				+ ", seatsLeft=" + seatsLeft + ", type=" + type + ", coverImage=" + coverImage + ", tambolaNumberCaller="+tambolaNumberCaller  + "]";
 	}
 
 	

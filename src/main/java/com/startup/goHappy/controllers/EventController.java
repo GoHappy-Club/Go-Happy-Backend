@@ -703,6 +703,19 @@ public class EventController {
 		ev.setParticipantList(new ArrayList<String>());
 		ev.setCostType(StringUtils.isEmpty(event.getString("type"))?"free":"paid");
 		ev.setType(StringUtils.isEmpty(event.getString("type"))?"session":event.getString("type"));
+		if(event.getString("eventName").toLowerCase().contains("tambola")) {
+			List<Integer> numberCaller = new ArrayList<>();
+			Map<String,Integer> liveTambola = new HashMap<>();
+			for (int i = 1; i <= 90; i++) {
+				numberCaller.add(i);
+			}
+			Collections.shuffle(numberCaller);
+			liveTambola.put("index",0);
+			liveTambola.put("value",numberCaller.get(0));
+			liveTambola.put("lastNumber",numberCaller.get(0));
+			ev.setTambolaNumberCaller(numberCaller);
+			ev.setLiveTambola(liveTambola);
+		}
 		if(!StringUtils.isEmpty(ev.getCron())) {
 			TimeZone tz = TimeZone.getTimeZone("Asia/Kolkata");
 			CronSequenceGenerator generator = new CronSequenceGenerator(ev.getCron(),tz);
@@ -1094,89 +1107,6 @@ public class EventController {
 		output.put("ongoingEvents", new ArrayList());
 		
 		return output;
-	}
-
-	@ApiOperation(value = "get Tambola ticket by ticket number and event ID")
-	@PostMapping("getTambolaTicket")
-	public ResponseEntity<byte[]> getTambolaTicket(@RequestBody JSONObject params) throws IOException {
-		ObjectMapper objectMapper = new ObjectMapper();
-		Optional<Event> oevent = eventService.findById(params.getString("eventId"));
-		Event event = oevent.get();
-		List<String> tickets = event.getTambolaTickets();
-		String ticket = tickets.get(Integer.parseInt(params.getString("ticketNumber")));
-		JSONObject output = new JSONObject();
-		output.put("ticket", ticket);
-		if (ticket != null) {
-			int[][] ticketArray = parseTicketString(ticket);
-			BufferedImage image = createTicketImage(ticketArray);
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			ImageIO.write(image, "png", baos);
-			byte[] imageBytes = baos.toByteArray();
-
-			return ResponseEntity
-					.ok()
-					.contentType(MediaType.IMAGE_PNG)
-					.body(imageBytes);
-		}
-		return ResponseEntity
-				.ok()
-				.contentType(MediaType.APPLICATION_JSON)
-				.body("{\"message\":\"Ticket not found\"}".getBytes());
-	}
-
-	private int[][] parseTicketString(String ticketString) throws IOException {
-		// Remove the extra quotes at the beginning and end
-		ticketString = ticketString.replaceAll("^\"|\"$", "");
-
-		ObjectMapper objectMapper = new ObjectMapper();
-		List<List<Integer>> ticketList = objectMapper.readValue(ticketString,
-				new com.fasterxml.jackson.core.type.TypeReference<List<List<Integer>>>() {
-				});
-
-		// Convert List<List<Integer>> to int[][]
-		int[][] ticket = new int[ticketList.size()][];
-		for (int i = 0; i < ticketList.size(); i++) {
-			List<Integer> row = ticketList.get(i);
-			ticket[i] = row.stream().mapToInt(Integer::intValue).toArray();
-		}
-
-		return ticket;
-	}
-
-	private BufferedImage createTicketImage(int[][] ticket) {
-		int width = 450;
-		int height = 150;
-		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-		Graphics2D g2d = image.createGraphics();
-
-		// Set background
-		g2d.setColor(Color.WHITE);
-		g2d.fillRect(0, 0, width, height);
-
-		// Draw grid
-		g2d.setColor(Color.BLACK);
-		for (int i = 0; i <= 3; i++) {
-			g2d.drawLine(0, i * 50, width, i * 50);
-		}
-		for (int i = 0; i <= 9; i++) {
-			g2d.drawLine(i * 50, 0, i * 50, height);
-		}
-
-		// Draw numbers
-		g2d.setFont(new Font("Arial", Font.BOLD, 20));
-		for (int i = 0; i < 3; i++) {
-			for (int j = 0; j < 9; j++) {
-				if (ticket[i][j] != 0) {
-					String number = String.valueOf(ticket[i][j]);
-					int x = j * 50 + 25 - (g2d.getFontMetrics().stringWidth(number) / 2);
-					int y = i * 50 + 30;
-					g2d.drawString(number, x, y);
-				}
-			}
-		}
-
-		g2d.dispose();
-		return image;
 	}
 	public JSONObject getOngoingEvents(JSONObject params){
 		System.out.println(params.getString("date"));
