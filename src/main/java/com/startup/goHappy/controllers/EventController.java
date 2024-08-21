@@ -710,9 +710,9 @@ public class EventController {
 				numberCaller.add(i);
 			}
 			Collections.shuffle(numberCaller);
-			liveTambola.put("index",0);
-			liveTambola.put("value",numberCaller.get(0));
-			liveTambola.put("lastNumber",numberCaller.get(0));
+			liveTambola.put("index",-1);
+			liveTambola.put("value",null);
+			liveTambola.put("lastNumber",null);
 			ev.setTambolaNumberCaller(numberCaller);
 			ev.setLiveTambola(liveTambola);
 		}
