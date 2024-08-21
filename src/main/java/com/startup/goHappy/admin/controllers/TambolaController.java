@@ -1,4 +1,4 @@
-package com.startup.goHappy.controllers;
+package com.startup.goHappy.admin.controllers;
 
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,24 +59,29 @@ public class TambolaController {
     }
 
     @ApiOperation(value = "generate random number for tambola")
-    @PostMapping("getcallNumber")
-    public JSONObject getcallNumber(@RequestBody JSONObject params) throws IOException {
+    @PostMapping("getCallNumber")
+    public JSONObject getCallNumber(@RequestBody JSONObject params) throws IOException {
         CollectionReference eventRef = eventService.getCollectionReference();
         Optional<Event> oevent = eventService.findById(params.getString("eventId"));
         Event event = oevent.get();
         List<Integer> callingNumbers = event.getTambolaNumberCaller();
         Map<String,Integer> liveTambola = event.getLiveTambola();
+        List<Integer> alreadyCalledNumbers = new ArrayList<>();
         int index = liveTambola.get("index");
-        int lastNumber = callingNumbers.get(index);
+        if (index != -1) {
+            int lastNumber= callingNumbers.get(index);
+            liveTambola.replace("lastNumber",lastNumber);
+            alreadyCalledNumbers = callingNumbers.subList(0, liveTambola.get("index")+1);
+        }
         int number = callingNumbers.get(index+1);
-        liveTambola.replace("lastNumber",lastNumber);
         liveTambola.replace("value",number);
         liveTambola.replace("index",index+1);
         Map<String, Object> map = new HashMap<>();
         map.put("liveTambola",liveTambola);
         eventRef.document(params.getString("eventId")).update(map);
         JSONObject output = new JSONObject();
-        output.put("number",lastNumber);
+        output.put("number",number);
+        output.put("alreadyCalledNumbers",alreadyCalledNumbers);
         return output;
     }
 
