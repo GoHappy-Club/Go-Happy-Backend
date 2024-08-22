@@ -742,7 +742,21 @@ public class EventController {
 				long start = nextExecutionDate.getTime();
 				System.out.println(duration);
 				Date newEndTime = new Date(nextExecutionDate.getTime()+duration*60000);
-				childEvent.setEndTime(""+newEndTime.getTime());				
+				childEvent.setEndTime(""+newEndTime.getTime());
+
+				if(event.getString("eventName").toLowerCase().contains("tambola")) {
+					List<Integer> numberCaller = new ArrayList<>();
+					Map<String,Integer> liveTambola = new HashMap<>();
+					for (int k = 1; k <= 90; k++) {
+						numberCaller.add(k);
+					}
+					Collections.shuffle(numberCaller);
+					liveTambola.put("index",-1);
+					liveTambola.put("value",null);
+					liveTambola.put("lastNumber",null);
+					childEvent.setTambolaNumberCaller(numberCaller);
+					childEvent.setLiveTambola(liveTambola);
+				}
 				
 				ZoomMeetingObjectDTO obj = new ZoomMeetingObjectDTO();
 				obj.setTopic(ev.getEventName());
