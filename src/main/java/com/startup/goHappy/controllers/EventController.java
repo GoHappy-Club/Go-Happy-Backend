@@ -50,11 +50,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.scheduling.support.CronSequenceGenerator;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -909,6 +905,7 @@ public class EventController {
 
 	@ApiOperation(value = "Get event by ID")
 	@PostMapping("getEvent")
+	@CrossOrigin(origins = "*", allowedHeaders = "*")
 	public JSONObject getEventById(@RequestBody JSONObject params){
 		String id = params.getString("id");
 
