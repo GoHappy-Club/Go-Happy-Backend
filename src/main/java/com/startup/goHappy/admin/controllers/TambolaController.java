@@ -9,10 +9,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -24,25 +21,27 @@ import java.util.List;
 
 @RestController
 @RequestMapping("tambola")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class TambolaController {
     @Autowired
     EventRepository eventService;
 
     @ApiOperation(value = "get Tambola ticket by ticket number and event ID")
     @PostMapping("getTicket")
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     public ResponseEntity<byte[]> getTambolaTicket(@RequestBody JSONObject params) throws IOException {
         Optional<Event> oevent = eventService.findById(params.getString("eventId"));
         Event event = oevent.get();
         List<String> tickets = event.getTambolaTickets();
         List<Integer> callingNumbers = event.getTambolaNumberCaller();
-        Map<String,Integer> liveTambola = event.getLiveTambola();
+        Map<String, Integer> liveTambola = event.getLiveTambola();
         List<Integer> alreadyCalledNumbers = callingNumbers.subList(0, liveTambola.get("index"));
         String ticket = tickets.get(Integer.parseInt(params.getString("ticketNumber")));
         JSONObject output = new JSONObject();
         output.put("ticket", ticket);
         if (ticket != null) {
             int[][] ticketArray = parseTicketString(ticket);
-            BufferedImage image = createTicketImage(ticketArray,alreadyCalledNumbers);
+            BufferedImage image = createTicketImage(ticketArray, alreadyCalledNumbers);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(image, "png", baos);
             byte[] imageBytes = baos.toByteArray();
@@ -60,38 +59,40 @@ public class TambolaController {
 
     @ApiOperation(value = "generate random number for tambola")
     @PostMapping("getCallNumber")
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     public JSONObject getCallNumber(@RequestBody JSONObject params) throws IOException {
         CollectionReference eventRef = eventService.getCollectionReference();
         Optional<Event> oevent = eventService.findById(params.getString("eventId"));
         Event event = oevent.get();
         List<Integer> callingNumbers = event.getTambolaNumberCaller();
-        Map<String,Integer> liveTambola = event.getLiveTambola();
+        Map<String, Integer> liveTambola = event.getLiveTambola();
         List<Integer> alreadyCalledNumbers = new ArrayList<>();
         int index = liveTambola.get("index");
         if (index != -1) {
-            int lastNumber= callingNumbers.get(index);
-            liveTambola.replace("lastNumber",lastNumber);
-            alreadyCalledNumbers = callingNumbers.subList(0, liveTambola.get("index")+1);
+            int lastNumber = callingNumbers.get(index);
+            liveTambola.replace("lastNumber", lastNumber);
+            alreadyCalledNumbers = callingNumbers.subList(0, liveTambola.get("index") + 1);
         }
-        int number = callingNumbers.get(index+1);
-        liveTambola.replace("value",number);
-        liveTambola.replace("index",index+1);
+        int number = callingNumbers.get(index + 1);
+        liveTambola.replace("value", number);
+        liveTambola.replace("index", index + 1);
         Map<String, Object> map = new HashMap<>();
-        map.put("liveTambola",liveTambola);
+        map.put("liveTambola", liveTambola);
         eventRef.document(params.getString("eventId")).update(map);
         JSONObject output = new JSONObject();
-        output.put("number",number);
-        output.put("alreadyCalledNumbers",alreadyCalledNumbers);
+        output.put("number", number);
+        output.put("alreadyCalledNumbers", alreadyCalledNumbers);
         return output;
     }
 
     @ApiOperation(value = "get List of already called numbers for tambola")
     @PostMapping("getCalledNumbers")
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     public ResponseEntity<byte[]> getCalledNumbers(@RequestBody JSONObject params) throws IOException {
         Optional<Event> oevent = eventService.findById(params.getString("eventId"));
         Event event = oevent.get();
         List<Integer> callingNumbers = event.getTambolaNumberCaller();
-        Map<String,Integer> liveTambola = event.getLiveTambola();
+        Map<String, Integer> liveTambola = event.getLiveTambola();
         List<Integer> alreadyCalledNumbers = callingNumbers.subList(0, liveTambola.get("index"));
         BufferedImage image = createNumbersImage(alreadyCalledNumbers);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -216,7 +217,7 @@ public class TambolaController {
                     if (alreadyCalledNumbers.contains(ticket[i][j])) {
                         g2d.setColor(Color.RED);
                         g2d.setStroke(new BasicStroke(3));
-                        g2d.drawLine(x - cellWidth / 2 + 15, y - cellHeight / 2 , x + cellWidth / 2 +8, y + cellHeight / 2-10);
+                        g2d.drawLine(x - cellWidth / 2 + 15, y - cellHeight / 2, x + cellWidth / 2 + 8, y + cellHeight / 2 - 10);
                         g2d.setColor(Color.BLACK);
                     }
                 }
