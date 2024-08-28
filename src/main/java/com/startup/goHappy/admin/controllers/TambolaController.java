@@ -35,7 +35,13 @@ public class TambolaController {
         List<String> tickets = event.getTambolaTickets();
         List<Integer> callingNumbers = event.getTambolaNumberCaller();
         Map<String, Integer> liveTambola = event.getLiveTambola();
-        List<Integer> alreadyCalledNumbers = callingNumbers.subList(0, liveTambola.get("index"));
+        List<Integer> alreadyCalledNumbers = callingNumbers.subList(0, liveTambola.get("index")+1);
+        String eventName = event.getEventName();
+        if (eventName.toLowerCase().contains("minus")) {
+            alreadyCalledNumbers = adjustNumbers(alreadyCalledNumbers, "MINUS_ONE");
+        } else if (eventName.toLowerCase().contains("plus")) {
+            alreadyCalledNumbers = adjustNumbers(alreadyCalledNumbers, "PLUS_ONE");
+        }
         String ticket = tickets.get(Integer.parseInt(params.getString("ticketNumber")));
         JSONObject output = new JSONObject();
         output.put("ticket", ticket);
@@ -226,5 +232,25 @@ public class TambolaController {
 
         g2d.dispose();
         return image;
+    }
+
+    public List<Integer> adjustNumbers(List<Integer> alreadyCalledNumbers, String version) {
+        List<Integer> adjustedNumbers = new ArrayList<>(alreadyCalledNumbers.size());
+        for (Integer number : alreadyCalledNumbers) {
+            int adjustedNumber = adjustNumber(number, version);
+            adjustedNumbers.add(adjustedNumber);
+        }
+        return adjustedNumbers;
+    }
+
+    private int adjustNumber(int number, String version) {
+        switch (version) {
+            case "PLUS_ONE":
+                return (number < 90) ? number + 1 : 1;
+            case "MINUS_ONE":
+                return (number > 1) ? number - 1 : 90;
+            default:
+                throw new IllegalArgumentException("Invalid game version");
+        }
     }
 }
