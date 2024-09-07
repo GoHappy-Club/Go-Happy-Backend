@@ -10,7 +10,7 @@ import java.util.List;
 public class Properties {
     @DocumentId
     private String id;
-    private String whatsappLink;
+    private List<String> whatsappLink;
     private String appVersion;
     private Boolean forceUpdate;
     private int buildNumber;
