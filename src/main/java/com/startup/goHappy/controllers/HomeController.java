@@ -30,8 +30,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.alibaba.fastjson.JSONObject;
 import com.startup.goHappy.entities.model.Event;
 import com.startup.goHappy.entities.repository.EventRepository;
-import com.startup.goHappy.integrations.service.EmailService;
-import com.startup.goHappy.services.HomeService;
+//import com.startup.goHappy.integrations.service.EmailService;
+//import com.startup.goHappy.services.HomeService;
 
 
 
