@@ -77,7 +77,7 @@ import io.micrometer.core.instrument.util.StringEscapeUtils;
 
 
 @RestController
-@RequestMapping("event")
+@RequestMapping("/event")
 public class EventController {
 	
 	
@@ -688,7 +688,7 @@ public class EventController {
 
 	@SuppressWarnings("deprecation")
 	@ApiOperation(value = "To create an event (can be a single or a recurring event)")
-	@PostMapping("create")
+	@PostMapping("/create")
 	public void createEvent(@RequestBody JSONObject event) throws IOException {
 		Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
 		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
