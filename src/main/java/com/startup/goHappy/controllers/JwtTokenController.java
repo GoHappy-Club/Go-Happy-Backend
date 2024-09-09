@@ -20,7 +20,7 @@ public class JwtTokenController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @PostMapping("authenticate")
+    @PostMapping("/authenticate")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody Map<String, String> authenticationRequest) {
         String username = authenticationRequest.get("username");
         String password = authenticationRequest.get("password");

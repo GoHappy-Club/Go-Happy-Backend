@@ -20,15 +20,13 @@ import java.util.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("tambola")
-@CrossOrigin(origins = "*", allowedHeaders = "*")
+@RequestMapping("/admin/tambola")
 public class TambolaController {
     @Autowired
     EventRepository eventService;
 
     @ApiOperation(value = "get Tambola ticket by ticket number and event ID")
-    @PostMapping("getTicket")
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/getTicket")
     public ResponseEntity<byte[]> getTambolaTicket(@RequestBody JSONObject params) throws IOException {
         Optional<Event> oevent = eventService.findById(params.getString("eventId"));
         Event event = oevent.get();
@@ -64,8 +62,7 @@ public class TambolaController {
     }
 
     @ApiOperation(value = "generate random number for tambola")
-    @PostMapping("getCallNumber")
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/getCallNumber")
     public JSONObject getCallNumber(@RequestBody JSONObject params) throws IOException {
         CollectionReference eventRef = eventService.getCollectionReference();
         Optional<Event> oevent = eventService.findById(params.getString("eventId"));
@@ -92,8 +89,7 @@ public class TambolaController {
     }
 
     @ApiOperation(value = "get List of already called numbers for tambola")
-    @PostMapping("getCalledNumbers")
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @PostMapping("/getCalledNumbers")
     public ResponseEntity<byte[]> getCalledNumbers(@RequestBody JSONObject params) throws IOException {
         Optional<Event> oevent = eventService.findById(params.getString("eventId"));
         Event event = oevent.get();

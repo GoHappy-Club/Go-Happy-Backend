@@ -36,7 +36,7 @@ import com.startup.goHappy.entities.repository.EventRepository;
 
 
 @RestController
-@RequestMapping("home")
+@RequestMapping("/home")
 public class HomeController {
 
 	@Autowired
@@ -80,7 +80,7 @@ public class HomeController {
 		return "";
 	}
 
-	@GetMapping("overview")
+	@GetMapping("/overview")
 	public JSONObject overview() throws Exception {
 		JSONObject content = new JSONObject();
 		content.put("trendingSessions",trendingSessions());
