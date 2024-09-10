@@ -30,10 +30,10 @@ public class JwtUtil {
         return extractAllClaims(token).getExpiration();
     }
 
-    public  String ExpiryDate(String token) {
+    public String ExpiryDate(String token) {
         long milliseconds = extractExpiration(token).toInstant().toEpochMilli();
         Instant instant = Instant.ofEpochMilli(milliseconds);
-        ZonedDateTime zonedDateTime = instant.atZone(ZoneId.systemDefault());
+        ZonedDateTime zonedDateTime = instant.atZone(ZoneId.of("Asia/Kolkata"));
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return zonedDateTime.format(formatter);
     }
