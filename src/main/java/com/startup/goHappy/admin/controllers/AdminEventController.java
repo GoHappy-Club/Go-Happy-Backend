@@ -28,7 +28,7 @@ public class AdminEventController {
         int LIMIT = 20;
         int OFFSET = (page - 1) * 20;
         CollectionReference eventRef = eventService.getCollectionReference();
-        Query query = eventRef.orderBy("eventDate", Query.Direction.DESCENDING).limit(LIMIT).offset(OFFSET);
+        Query query = eventRef.whereEqualTo("isParent", false).orderBy("eventDate", Query.Direction.DESCENDING).limit(LIMIT).offset(OFFSET);
         ApiFuture<QuerySnapshot> querySnapshot = query.get();
         Set<Event> eventsNew = new HashSet<>();
         try {
