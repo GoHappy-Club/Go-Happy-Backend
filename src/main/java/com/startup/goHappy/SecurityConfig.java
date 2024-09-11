@@ -72,10 +72,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/authenticate").permitAll()
                 .antMatchers("/user/setPaymentDataWorkshop", "/user/setPaymentDataContribution").permitAll()
                 .antMatchers("/payments/download").hasAnyRole("ADMIN", "PAYMENT_MANAGER")
-                .antMatchers("/event/create", "/event/delete","/admin/tambola/**").hasAnyRole("ADMIN", "EVENT_MANAGER")
+                .antMatchers("/event/create", "/event/delete", "/admin/events/updateEvent/{id}").hasAnyRole("ADMIN", "EVENT_MANAGER")
+                .antMatchers("/admin/tambola/**").hasAnyRole("TAMBOLA_MANAGER", "ADMIN")
                 .antMatchers("/notifications/**").hasAnyRole("ADMIN", "NOTIFICATION_MANAGER")
                 .antMatchers("/trips/add").hasAnyRole("ADMIN", "TRIP_MANAGER")
-                .anyRequest().hasAnyRole("ADMIN", "USER");
+                .anyRequest().hasAnyRole("ADMIN", "USER", "TRIP_MANAGER", "TAMBOLA_MANAGER", "EVENT_MANAGER", "PAYMENT_MANAGER", "NOTIFICATION_MANAGER");
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
     }
