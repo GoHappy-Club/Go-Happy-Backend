@@ -28,17 +28,29 @@ public class AdminEventController {
 
     @ApiOperation(value = "To get paginated events data")
     @GetMapping("getPaginatedEvents")
-    public ResponseEntity<?> getPaginatedEvents(@RequestParam int page) {
+    public ResponseEntity<?> getPaginatedEvents(
+            @RequestParam int page,
+            @RequestParam(required = false) String minDate,
+            @RequestParam(required = false) String maxDate,
+            @RequestParam(required = false) String filterField,
+            @RequestParam(required = false) String filterValue) {
         final int LIMIT = 10;
         final int OFFSET = (page - 1) * LIMIT;
 
         try {
             CollectionReference eventRef = eventService.getCollectionReference();
-            Query query = eventRef.whereEqualTo("isParent", false)
-                    .orderBy("eventDate", Query.Direction.DESCENDING)
-                    .orderBy("startTime", Query.Direction.DESCENDING)
-                    .limit(LIMIT)
-                    .offset(OFFSET);
+            Query query = eventRef.whereEqualTo("isParent", false);
+
+            if (minDate != null && !minDate.isEmpty() && maxDate != null && !maxDate.isEmpty()) {
+                query = query.whereGreaterThanOrEqualTo("startTime", minDate).whereLessThan("startTime", maxDate);
+            }
+
+            if (filterField != null && !filterField.isEmpty() && filterValue != null && !filterValue.isEmpty()) {
+                query = query.whereEqualTo(filterField, filterValue);
+            }
+            query = query.orderBy("eventDate", Query.Direction.DESCENDING)
+                    .orderBy("startTime", Query.Direction.DESCENDING);
+            query = query.limit(LIMIT).offset(OFFSET);
 
             ApiFuture<QuerySnapshot> querySnapshot = query.get();
             List<Event> events = new ArrayList<>();
@@ -51,6 +63,7 @@ public class AdminEventController {
             }
             return ResponseEntity.ok(events);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error fetching events: " + e.getMessage());
         }
