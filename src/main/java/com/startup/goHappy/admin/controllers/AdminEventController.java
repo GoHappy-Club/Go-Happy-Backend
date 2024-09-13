@@ -33,13 +33,20 @@ public class AdminEventController {
             @RequestParam(required = false) String minDate,
             @RequestParam(required = false) String maxDate,
             @RequestParam(required = false) String filterField,
-            @RequestParam(required = false) String filterValue) {
+            @RequestParam(required = false) String filterValue,
+            @RequestParam(required = false) String recordingNull) {
         final int LIMIT = 10;
         final int OFFSET = (page - 1) * LIMIT;
 
         try {
             CollectionReference eventRef = eventService.getCollectionReference();
             Query query = eventRef.whereEqualTo("isParent", false);
+
+            if (recordingNull != null && !recordingNull.isEmpty()) {
+                if (recordingNull.equals("true")) {
+                    query = query.whereEqualTo("recordingLink", null);
+                }
+            }
 
             if (minDate != null && !minDate.isEmpty() && maxDate != null && !maxDate.isEmpty()) {
                 query = query.whereGreaterThanOrEqualTo("startTime", minDate).whereLessThan("startTime", maxDate);
