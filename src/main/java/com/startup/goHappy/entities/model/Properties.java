@@ -11,6 +11,7 @@ public class Properties {
     @DocumentId
     private String id;
     private List<String> whatsappLink;
+    private String whatsappHelpLink;
     private String appVersion;
     private Boolean forceUpdate;
     private int buildNumber;
