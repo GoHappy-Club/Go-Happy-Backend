@@ -10,8 +10,8 @@ import java.util.List;
 public class Properties {
     @DocumentId
     private String id;
-    private List<String> whatsappLink;
-    private String whatsappHelpLink;
+    private List<String> whatsappGroupLink; // 0-> official , 1-> homework
+    private String whatsappHelpLink; // for get help button
     private String appVersion;
     private Boolean forceUpdate;
     private int buildNumber;
