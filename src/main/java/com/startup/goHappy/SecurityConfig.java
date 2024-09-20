@@ -74,13 +74,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/_ah/start").permitAll()
                 .antMatchers("/authenticate").permitAll()
                 .antMatchers("/user/setPaymentDataWorkshop", "/user/setPaymentDataContribution").permitAll()
-                .antMatchers("/user/download", "/user/topReferrals", "/user/referralsList").hasAnyRole("RELATION_MANAGER", "ADMIN")
+                .antMatchers("/user/download", "/user/topReferrals", "/user/referralsList","/user/getUserByEmail","/user/getUserByPhone").hasAnyRole("USER_DATA_MANAGER", "ADMIN")
                 .antMatchers("/payments/download").hasAnyRole("ADMIN", "PAYMENT_MANAGER")
                 .antMatchers("/event/create", "/event/delete", "/admin/events/updateEvent/{id}").hasAnyRole("ADMIN", "EVENT_MANAGER")
                 .antMatchers("/admin/tambola/**").hasAnyRole("TAMBOLA_MANAGER", "ADMIN")
                 .antMatchers("/notifications/**").hasAnyRole("ADMIN", "NOTIFICATION_MANAGER")
                 .antMatchers("/trips/add").hasAnyRole("ADMIN", "TRIP_MANAGER")
-                .anyRequest().hasAnyRole("ADMIN", "USER", "TRIP_MANAGER", "TAMBOLA_MANAGER", "EVENT_MANAGER", "PAYMENT_MANAGER", "NOTIFICATION_MANAGER");
+                .anyRequest().hasAnyRole("ADMIN", "USER", "TRIP_MANAGER", "TAMBOLA_MANAGER", "EVENT_MANAGER", "PAYMENT_MANAGER", "NOTIFICATION_MANAGER","USER_DATA_MANAGER");
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
     }
