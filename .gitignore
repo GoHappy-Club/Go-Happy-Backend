@@ -10,3 +10,5 @@ target/*
 application.properties
 service-account-dev-file.json
 .idea/*
+src/main/deployment/*
+src/main/appengine/*
