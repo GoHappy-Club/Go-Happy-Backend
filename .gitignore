@@ -12,3 +12,4 @@ service-account-dev-file.json
 .idea/*
 src/main/deployment/*
 src/main/appengine/*
+*.jar
