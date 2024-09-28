@@ -697,7 +697,7 @@ public class EventController {
 		Event ev = objectMapper.readValue(event.toJSONString(), Event.class);	
 		ev.setId(UUID.randomUUID().toString());
 		ev.setParticipantList(new ArrayList<String>());
-		ev.setCostType(StringUtils.isEmpty(event.getString("type"))?"free":"paid");
+		ev.setCostType((!StringUtils.isEmpty(event.getString("costType")) && event.getString("costType").equals("paid"))?"paid":"free");
 		ev.setType(StringUtils.isEmpty(event.getString("type"))?"session":event.getString("type"));
 		if(event.getString("eventName").toLowerCase().contains("tambola")) {
 			List<Integer> numberCaller = new ArrayList<>();
