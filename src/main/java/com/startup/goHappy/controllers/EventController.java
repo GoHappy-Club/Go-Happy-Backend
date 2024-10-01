@@ -852,7 +852,7 @@ public class EventController {
 //		if(params.getString("date").compareTo(newDate)<0) {
 //			params.put("date", newDate);
 //		}
-		Query queryNew = eventsRef.whereGreaterThanOrEqualTo("endTime", params.getString("date")).whereEqualTo("isParent",false);
+		Query queryNew = eventsRef.whereGreaterThanOrEqualTo("startTime", params.getString("date")).whereEqualTo("isParent",false);
 
 		if(params.getString("endDate")!=null) {
 			queryNew = queryNew.whereLessThanOrEqualTo("endTime", ""+params.getString("endDate"));
