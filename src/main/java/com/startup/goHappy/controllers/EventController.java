@@ -36,10 +36,12 @@ import java.time.Duration;
 import javax.imageio.ImageIO;
 import javax.mail.MessagingException;
 
+import com.startup.goHappy.entities.TypecastedModels.SearchEventDTO;
 import com.startup.goHappy.entities.model.PaymentLog;
 import com.startup.goHappy.entities.model.Referral;
 import com.startup.goHappy.entities.repository.PaymentLogRepository;
 import com.startup.goHappy.entities.repository.ReferralRepository;
+import com.startup.goHappy.utils.Helpers;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -106,6 +108,9 @@ public class EventController {
 
 	@Autowired
 	PaymentLogRepository paymentLogService;
+
+	@Autowired
+	Helpers helpers;
 	
 	String content = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional //EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n"
 			+ "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\">\n"
@@ -821,6 +826,28 @@ public class EventController {
 		String id = params.getString("id");
 		eventService.delete(eventService.get(id).get());
 		return;
+	}
+
+	@ApiOperation(value = "To search events")
+	@GetMapping("searchEvents")
+	public List<SearchEventDTO> searchEvents(@RequestParam String inputSearch) throws IOException, ExecutionException, InterruptedException {
+		long startEpoch = new Date().getTime();
+		long endEpoch = startEpoch + (14 * 24 * 60 * 60 * 1000); // 14 days later
+		String startInstance = String.valueOf(startEpoch);
+		String endInstance = String.valueOf(endEpoch);
+		CollectionReference eventRef = eventService.getCollectionReference();
+		Query query = eventRef.select("eventName", "startTime","coverImage","id");
+		query = query.whereGreaterThanOrEqualTo("startTime", startInstance).whereLessThanOrEqualTo("startTime", endInstance);
+		ApiFuture<QuerySnapshot> querySnapshot = query.get();
+		List<SearchEventDTO> events = new ArrayList<>();
+
+		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+			SearchEventDTO event = document.toObject(SearchEventDTO.class);
+			if (helpers.matches(event.getEventName().toLowerCase(), inputSearch.toLowerCase())) {
+				events.add(event);
+			}
+		}
+		return events;
 	}
 
 	@ApiOperation(value = "To get all the events (not recommended to run)")
