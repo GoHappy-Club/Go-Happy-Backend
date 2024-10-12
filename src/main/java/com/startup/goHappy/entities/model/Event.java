@@ -5,6 +5,7 @@ package com.startup.goHappy.entities.model;
 import java.util.*;
 
 import com.google.firebase.database.utilities.Pair;
+import com.startup.goHappy.integrations.model.ZoomParticipantsDTO;
 import org.springframework.context.annotation.Primary;
 
 
@@ -44,6 +45,7 @@ public class Event {
 	private List<String> participantList;
 	private List<Integer> tambolaNumberCaller;
 	private Map<String,Integer> liveTambola;
+	private List<ZoomParticipantsDTO.Participant> zoomAnalytics;
 
 	private List<String> tambolaTickets;
 
