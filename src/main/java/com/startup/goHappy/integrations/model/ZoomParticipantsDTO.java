@@ -17,7 +17,6 @@ public class ZoomParticipantsDTO {
     public static class Participant {
         private String customer_key;
         private int duration;
-        private boolean failover;
         private String id;
         private String join_time;
         private String leave_time;

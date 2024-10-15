@@ -1,18 +1,16 @@
-package com.startup.goHappy.integrations.service;
+package com.startup.goHappy.integrations.jobs;
 
 import com.alibaba.fastjson.JSONObject;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.firestore.CollectionReference;
 import com.startup.goHappy.controllers.EventController;
 import com.startup.goHappy.entities.model.Event;
 import com.startup.goHappy.entities.repository.EventRepository;
 import com.startup.goHappy.integrations.model.ZoomParticipantsDTO;
+import com.startup.goHappy.integrations.service.ZoomService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -58,7 +56,6 @@ public class ZoomParticipantInfo {
     }
 
     public String extractMeetingNumber(String zoomLink) {
-        System.out.println("Zooom link ==>"+zoomLink);
         String regex = "j\\/(\\d+)";
 
         Pattern pattern = Pattern.compile(regex);
