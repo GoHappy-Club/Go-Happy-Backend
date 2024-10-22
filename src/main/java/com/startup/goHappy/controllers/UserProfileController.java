@@ -12,9 +12,10 @@ import com.google.cloud.firestore.*;
 import com.opencsv.CSVWriter;
 import com.startup.goHappy.entities.model.PaymentLog;
 import com.startup.goHappy.entities.model.Referral;
+import com.startup.goHappy.entities.model.UserMemberships;
 import com.startup.goHappy.entities.repository.PaymentLogRepository;
 import com.startup.goHappy.entities.repository.ReferralRepository;
-import org.apache.commons.collections4.IterableUtils;
+import com.startup.goHappy.enums.MembershipEnum;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -53,6 +54,9 @@ public class UserProfileController {
 
     @Autowired
     EventController eventController;
+
+    @Autowired
+    MembershipController membershipController;
 
 
     public UserProfileController() {
@@ -136,7 +140,7 @@ public class UserProfileController {
         String[] columnNames = {"ID", "Name", "Age", "Email", "Phone Number",
                 "Last Payment Date", "Invite Code", "Sessions Attended",
                 "Date Of Joining", "Date of Joining (Date Format)",
-                "Profile Image", "Membership", "Last Payment Amount"};
+                "Profile Image", "Last Payment Amount"};
         users.add(columnNames);
         for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
             UserProfile user = document.toObject(UserProfile.class);
@@ -155,7 +159,6 @@ public class UserProfileController {
                     user.getDateOfJoining(),
                     user.getDateOfJoiningDateObject(),
                     user.getProfileImage(),
-                    user.getMembership(),
                     user.getLastPaymentAmount() != null ? user.getLastPaymentAmount().toString() : "",
                     user.getCity(),
                     user.getEmergencyContact(),
@@ -260,11 +263,17 @@ public class UserProfileController {
     }
 
     @PostMapping("update")
-    public UserProfile updateUser(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+    public JSONObject updateUser(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+
+        //retrieve userMembership Profile to send to frontend
+        JSONObject getMembershipByPhoneParams = new JSONObject();
+        getMembershipByPhoneParams.put("phone",params.getString("phone"));
+        UserMemberships userMembership = membershipController.getMembershipByPhone(getMembershipByPhoneParams);
 
         CollectionReference userProfiles = userProfileService.getCollectionReference();
         if(!StringUtils.isEmpty(params.getString("phone"))) {
-            if (params.getString("phone").startsWith("+")) {
+    
+        if (params.getString("phone").startsWith("+")) {
                 params.put("phone", params.getString("phone").substring(1));
             }
         }
@@ -291,7 +300,11 @@ public class UserProfileController {
             break;
         }
         userProfileService.save(user);
-        return user;
+        JSONObject output = new JSONObject();
+        output.put("user", user);
+        output.put("membership",userMembership);
+
+        return output;
     }
 
     @PostMapping("updateProfileImage")

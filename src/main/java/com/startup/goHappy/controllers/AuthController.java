@@ -4,16 +4,15 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import com.startup.goHappy.entities.model.Referral;
+import com.startup.goHappy.entities.model.UserMemberships;
+import com.startup.goHappy.entities.repository.UserMembershipsRepository;
 import io.swagger.annotations.ApiOperation;
-import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,7 +24,6 @@ import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Query;
 import com.google.cloud.firestore.QuerySnapshot;
-import com.startup.goHappy.entities.model.Event;
 import com.startup.goHappy.entities.model.UserProfile;
 import com.startup.goHappy.entities.repository.UserProfileRepository;
 
@@ -37,6 +35,8 @@ public class AuthController {
 	UserProfileRepository userProfileService;
 	@Autowired
 	UserProfileController userProfileController;
+	@Autowired
+	MembershipController membershipController;
 
 	@ApiOperation(value = "To register the user on the platform")
 	@PostMapping("register")
@@ -68,7 +68,7 @@ public class AuthController {
 
 	@ApiOperation(value = "To login the user and generate token")
 	@PostMapping("login")
-	public UserProfile login(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+	public JSONObject login(@RequestBody JSONObject params) throws Exception {
 		
 		CollectionReference userProfiles = userProfileService.getCollectionReference();
 
@@ -77,16 +77,25 @@ public class AuthController {
 
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
 		UserProfile user = null;
+		JSONObject output = new JSONObject();
 		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
 			user = document.toObject(UserProfile.class);  
 			break;
-		}		
+		}
 		if(user!=null) {
 			if(!StringUtils.isEmpty(params.getString("fcmToken"))) {
 				user.setFcmToken(params.getString("fcmToken"));
 				userProfileService.save(user);
 			}
-			return user;
+			JSONObject getMembershipByPhoneParams = new JSONObject();
+			getMembershipByPhoneParams.put("phone", user.getPhone());
+			UserMemberships userMembership = membershipController.getMembershipByPhone(getMembershipByPhoneParams);
+			if(userMembership==null) {
+				userMembership = membershipController.createNewMembership(user.getPhone(),user.getId());
+			}
+			output.put("user",user);
+			output.put("membership",userMembership);
+			return output;
 		}
 		else if(!StringUtils.isEmpty(params.getString("token"))) {
 			Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
@@ -104,7 +113,11 @@ public class AuthController {
 				user1 = document.toObject(UserProfile.class);  
 				break;
 			}
-			return user1;
+            assert user1 != null;
+            UserMemberships userMembership = membershipController.createNewMembership(user1.getPhone(),user1.getId());
+			output.put("user",user1);
+			output.put("membership",userMembership);
+			return output;
 		}
 			
 		return null;

@@ -106,7 +106,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void testLogin() throws IOException, InterruptedException, ExecutionException {
+    public void testLogin() throws Exception {
         JSONObject params = new JSONObject();
         params.put("phone", "1234567890");
         params.put("token", "abcd1234");
@@ -128,14 +128,14 @@ public class AuthControllerTest {
         when(mockQuery.get()).thenReturn(mockQuerySnapshotFuture);
         when(mockQuerySnapshotFuture.get()).thenReturn(mockQuerySnapshot);
 
-        UserProfile actualResult = authController.login(params);
+        JSONObject actualResult = authController.login(params);
 
         assertNotNull(actualResult);
         assertEquals(mockUserProfile, actualResult);
     }
 
     @Test
-    public void testLoginWithToken() throws IOException, InterruptedException, ExecutionException {
+    public void testLoginWithToken() throws Exception {
         JSONObject params = new JSONObject();
         params.put("token", "abcd1234");
         params.put("referralId", "ref123");
@@ -157,7 +157,7 @@ public class AuthControllerTest {
         when(mockQuery.get()).thenReturn(mockQuerySnapshotFuture);
         when(mockQuerySnapshotFuture.get()).thenReturn(mockQuerySnapshot);
 
-        UserProfile actualResult = authController.login(params);
+        JSONObject actualResult = authController.login(params);
 
         assertNotNull(actualResult);
         assertEquals(mockUserProfile, actualResult);
