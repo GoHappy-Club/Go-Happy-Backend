@@ -20,6 +20,6 @@ public class PhonePeController {
 	
 	@PostMapping("generatePayload")
 	public JSONObject setup(@RequestBody JSONObject params) throws IOException, RazorpayException {
-		return phonePeService.generatePayload(params.getString("phone"),params.getInteger("amount"),params.getString("paymentType"),params.getString("orderId"),params.getString("tambolaTicket"));
+		return phonePeService.generatePayload(params.getString("phone"),params.getInteger("amount"),params.getString("paymentType"),params.getString("orderId"),params.getString("tambolaTicket"),params.getString("membershipId"));
 	}
 }

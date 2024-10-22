@@ -1,7 +1,5 @@
 package com.startup.goHappy.entities.model;
 
-import org.springframework.context.annotation.Primary;
-
 import lombok.Data;
 
 @Data
@@ -17,7 +15,6 @@ public class UserProfile {
 	private String password;
 	private Boolean googleSignIn;
 	private String profileImage;
-	private String membership;
 	private String lastPaymentDate;
 	private Integer lastPaymentAmount;
 	private String selfInviteCode;
