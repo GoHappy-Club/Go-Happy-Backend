@@ -836,14 +836,15 @@ public class EventController {
 		String startInstance = String.valueOf(startEpoch);
 		String endInstance = String.valueOf(endEpoch);
 		CollectionReference eventRef = eventService.getCollectionReference();
-		Query query = eventRef.select("eventName", "startTime","coverImage","id","participantList","eventDate");
+        Query query = eventRef.select("eventName", "expertName", "expertImage", "startTime", "coverImage", "id", "participantList", "eventDate");
 		query = query.whereGreaterThanOrEqualTo("startTime", startInstance).whereLessThanOrEqualTo("startTime", endInstance);
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
 		List<SearchEventDTO> events = new ArrayList<>();
 
 		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
 			SearchEventDTO event = document.toObject(SearchEventDTO.class);
-			if (helpers.matches(event.getEventName().toLowerCase(), inputSearch.toLowerCase())) {
+            assert event != null;
+            if (helpers.matches(event.getExpertName().toLowerCase(), inputSearch.toLowerCase()) || helpers.matches(event.getEventName().toLowerCase(), inputSearch.toLowerCase())) {
 				events.add(event);
 			}
 		}
@@ -1143,12 +1144,12 @@ public class EventController {
 		output.put("upcomingEvents", new ArrayList());
 		output.put("expiredEvents", events2List.subList(0,events2List.size()>12?12:events2List.size()));
 		output.put("ongoingEvents", new ArrayList());
-		
+
 		return output;
 	}
 	public JSONObject getOngoingEvents(JSONObject params){
 		System.out.println(params.getString("date"));
-		
+
 		Instant instance = java.time.Instant.ofEpochMilli(Long.parseLong(params.getString("date")));
 		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
 		                            .ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
@@ -1159,7 +1160,7 @@ public class EventController {
 		CollectionReference eventsRef = eventService.getCollectionReference();
 		Long newStartTime = Long.parseLong(params.getString("date"))+600000;
 		Long newEndTime = Long.parseLong(params.getString("endDate"))+600000;
-		
+
 		Query query1 = eventsRef.whereLessThan("startTime", ""+newStartTime);
 		Query query2 = eventsRef.whereGreaterThan("endTime", ""+newEndTime);
 		Query query3 = eventsRef.whereEqualTo("isParent", false);
@@ -1168,19 +1169,19 @@ public class EventController {
 		ApiFuture<QuerySnapshot> querySnapshot2 = query2.get();
 		ApiFuture<QuerySnapshot> querySnapshot3 = query3.get();
 
-		
+
 		Set<Event> events1 = new HashSet<>();
 		Set<Event> events2 = new HashSet<>();
 		Set<Event> events3 = new HashSet<>();
 		try {
 			for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
-				events1.add(document.toObject(Event.class));  
+				events1.add(document.toObject(Event.class));
 			}
 			for (DocumentSnapshot document : querySnapshot2.get().getDocuments()) {
-				events2.add(document.toObject(Event.class));  
+				events2.add(document.toObject(Event.class));
 			}
 			for (DocumentSnapshot document : querySnapshot3.get().getDocuments()) {
-				events3.add(document.toObject(Event.class));  
+				events3.add(document.toObject(Event.class));
 			}
 		}
 		catch(Exception e) {
