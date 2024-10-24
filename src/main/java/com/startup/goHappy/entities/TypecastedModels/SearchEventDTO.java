@@ -20,5 +20,9 @@ public class SearchEventDTO {
 
     private String coverImage;
 
+    private String expertName;
+
+    private String expertImage;
+
     private List<String> participantList;
 }
