@@ -55,7 +55,7 @@ public class PhonePeService {
             requestBody.put("callbackUrl",baseUrl+"/membership/renew?phoneNumber="+encodedPhoneNumber+"&amount="+encodedAmount+"&membershipId="+ encodedMembershipId);
             requestBody.put("redirectUrl","https://www.gohappyclub.in/free_sessions");
         }else if("upgrade".equals(paymentType)){
-            requestBody.put("callbackUrl",baseUrl+"/membership/upgradeSubscription?phoneNumber="+encodedPhoneNumber+"&amount="+encodedAmount+"&membershipId="+ encodedMembershipId);
+            requestBody.put("callbackUrl",baseUrl+"/membership/upgrade?phoneNumber="+encodedPhoneNumber+"&amount="+encodedAmount+"&membershipId="+ encodedMembershipId);
             requestBody.put("redirectUrl","https://www.gohappyclub.in/free_sessions");
         }else if("topUp".equals(paymentType)){
             requestBody.put("callbackUrl",baseUrl+"/membership/topUp?phoneNumber="+encodedPhoneNumber+"&amount="+encodedAmount);
