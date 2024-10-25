@@ -361,6 +361,7 @@ public class EventController {
 	@ApiOperation(value = "To book an event")
 	@PostMapping("bookEvent")
 	public String bookEvent(@RequestBody JSONObject params) throws IOException, MessagingException, GeneralSecurityException, InterruptedException, ExecutionException {
+		System.out.println("RUnning book");
 		CollectionReference eventRef = eventService.getCollectionReference();
 		CollectionReference referrals = referralService.getCollectionReference();
 
@@ -439,6 +440,7 @@ public class EventController {
 	@ApiOperation(value = "To cancel an event")
 	@PostMapping("cancelEvent")
 	public String cancelEvent(@RequestBody JSONObject params) throws IOException, ExecutionException, InterruptedException {
+		System.out.println("RUnning cancel");
 		CollectionReference eventRef = eventService.getCollectionReference();
 
 		JSONObject getMembershipByPhoneParams = new JSONObject();
