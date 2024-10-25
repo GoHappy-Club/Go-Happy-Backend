@@ -30,10 +30,10 @@ public class Memberships {
     @Autowired
     MembershipRepository membershipRepository;
 
-    @Scheduled(cron = "0 0 */6 * * *")
+//    @Scheduled(cron = "0 comme */6 * * *")
     public void giveMonthlyCoins() throws ExecutionException, InterruptedException {
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_MONTH, -30);
+        calendar.add(Calendar.MONTH, -1);
         long thirtyDaysAgoInMillis = calendar.getTimeInMillis();
 
         CollectionReference userMembershipRef = userMembershipsService.getCollectionReference();
