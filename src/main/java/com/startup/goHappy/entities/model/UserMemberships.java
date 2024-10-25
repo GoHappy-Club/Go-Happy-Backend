@@ -10,7 +10,7 @@ public class UserMemberships {
     @DocumentId
     private String id;
 
-    private MembershipEnum membershipType=MembershipEnum.Free;
+    private MembershipEnum membershipType = MembershipEnum.Free;
     private String userId;
     private String phone;
     private String membershipStartDate;
@@ -18,5 +18,6 @@ public class UserMemberships {
     private int coins = 0;
     private String cancellationDate;
     private String cancellationReason;
+    private String lastCoinsCreditedDate;
     private Object vouchers;
 }

@@ -126,6 +126,7 @@ public class MembershipController {
             userMembership.setMembershipStartDate("" + new Date().getTime());
             userMembership.setMembershipEndDate("" + (new Date().getTime() + Long.valueOf(membership.getDuration()) * 24 * 60 * 60 * 1000));
             userMembership.setCoins(membership.getCoinsPerMonth());
+            userMembership.setLastCoinsCreditedDate(""+new Date().getTime());
 
             // set user's phone and uid in this membership document
             userMembership.setUserId(user.getId());
@@ -185,6 +186,7 @@ public class MembershipController {
             userMember.setMembershipType(MembershipEnum.Free);
             userMember.setMembershipStartDate(null);
             userMember.setMembershipEndDate(null);
+            userMember.setLastCoinsCreditedDate(null);
             userMember.setCancellationDate(helpers.FormatMilliseconds(new Date().getTime()));
             userMember.setCancellationReason(params.getString("reason"));
             break;
@@ -330,6 +332,7 @@ public class MembershipController {
             assert userMember != null;
             userMember.setMembershipType(membership.getMembershipType());
             userMember.setCoins(userMember.getCoins() + membership.getCoinsPerMonth());
+            userMember.setLastCoinsCreditedDate(""+new Date().getTime());
             // set start and end date
             userMember.setMembershipStartDate("" + new Date().getTime());
             userMember.setMembershipEndDate("" + (new Date().getTime() + Long.valueOf(membership.getDuration()) * 24 * 60 * 60 * 1000));
@@ -364,36 +367,36 @@ public class MembershipController {
     @ApiOperation(value = "to top-up a user's wallet")
     @PostMapping("/topUp")
     public void topUpWallet(@RequestBody JSONObject params, @RequestParam String phoneNumber, @RequestParam String amount) throws ExecutionException, InterruptedException, IOException, FirebaseMessagingException {
-        String encodedResponse = params.getString("response");
+//        String encodedResponse = params.getString("response");
+//
+//        byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
+//        String decodedString = new String(decodedBytes);
+//
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        JsonNode decodedJson = objectMapper.readTree(decodedString);
+//        String code = decodedJson.get("code").asText();
+//
+//        //check the status of the payment, if it is error, return
+//        if ("PAYMENT_ERROR".equals(code)) return;
 
-        byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
-        String decodedString = new String(decodedBytes);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode decodedJson = objectMapper.readTree(decodedString);
-        String code = decodedJson.get("code").asText();
-
-        //check the status of the payment, if it is error, return
-        if ("PAYMENT_ERROR".equals(code)) return;
-
-        CollectionReference userMemberships = userMembershipsService.getCollectionReference();
         JSONObject getUserByPhoneParams = new JSONObject();
+        getUserByPhoneParams.put("phoneNumber", phoneNumber);
         JSONObject result = userProfileController.getUserByPhone(getUserByPhoneParams);
         UserProfile user = result.getObject("user",UserProfile.class);
         user.setLastPaymentAmount(Integer.parseInt(amount)/100);
         user.setLastPaymentDate("" + new Date().getTime());
 
-        Query userMemberQuery = userMemberships.whereEqualTo("phone", phoneNumber);
-        ApiFuture<QuerySnapshot> querySnapshot1 = userMemberQuery.get();
-        UserMemberships userMember = null;
-        for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
-            userMember = document.toObject(UserMemberships.class);
-            break;
-        }
-        assert userMember != null;
+        JSONObject getMembershipByPhoneParams = new JSONObject();
+        getMembershipByPhoneParams.put("phone", phoneNumber);
+        UserMemberships userMember = getMembershipByPhone(getMembershipByPhoneParams);
+
+        if (userMember.getMembershipType() == MembershipEnum.Free)
+            return;
+
         userMember.setCoins(userMember.getCoins() + Integer.parseInt(amount));
 
         userMembershipsService.save(userMember);
+        userProfileService.save(user);
 
         // send fcm notification to the frontend for redux update
         String MEMBERSHIP_TOPIC = "subscriptionUpdate";
@@ -401,7 +404,19 @@ public class MembershipController {
 
     }
 
-    @ApiOperation(value = "Get user's profile and membership document for updation")
+    @ApiOperation(value = "to revoke a user's membership")
+    @GetMapping("/expire")
+    public UserMemberships expire(@RequestParam String phoneNumber) throws ExecutionException, InterruptedException, IOException, FirebaseMessagingException {
+        JSONObject getMembershipByPhoneParams = new JSONObject();
+        getMembershipByPhoneParams.put("phone", phoneNumber);
+        UserMemberships userMembership = getMembershipByPhone(getMembershipByPhoneParams);
+        userMembership.setMembershipType(MembershipEnum.Free);
+        userMembership.setLastCoinsCreditedDate(null);
+        userMembershipsService.save(userMembership);
+        return userMembership;
+    }
+
+    @ApiOperation(value = "Get user's profile and membership document for update")
     @PostMapping("/getUserUpdates")
     public JSONObject getUserUpdates(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
         CollectionReference userProfiles = userProfileService.getCollectionReference();
