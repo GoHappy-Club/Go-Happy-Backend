@@ -47,6 +47,9 @@ public class MembershipController {
     UserMembershipsRepository userMembershipsService;
 
     @Autowired
+    CoinPackagesRepository coinPackagesService;
+
+    @Autowired
     Constants constants;
 
     @Autowired
@@ -62,6 +65,13 @@ public class MembershipController {
     public List<Membership> listAll() {
         Iterable<Membership> memberships = membershipService.retrieveAll();
         return IterableUtils.toList(memberships);
+    }
+
+    @ApiOperation(value = "To get all the coin pricing and packages")
+    @GetMapping("/listCoinPackages")
+    public List<CoinPackages> listCoinPackages() {
+        Iterable<CoinPackages> packages = coinPackagesService.retrieveAll();
+        return IterableUtils.toList(packages);
     }
 
     @ApiOperation(value = "When user completes payment for a subscription plan")
@@ -85,6 +95,12 @@ public class MembershipController {
 
         // if status is error, then return
         if ("PAYMENT_ERROR".equals(code)) return;
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
 
         CollectionReference userProfiles = userProfileService.getCollectionReference();
         CollectionReference membershipsRef = membershipService.getCollectionReference();
@@ -121,12 +137,13 @@ public class MembershipController {
             user.setLastPaymentAmount(membership.getSubscriptionFees());
             user.setLastPaymentDate("" + new Date().getTime());
 
-            //set user's membership type and start/end date & add coins in user's wallet
+            //set user's membership type and start/end date & append coins in user's wallet
             userMembership.setMembershipType(membership.getMembershipType());
-            userMembership.setMembershipStartDate("" + new Date().getTime());
-            userMembership.setMembershipEndDate("" + (new Date().getTime() + Long.valueOf(membership.getDuration()) * 24 * 60 * 60 * 1000));
-            userMembership.setCoins(membership.getCoinsPerMonth());
-            userMembership.setLastCoinsCreditedDate(""+new Date().getTime());
+            userMembership.setMembershipStartDate("" + calendar.getTimeInMillis());
+            userMembership.setLastCoinsCreditedDate("" + calendar.getTimeInMillis());
+            calendar.add(Calendar.MONTH, membership.getDuration());
+            userMembership.setMembershipEndDate("" + calendar.getTimeInMillis());
+            userMembership.setCoins(userMembership.getCoins() + membership.getCoinsPerMonth());
 
             // set user's phone and uid in this membership document
             userMembership.setUserId(user.getId());
@@ -227,6 +244,12 @@ public class MembershipController {
         //check the status of the payment, if it is error, return
         if ("PAYMENT_ERROR".equals(code)) return;
 
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
         CollectionReference userProfiles = userProfileService.getCollectionReference();
         CollectionReference userMemberships = userMembershipsService.getCollectionReference();
         CollectionReference membershipRef = membershipService.getCollectionReference();
@@ -249,11 +272,14 @@ public class MembershipController {
         for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
             userMember = document.toObject(UserMemberships.class);
 
-            //change userMember's membership type and start/end date
+            //change userMember's start/end date
             assert userMember != null;
             assert membership != null;
-            userMember.setMembershipStartDate("" + new Date().getTime());
-            userMember.setMembershipEndDate("" + (Long.parseLong(userMember.getMembershipEndDate()) + (Long.valueOf(membership.getDuration()) * 24 * 60 * 60 * 1000)));
+            userMember.setMembershipStartDate("" + calendar.getTimeInMillis());
+            long timeDuration = Long.parseLong(userMember.getMembershipEndDate());
+            calendar.setTimeInMillis(timeDuration);
+            calendar.add(Calendar.MONTH, membership.getDuration());
+            userMember.setMembershipEndDate("" + calendar.getTimeInMillis());
             break;
         }
 
@@ -305,6 +331,12 @@ public class MembershipController {
         //check the status of the payment, if it is error, return
         if ("PAYMENT_ERROR".equals(code)) return;
 
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
         CollectionReference userProfiles = userProfileService.getCollectionReference();
         CollectionReference userMemberships = userMembershipsService.getCollectionReference();
         CollectionReference membershipRef = membershipService.getCollectionReference();
@@ -332,10 +364,12 @@ public class MembershipController {
             assert userMember != null;
             userMember.setMembershipType(membership.getMembershipType());
             userMember.setCoins(userMember.getCoins() + membership.getCoinsPerMonth());
-            userMember.setLastCoinsCreditedDate(""+new Date().getTime());
             // set start and end date
-            userMember.setMembershipStartDate("" + new Date().getTime());
-            userMember.setMembershipEndDate("" + (new Date().getTime() + Long.valueOf(membership.getDuration()) * 24 * 60 * 60 * 1000));
+            userMember.setMembershipStartDate("" + calendar.getTimeInMillis());
+            userMember.setLastCoinsCreditedDate("" + calendar.getTimeInMillis());
+            calendar.add(Calendar.MONTH, membership.getDuration());
+
+            userMember.setMembershipEndDate("" + calendar.getTimeInMillis());
             break;
         }
 
@@ -366,37 +400,44 @@ public class MembershipController {
 
     @ApiOperation(value = "to top-up a user's wallet")
     @PostMapping("/topUp")
-    public void topUpWallet(@RequestBody JSONObject params, @RequestParam String phoneNumber, @RequestParam String amount) throws ExecutionException, InterruptedException, IOException, FirebaseMessagingException {
-//        String encodedResponse = params.getString("response");
-//
-//        byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
-//        String decodedString = new String(decodedBytes);
-//
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        JsonNode decodedJson = objectMapper.readTree(decodedString);
-//        String code = decodedJson.get("code").asText();
-//
-//        //check the status of the payment, if it is error, return
-//        if ("PAYMENT_ERROR".equals(code)) return;
+    public void topUpWallet(@RequestBody JSONObject params, @RequestParam String phoneNumber, @RequestParam String amount, @RequestParam String coinsToGive) throws ExecutionException, InterruptedException, IOException, FirebaseMessagingException {
+        String encodedResponse = params.getString("response");
+
+        byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
+        String decodedString = new String(decodedBytes);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode decodedJson = objectMapper.readTree(decodedString);
+        String code = decodedJson.get("code").asText();
+
+        //check the status of the payment, if it is error, return
+        if ("PAYMENT_ERROR".equals(code)) return;
 
         JSONObject getUserByPhoneParams = new JSONObject();
         getUserByPhoneParams.put("phoneNumber", phoneNumber);
         JSONObject result = userProfileController.getUserByPhone(getUserByPhoneParams);
-        UserProfile user = result.getObject("user",UserProfile.class);
-        user.setLastPaymentAmount(Integer.parseInt(amount)/100);
+        UserProfile user = result.getObject("user", UserProfile.class);
+        user.setLastPaymentAmount(Integer.parseInt(amount) / 100);
         user.setLastPaymentDate("" + new Date().getTime());
+
+        PaymentLog plog = new PaymentLog();
+        plog.setId(UUID.randomUUID().toString());
+        plog.setAmount(Integer.parseInt(amount) / 100);
+        plog.setPhone(user.getPhone());
+        plog.setType("topUp");
+        plog.setPaymentDate("" + new Date().getTime());
 
         JSONObject getMembershipByPhoneParams = new JSONObject();
         getMembershipByPhoneParams.put("phone", phoneNumber);
         UserMemberships userMember = getMembershipByPhone(getMembershipByPhoneParams);
 
-        if (userMember.getMembershipType() == MembershipEnum.Free)
-            return;
+        if (userMember.getMembershipType() == MembershipEnum.Free) return;
 
-        userMember.setCoins(userMember.getCoins() + Integer.parseInt(amount));
+        userMember.setCoins(userMember.getCoins() + Integer.parseInt(coinsToGive));
 
         userMembershipsService.save(userMember);
         userProfileService.save(user);
+        paymentLogService.save(plog);
 
         // send fcm notification to the frontend for redux update
         String MEMBERSHIP_TOPIC = "subscriptionUpdate";

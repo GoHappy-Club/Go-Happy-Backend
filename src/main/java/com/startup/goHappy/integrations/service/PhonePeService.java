@@ -28,7 +28,7 @@ public class PhonePeService {
     @Value("${base.url}")
     private String baseUrl;
 
-	public JSONObject generatePayload(String phone,Integer amount,String paymentType,String orderId,String tambolaTicket, String membershipId) throws JsonProcessingException, UnsupportedEncodingException {
+	public JSONObject generatePayload(String phone,Integer amount,String paymentType,String orderId,String tambolaTicket, String membershipId,String coinsToGive) throws JsonProcessingException, UnsupportedEncodingException {
 		String merchantTransactionId = UUID.randomUUID().toString().replace("-", "");
 		JSONObject requestBody = new JSONObject();
 		requestBody.put("merchantId",merchantId);
@@ -40,6 +40,7 @@ public class PhonePeService {
         String encodedTambolaTicket = tambolaTicket != null ? URLEncoder.encode(tambolaTicket, "UTF-8") : "";
         String encodedMembershipId = membershipId != null ? URLEncoder.encode(membershipId, "UTF-8") : "";
         String encodedAmount = amount != null ? URLEncoder.encode(String.valueOf(amount), "UTF-8") : "";
+        String encodedCoinsToGive = coinsToGive != null ? URLEncoder.encode(coinsToGive, "UTF-8") : "";
 
         // set api callbacks based on the type of the payment request.
 		if ("contribution".equals(paymentType)) {
@@ -58,7 +59,7 @@ public class PhonePeService {
             requestBody.put("callbackUrl",baseUrl+"/membership/upgrade?phoneNumber="+encodedPhoneNumber+"&amount="+encodedAmount+"&membershipId="+ encodedMembershipId);
             requestBody.put("redirectUrl","https://www.gohappyclub.in/free_sessions");
         }else if("topUp".equals(paymentType)){
-            requestBody.put("callbackUrl",baseUrl+"/membership/topUp?phoneNumber="+encodedPhoneNumber+"&amount="+encodedAmount);
+            requestBody.put("callbackUrl",baseUrl+"/membership/topUp?phoneNumber="+encodedPhoneNumber+"&amount="+encodedAmount+"&coinsToGive="+encodedCoinsToGive);
             requestBody.put("redirectUrl","https://www.gohappyclub.in/free_sessions");
         }
 		requestBody.put("merchantUserId",phone);
