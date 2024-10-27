@@ -40,18 +40,19 @@ public class ZoomParticipantInfo {
 
         List<Event> events = eventController.getEventsWithinDateRange(params);
         for (Event event : events) {
+//            for(String phone : event.getParticipantList()){
+//                processAttendanceData(phone);
+//            }
         String meetingNumber = extractMeetingNumber(event.getMeetingLink());
         List<ZoomParticipantsDTO.Participant> participants = zoomService.getPastMeetingParticipants(meetingNumber);
             storeAttendanceData(event.getId(), participants);
         }
     }
 
-    private Map<String, String> processAttendanceData(List<ZoomParticipantsDTO.Participant> participants) {
+    private Map<String, String> processAttendanceData(String phoneNumber) {
         Map<String, String> attendanceData = new HashMap<>();
-        for (ZoomParticipantsDTO.Participant participant : participants) {
-            int durationMinutes = participant.getDuration() / 60;
-            attendanceData.put(participant.getName(), String.valueOf(durationMinutes));
-        }
+        attendanceData.put("phoneNumber", phoneNumber);
+        attendanceData.put("duration","50");
         return attendanceData;
     }
 
