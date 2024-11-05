@@ -837,7 +837,7 @@ public class EventController {
 		String endInstance = String.valueOf(endEpoch);
 		CollectionReference eventRef = eventService.getCollectionReference();
         Query query = eventRef.select("eventName", "expertName", "expertImage", "startTime", "coverImage", "id", "participantList", "eventDate");
-		query = query.whereGreaterThanOrEqualTo("startTime", startInstance).whereLessThanOrEqualTo("startTime", endInstance);
+		query = query.whereGreaterThanOrEqualTo("endTime", startInstance).whereLessThanOrEqualTo("startTime", endInstance);
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
 		List<SearchEventDTO> events = new ArrayList<>();
 
