@@ -19,6 +19,7 @@ import com.startup.goHappy.entities.model.*;
 import com.startup.goHappy.entities.model.Event;
 import com.startup.goHappy.entities.repository.*;
 import com.startup.goHappy.enums.MembershipEnum;
+import com.startup.goHappy.enums.TransactionTypeEnum;
 import com.startup.goHappy.utils.Constants;
 import com.startup.goHappy.utils.Helpers;
 import io.swagger.annotations.ApiOperation;
@@ -44,8 +45,8 @@ import com.startup.goHappy.utils.TambolaGenerator;
 @RestController
 @RequestMapping("/event")
 public class EventController {
-	
-	
+
+
 	private static DateTimeFormatter FOMATTER = DateTimeFormatter.ofPattern("EEEE, MMM dd, yyyy 'at' HH:mm:ss a");
 
 	@Autowired
@@ -53,19 +54,19 @@ public class EventController {
 
 	@Autowired
 	ReferralRepository referralService;
-	
+
 	@Autowired
 	ZoomService zoomService;
-	
+
 	@Autowired
 	EmailService emailService;
-	
+
 	@Autowired
 	TambolaGenerator tambolaGenerator;
-	
+
 	@Autowired
 	UserProfileController userProfileController;
-	
+
 	@Autowired
 	UserProfileRepository userProfileService;
 
@@ -77,6 +78,12 @@ public class EventController {
 
 	@Autowired
 	UserMembershipsRepository userMembershipsService;
+
+	@Autowired
+	CoinTransactionsRepository coinTransactionsService;
+
+	@Autowired
+	MembershipRepository membershipService;
 
 	@Autowired
 	Helpers helpers;
@@ -101,7 +108,7 @@ public class EventController {
 		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
 		                            .ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
 		ObjectMapper objectMapper = new ObjectMapper();
-		Event ev = objectMapper.readValue(event.toJSONString(), Event.class);	
+		Event ev = objectMapper.readValue(event.toJSONString(), Event.class);
 		ev.setId(UUID.randomUUID().toString());
 		ev.setParticipantList(new ArrayList<String>());
 		ev.setCostType((!StringUtils.isEmpty(event.getString("costType")) && event.getString("costType").equals("paid"))?"paid":"free");
@@ -160,7 +167,7 @@ public class EventController {
 					childEvent.setTambolaNumberCaller(numberCaller);
 					childEvent.setLiveTambola(liveTambola);
 				}
-				
+
 				ZoomMeetingObjectDTO obj = new ZoomMeetingObjectDTO();
 				obj.setTopic(ev.getEventName());
 				obj.setTimezone("Asia/Kolkata");
@@ -186,7 +193,6 @@ public class EventController {
 				tempChild=childEvent;
 				nextExecutionDate = generator.next(nextExecutionDate);
 				i++;
-				
 			}
 		}
 		else {
@@ -208,17 +214,17 @@ public class EventController {
 			finalDateForZoom = finalDateForZoom.replace(" ", "T");
 
 			obj.setStart_time(finalDateForZoom);
-			
+
 			ZoomMeetingObjectDTO zoomData = zoomService.createMeeting(obj);
-			
+
 			String zoomLink = zoomData.getJoin_url();
 			Long meetingId = zoomData.getId();
-			
+
 			ev.setMeetingLink(zoomLink);
 			ev.setMeetingId(""+meetingId);
 			eventService.save(ev);
 		}
-		
+
 		return;
 	}
 
@@ -262,11 +268,68 @@ public class EventController {
 		output.put("events", result);
 		return output;
 	}
+
+	@ApiOperation(value = "to give user's their cashback of sessions")
+	@PostMapping("/giveReward")
+	public UserMemberships giveReward(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+		JSONObject getRecentTransactionsParams = new JSONObject();
+		getRecentTransactionsParams.put("phone",params.getString("phone"));
+		UserMemberships userMembership = membershipController.getMembershipByPhone(getRecentTransactionsParams);
+		CollectionReference coinTransactionsRef = coinTransactionsService.getCollectionReference();
+		Query cashbackQuery = coinTransactionsRef.whereEqualTo("phone",params.getString("phone")).whereEqualTo("source","coinback").whereEqualTo("sourceId",params.getString("eventId"));
+		ApiFuture<QuerySnapshot> newQuerySnapshot = cashbackQuery.get();
+		CoinTransactions newTransaction = null;
+		for(DocumentSnapshot document : newQuerySnapshot.get().getDocuments()) {
+			newTransaction = document.toObject(CoinTransactions.class);
+			break;
+		}
+		if(newTransaction != null) {
+			System.out.println("Returning early");
+			return userMembership;
+		}
+		System.out.println("Giving reward");
+		JSONObject eventParams = new JSONObject();
+		eventParams.put("id",params.getString("eventId"));
+		JSONObject eventObject = getEventById(eventParams);
+		Event event = eventObject.getObject("event", Event.class);
+
+		MembershipEnum membershipType = userMembership.getMembershipType();
+		CollectionReference membershipRef = membershipService.getCollectionReference();
+
+		Query membershipQuery = membershipRef.whereEqualTo("membershipType", membershipType);
+		ApiFuture<QuerySnapshot> querySnapshot = membershipQuery.get();
+		Membership membership = null;
+		for(DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+			membership = document.toObject(Membership.class);
+            break;
+		}
+
+		double coinsToGive = event.getCost() * (membership.getRewardMultiplier() / 100);
+
+		CoinTransactions transaction = new CoinTransactions();
+		transaction.setAmount((int) coinsToGive);
+		transaction.setId(UUID.randomUUID().toString());
+		transaction.setPhone(params.getString("phone"));
+		transaction.setSource("coinback");
+		transaction.setSourceId(params.getString("eventId"));
+		transaction.setTitle("Coinback for "+event.getEventName());
+		transaction.setTransactionDate(new Date().getTime());
+		transaction.setType(TransactionTypeEnum.CREDIT);
+
+        // add coins to user's wallet
+        userMembership.setCoins(userMembership.getCoins() + (int)coinsToGive);
+
+		coinTransactionsService.save(transaction);
+        userMembershipsService.save(userMembership);
+
+        return  userMembership;
+	}
+
 	@ApiOperation(value = "Get events by date range (used when user clicks a date on the app)")
 	@PostMapping("getEventsByDate")
 	public JSONObject getEventsByDate(@RequestBody JSONObject params){
 		System.out.println("date"+params.getString("date"));
-		
+
 		Instant instance = java.time.Instant.ofEpochMilli(Long.parseLong(params.getString("date")));
 		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
 		                            .ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
@@ -361,13 +424,13 @@ public class EventController {
 	@ApiOperation(value = "To book an event")
 	@PostMapping("bookEvent")
 	public String bookEvent(@RequestBody JSONObject params) throws IOException, MessagingException, GeneralSecurityException, InterruptedException, ExecutionException {
-		System.out.println("RUnning book");
 		CollectionReference eventRef = eventService.getCollectionReference();
 		CollectionReference referrals = referralService.getCollectionReference();
 
 		JSONObject getMembershipByPhoneParams = new JSONObject();
 		getMembershipByPhoneParams.put("phone", params.getString("phoneNumber"));
-		UserMemberships userMembership= membershipController.getMembershipByPhone(getMembershipByPhoneParams);
+		UserMemberships userMembership = membershipController.getMembershipByPhone(getMembershipByPhoneParams);
+        CoinTransactions newTransaction = new CoinTransactions();
 
 		Optional<Event> oevent = eventService.findById(params.getString("id"));
 		Event event = oevent.orElse(null);
@@ -385,14 +448,26 @@ public class EventController {
 			participants = new ArrayList<String>();
 		}
 		participants.add(params.getString("phoneNumber"));
-		
+
 		event.setParticipantList(participants);
 
 		// deduct coins from user's wallet if paid event
 		if (StringUtils.equals(event.getCostType(), "paid")) {
 			userMembership.setCoins(userMembership.getCoins() - event.getCost());
-			userMembershipsService.save(userMembership);
+			// add the data in user's transaction history
+			newTransaction.setAmount(event.getCost());
+			newTransaction.setSource(event.getType());
+			newTransaction.setType(TransactionTypeEnum.DEBIT);
+			newTransaction.setTitle("Book "+event.getEventName()+" session");
+			newTransaction.setSourceId(event.getId());
+			newTransaction.setTransactionDate(new Date().getTime());
+			newTransaction.setPhone(params.getString("phoneNumber"));
+			newTransaction.setId(UUID.randomUUID().toString());
 		}
+
+
+		userMembershipsService.save(userMembership);
+		coinTransactionsService.save(newTransaction);
 
 		//TAMBOLA GENERATION-START
 		List<String> tambolaTickets = event.getTambolaTickets();
@@ -402,10 +477,10 @@ public class EventController {
 		if(event.getEventName().toLowerCase().contains("tambola")) {
 			tambolaTickets.add(ticket);
 		}
-		
+
 		event.setTambolaTickets(tambolaTickets);
 		//TAMBOLA GENERATION-END
-		
+
 		Map<String, Object> map = new HashMap<>();
 		map.put("participantList",participants);
 		map.put("seatsLeft",event.getSeatsLeft());
@@ -437,10 +512,20 @@ public class EventController {
 		return "SUCCESS";
 	}
 
+  public String sendEmail(String email, String subject, String content)  {
+	  try {
+		emailService.sendSimpleMessage(email,subject,content);
+	} catch (MessagingException | IOException | GeneralSecurityException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+
+    return "SUCCESS";
+  }
+
 	@ApiOperation(value = "To cancel an event")
 	@PostMapping("cancelEvent")
 	public String cancelEvent(@RequestBody JSONObject params) throws IOException, ExecutionException, InterruptedException {
-		System.out.println("RUnning cancel");
 		CollectionReference eventRef = eventService.getCollectionReference();
 
 		JSONObject getMembershipByPhoneParams = new JSONObject();
@@ -459,11 +544,23 @@ public class EventController {
 		event.setParticipantList(participants);
 
 		// refund coins to user's wallet in case of paid event
+		CoinTransactions newTransaction = new CoinTransactions();
 		if (StringUtils.equals(event.getCostType(),"paid")) {
 			userMembership.setCoins(userMembership.getCoins() + event.getCost());
-			userMembershipsService.save(userMembership);
+
+			// add the data in user's transaction history
+			newTransaction.setAmount(event.getCost());
+			newTransaction.setSource("Refund");
+			newTransaction.setSourceId(event.getId());
+			newTransaction.setTitle("Refund of "+event.getEventName()+ " session");
+			newTransaction.setType(TransactionTypeEnum.CREDIT);
+			newTransaction.setId(UUID.randomUUID().toString());
+			newTransaction.setTransactionDate(new Date().getTime());
+			newTransaction.setPhone(params.getString("phoneNumber"));
 		}
 
+		userMembershipsService.save(userMembership);
+        coinTransactionsService.save(newTransaction);
 		Map<String, Object> map = new HashMap<>();
 		if(event.getEventName().toLowerCase().contains("tambola")) {
 			List<String> tickets = event.getTambolaTickets();
@@ -492,57 +589,45 @@ public class EventController {
 	}
 	@ApiOperation(value = "Get list of past sessions attended by a user")
 	@PostMapping("mySessions")
-	public JSONObject mySessions(@RequestBody JSONObject params) throws IOException {
+	public JSONObject mySessions(@RequestBody JSONObject params) throws IOException, ExecutionException, InterruptedException {
 		Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
 		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
 		                            .ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
-		ZonedDateTime endZonedDateTime = zonedDateTime.with(LocalTime.of ( 23 , 59 ));
 		CollectionReference eventsRef = eventService.getCollectionReference();
-//		.whereArrayContains("participantList", params.getString("email")).whereEqualTo("isParent", false)
-//		Query query1 = eventsRef.whereGreaterThan("startTime", ""+zonedDateTime.toInstant().toEpochMilli()).whereArrayContains("participantList", params.getString("phoneNumber")).whereEqualTo("isParent", false);
-//		zonedDateTime.toInstant().toEpochMilli()
+		JSONObject getMembershipByPhoneParams = new JSONObject();
+		getMembershipByPhoneParams.put("phone",params.getString("phoneNumber"));
+		UserMemberships userMembership = membershipController.getMembershipByPhone(getMembershipByPhoneParams);
 		Query query2 = eventsRef.whereLessThan("endTime", ""+zonedDateTime.toInstant().toEpochMilli()).whereArrayContains("participantList", params.getString("phoneNumber")).whereEqualTo("isParent", false);
-		
-//		ApiFuture<QuerySnapshot> querySnapshot1 = query1.get();
+		JSONObject emptyEventsObject = new JSONObject();
+		List<Event> list = new ArrayList<>();
+		emptyEventsObject.put("expiredEvents", list);
+		if (userMembership == null) return emptyEventsObject;
+		if (userMembership.getMembershipType() == MembershipEnum.Free) return emptyEventsObject;
+		else if (userMembership.getMembershipType() == MembershipEnum.Silver) {
+			long currTime = new Date().getTime();
+			long twelveDaysAgo = currTime - 12 * 24 * 60 * 60 * 1000;
+			query2 = query2.whereGreaterThanOrEqualTo("startTime", "" + twelveDaysAgo);
+        } else if (userMembership.getMembershipType() == MembershipEnum.Gold) {
+            long currTime = new Date().getTime();
+            long thirtyDaysAgo = currTime - 30L * 24 * 60 * 60 * 1000;
+            query2 = query2.whereGreaterThanOrEqualTo("startTime", "" + thirtyDaysAgo);
+		}
 		ApiFuture<QuerySnapshot> querySnapshot2 = query2.get();
 
-		
-//		Set<Event> events1 = new HashSet<>();
 		Set<Event> events2 = new HashSet<>();
-//		Set<Event> events3 = new HashSet<>();
 		try {
-//			for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
-//				events1.add(document.toObject(Event.class));
-//			}
 			for (DocumentSnapshot document : querySnapshot2.get().getDocuments()) {
-				events2.add(document.toObject(Event.class));  
+				events2.add(document.toObject(Event.class));
 			}
 		}
 		catch(Exception e) {
 			e.printStackTrace();
 		}
-		JSONObject paramsForEventByDate = new JSONObject();
-		paramsForEventByDate.put("date", ""+zonedDateTime.toInstant().toEpochMilli());
-		paramsForEventByDate.put("endDate", ""+zonedDateTime.toInstant().toEpochMilli());
-		
-//		JSONObject ongoingJSON = getOngoingEvents(paramsForEventByDate);
 		JSONObject output = new JSONObject();
-		ObjectMapper objectMapper = new ObjectMapper();
-//		for(Object obj:ongoingJSON.getJSONArray("events")) {
-//			Event ev =((Event)obj);
-//			if(ev.getParticipantList()!=null && ev.getParticipantList().size()>0 &&  ev.getParticipantList().contains(params.getString("phoneNumber"))) {
-//				events3.add(ev);
-//			}
-//		}
-//		events1.removeAll(events3);
-//		ArrayList<Event> events1List = new ArrayList<>(events1);
 		ArrayList<Event> events2List = new ArrayList<>(events2);
-//		Collections.sort(events1List,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
-		Collections.sort(events2List,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+		events2List.sort(Comparator.comparing(Event::getStartTime));
 		Collections.reverse(events2List);
-		output.put("upcomingEvents", new ArrayList());
-		output.put("expiredEvents", events2List.subList(0,events2List.size()>12?12:events2List.size()));
-		output.put("ongoingEvents", new ArrayList());
+		output.put("expiredEvents", events2List);
 
 		return output;
 	}
