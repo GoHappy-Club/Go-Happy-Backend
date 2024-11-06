@@ -51,7 +51,7 @@ public class Memberships {
         CollectionReference userMembershipRef = userMembershipsService.getCollectionReference();
         CollectionReference membershipRef = membershipRepository.getCollectionReference();
 
-        Query userQuery = userMembershipRef.whereEqualTo("lastCoinsCreditedDate", thirtyDaysAgoInMillis);
+        Query userQuery = userMembershipRef.whereEqualTo("lastCoinsCreditedDate", thirtyDaysAgoInMillis).whereEqualTo("freeTrialActive",false);
         ApiFuture<QuerySnapshot> querySnapshot = userQuery.get();
         calendar.set(Calendar.MONTH, 1);
 
