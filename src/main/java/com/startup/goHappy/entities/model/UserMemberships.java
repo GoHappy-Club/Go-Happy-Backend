@@ -2,7 +2,14 @@ package com.startup.goHappy.entities.model;
 
 
 import com.startup.goHappy.enums.MembershipEnum;
+import com.startup.goHappy.enums.TransactionTypeEnum;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class UserMemberships {
@@ -20,4 +27,5 @@ public class UserMemberships {
     private String cancellationReason;
     private String lastCoinsCreditedDate;
     private Object vouchers;
+    private boolean freeTrialUsed = false;
 }
