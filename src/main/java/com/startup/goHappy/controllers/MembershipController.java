@@ -13,6 +13,7 @@ import com.google.firebase.messaging.Message;
 import com.startup.goHappy.entities.model.*;
 import com.startup.goHappy.entities.repository.*;
 import com.startup.goHappy.enums.MembershipEnum;
+import com.startup.goHappy.enums.TransactionTypeEnum;
 import com.startup.goHappy.integrations.service.EmailService;
 import com.startup.goHappy.utils.Constants;
 import com.startup.goHappy.utils.Helpers;
@@ -50,6 +51,9 @@ public class MembershipController {
     CoinPackagesRepository coinPackagesService;
 
     @Autowired
+    CoinTransactionsRepository coinTransactionsService;
+
+    @Autowired
     Constants constants;
 
     @Autowired
@@ -74,6 +78,36 @@ public class MembershipController {
         return IterableUtils.toList(packages);
     }
 
+    @ApiOperation(value = "activate a user's free trial for 1 month/ will be used as a callback for PhonePe")
+    @PostMapping("/activateFreeTrial")
+    public void activateFreeTrial(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+        UserMemberships userMembership = getMembershipByPhone(params);
+
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"));
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        userMembership.setMembershipStartDate(String.valueOf(calendar.getTimeInMillis()));
+        calendar.add(Calendar.MONTH, 1);
+        userMembership.setMembershipEndDate(String.valueOf(calendar.getTimeInMillis()));
+        userMembership.setMembershipType(MembershipEnum.Silver);
+
+        userMembershipsService.save(userMembership);
+    }
+
+    @ApiOperation("cancel or de-activate a user's free trial")
+    @PostMapping("/cancelFreeTrial")
+    public void cancelFreeTrial(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+        UserMemberships userMembership = getMembershipByPhone(params);
+
+        userMembership.setMembershipStartDate(null);
+        userMembership.setMembershipType(MembershipEnum.Free);
+        userMembership.setMembershipEndDate(null);
+        userMembershipsService.save(userMembership);
+    }
+
     @ApiOperation(value = "When user completes payment for a subscription plan")
     @PostMapping("/buy")
     public void buySubscription(@RequestBody JSONObject params, @RequestParam String phoneNumber, @RequestParam String amount, @RequestParam String membershipId) throws ExecutionException, InterruptedException, IOException, MessagingException, GeneralSecurityException, FirebaseMessagingException {
@@ -96,7 +130,7 @@ public class MembershipController {
         // if status is error, then return
         if ("PAYMENT_ERROR".equals(code)) return;
 
-        Calendar calendar = Calendar.getInstance();
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"));
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
@@ -128,6 +162,7 @@ public class MembershipController {
 
         UserProfile user = null;
         PaymentLog plog = new PaymentLog();
+        CoinTransactions transaction = new CoinTransactions();
         for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
             user = document.toObject(UserProfile.class);
             assert user != null;
@@ -145,6 +180,17 @@ public class MembershipController {
             userMembership.setMembershipEndDate("" + calendar.getTimeInMillis());
             userMembership.setCoins(userMembership.getCoins() + membership.getCoinsPerMonth());
 
+            // add this transaction to user's history
+            transaction.setAmount(membership.getCoinsPerMonth());
+            transaction.setSource("Membership");
+            transaction.setType(TransactionTypeEnum.CREDIT);
+            transaction.setTransactionDate(new Date().getTime());
+            transaction.setPhone(phoneNumber);
+            transaction.setId(UUID.randomUUID().toString());
+            transaction.setSourceId(membershipId);
+            transaction.setTitle("Buy "+membership.getMembershipType()+ " Membership");
+
+
             // set user's phone and uid in this membership document
             userMembership.setUserId(user.getId());
             userMembership.setPhone(user.getPhone());
@@ -160,6 +206,7 @@ public class MembershipController {
         userProfileService.save(user);
         userMembershipsService.save(userMembership);
         paymentLogService.save(plog);
+        coinTransactionsService.save(transaction);
 
         //send email to user
         String currentContent = constants.getJoiningContent();
@@ -244,7 +291,7 @@ public class MembershipController {
         //check the status of the payment, if it is error, return
         if ("PAYMENT_ERROR".equals(code)) return;
 
-        Calendar calendar = Calendar.getInstance();
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"));
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
@@ -331,7 +378,7 @@ public class MembershipController {
         //check the status of the payment, if it is error, return
         if ("PAYMENT_ERROR".equals(code)) return;
 
-        Calendar calendar = Calendar.getInstance();
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"));
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
@@ -375,6 +422,7 @@ public class MembershipController {
 
         UserProfile user = null;
         PaymentLog plog = new PaymentLog();
+        CoinTransactions newTransaction = new CoinTransactions();
         for (DocumentSnapshot document : querySnapshot2.get().getDocuments()) {
             user = document.toObject(UserProfile.class);
             user.setLastPaymentDate("" + new Date().getTime());
@@ -385,12 +433,23 @@ public class MembershipController {
             plog.setId(UUID.randomUUID().toString());
             plog.setAmount(user.getLastPaymentAmount());
             plog.setType("membership");
+
+            // add this transaction to user's history
+            newTransaction.setAmount(membership.getSubscriptionFees());
+            newTransaction.setSource("Membership");
+            newTransaction.setTitle("Upgrade to "+membership.getMembershipType()+" Membership");
+            newTransaction.setType(TransactionTypeEnum.CREDIT);
+            newTransaction.setSourceId(membershipId);
+            newTransaction.setTransactionDate(new Date().getTime());
+            newTransaction.setId(UUID.randomUUID().toString());
+
             break;
         }
 
         userMembershipsService.save(userMember);
         userProfileService.save(user);
         paymentLogService.save(plog);
+        coinTransactionsService.save(newTransaction);
 
         // send fcm notification to the frontend for redux update
         String MEMBERSHIP_TOPIC = "subscriptionUpdate";
@@ -435,9 +494,23 @@ public class MembershipController {
 
         userMember.setCoins(userMember.getCoins() + Integer.parseInt(coinsToGive));
 
+        // add this transaction to user's history
+        CoinTransactions newTransaction = new CoinTransactions();
+        newTransaction.setAmount(Integer.parseInt(amount));
+        newTransaction.setSource("Wallet");
+        newTransaction.setType(TransactionTypeEnum.CREDIT);
+        newTransaction.setSourceId(plog.getId());
+        newTransaction.setTransactionDate(new Date().getTime());
+        newTransaction.setTitle("Top up Wallet");
+        newTransaction.setSourceId(plog.getId());
+        newTransaction.setId(UUID.randomUUID().toString());
+        newTransaction.setPhone(user.getPhone());
+
+
         userMembershipsService.save(userMember);
         userProfileService.save(user);
         paymentLogService.save(plog);
+        coinTransactionsService.save(newTransaction);
 
         // send fcm notification to the frontend for redux update
         String MEMBERSHIP_TOPIC = "subscriptionUpdate";
@@ -455,6 +528,34 @@ public class MembershipController {
         userMembership.setLastCoinsCreditedDate(null);
         userMembershipsService.save(userMembership);
         return userMembership;
+    }
+
+    @ApiOperation(value = "Get user's recent 10 transaction history")
+    @PostMapping("/getRecentTransactions")
+    public List<CoinTransactions> getRecentTransactions(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+        CollectionReference coinTransactionsRef = coinTransactionsService.getCollectionReference();
+        Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).orderBy("transactionDate", Query.Direction.DESCENDING).limit(10);
+        ApiFuture<QuerySnapshot> snapshotApiFuture = transactionQuery.get();
+        List<CoinTransactions> recentTransactions = new ArrayList<>();
+        for(DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
+            recentTransactions.add(document.toObject(CoinTransactions.class));
+        }
+        return recentTransactions;
+    }
+
+    @ApiOperation(value = "Get user's last month transaction history")
+    @PostMapping("/getTransactions")
+    public List<CoinTransactions> getTransactions(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+        long startDate = new Date().getTime();
+        long endDate = startDate - 30L * 24 * 60 * 60 * 1000;
+        CollectionReference coinTransactionsRef = coinTransactionsService.getCollectionReference();
+        Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).whereGreaterThanOrEqualTo("transactionDate",endDate).whereLessThanOrEqualTo("transactionDate",startDate).orderBy("transactionDate", Query.Direction.DESCENDING);
+        ApiFuture<QuerySnapshot> snapshotApiFuture = transactionQuery.get();
+        List<CoinTransactions> transactions = new ArrayList<>();
+        for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
+            transactions.add(document.toObject(CoinTransactions.class));
+        }
+        return transactions;
     }
 
     @ApiOperation(value = "Get user's profile and membership document for update")
@@ -516,7 +617,6 @@ public class MembershipController {
     }
 
     private void sendSubscriptionUpdateWithFcm(String fcmToken, String topic, UserMemberships userMembership) throws FirebaseMessagingException {
-        System.out.println("Recieved fcm token is ==>" + fcmToken);
         List<String> fcmTokens = new ArrayList<>();
         fcmTokens.add(fcmToken);
 
@@ -530,7 +630,6 @@ public class MembershipController {
             Message message = Message.builder().setTopic(topic).putData("runUpdate", "true").putData("type", "subscriptionUpdate").putData("userMembership", JSONObject.toJSONString(userMembership)).build();
 
             String response = FirebaseMessaging.getInstance().send(message);
-            System.out.println("Successfully sent weekly contribution reminder: " + response);
         } catch (FirebaseMessagingException e) {
             System.err.println("Failed to send weekly contribution reminder: " + e.getMessage());
         }
