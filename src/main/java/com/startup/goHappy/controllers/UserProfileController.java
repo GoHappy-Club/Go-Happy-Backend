@@ -62,6 +62,7 @@ public class UserProfileController {
     public UserProfileController() {
 
     }
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @TestOnly
     public UserProfileController(UserProfileRepository userProfileService) {
@@ -300,11 +301,16 @@ public class UserProfileController {
             break;
         }
         userProfileService.save(user);
-        JSONObject output = new JSONObject();
-        output.put("user", user);
-        output.put("membership",userMembership);
+        Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
+        Map<String, Object> membershipMap = objectMapper.convertValue(userMembership, Map.class);
 
-        return output;
+        // Merge the maps into one
+        Map<String, Object> mergedMap = new HashMap<>(userMap);
+        mergedMap.putAll(membershipMap);
+//        output.put("user", user);
+//        output.put("membership",userMembership);
+
+        return new JSONObject(mergedMap);
     }
 
     @PostMapping("updateProfileImage")
