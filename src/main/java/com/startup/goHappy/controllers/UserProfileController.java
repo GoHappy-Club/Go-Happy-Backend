@@ -266,11 +266,6 @@ public class UserProfileController {
     @PostMapping("update")
     public JSONObject updateUser(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
 
-        //retrieve userMembership Profile to send to frontend
-        JSONObject getMembershipByPhoneParams = new JSONObject();
-        getMembershipByPhoneParams.put("phone",params.getString("phone"));
-        UserMemberships userMembership = membershipController.getMembershipByPhone(getMembershipByPhoneParams);
-
         CollectionReference userProfiles = userProfileService.getCollectionReference();
         if(!StringUtils.isEmpty(params.getString("phone"))) {
     
@@ -301,6 +296,14 @@ public class UserProfileController {
             break;
         }
         userProfileService.save(user);
+
+        //retrieve userMembership Profile to send to frontend
+        JSONObject getMembershipByPhoneParams = new JSONObject();
+        getMembershipByPhoneParams.put("phone",params.getString("phone"));
+        UserMemberships userMembership = membershipController.getMembershipByPhone(getMembershipByPhoneParams);
+        if(userMembership == null){
+            userMembership = membershipController.createNewMembership(user.getPhone(),user.getId());
+        }
         Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
         Map<String, Object> membershipMap = objectMapper.convertValue(userMembership, Map.class);
 
