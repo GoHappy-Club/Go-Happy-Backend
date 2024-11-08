@@ -284,10 +284,8 @@ public class EventController {
 			break;
 		}
 		if(newTransaction != null) {
-			System.out.println("Returning early");
 			return userMembership;
 		}
-		System.out.println("Giving reward");
 		JSONObject eventParams = new JSONObject();
 		eventParams.put("id",params.getString("eventId"));
 		JSONObject eventObject = getEventById(eventParams);
@@ -304,10 +302,11 @@ public class EventController {
             break;
 		}
 
-		double coinsToGive = event.getCost() * (membership.getRewardMultiplier() / 100);
+		int coinsToGive = (int) Math.round(event.getCost() * membership.getRewardMultiplier());
+		System.out.println("Giving coins ==>"+coinsToGive);
 
 		CoinTransactions transaction = new CoinTransactions();
-		transaction.setAmount((int) coinsToGive);
+		transaction.setAmount(coinsToGive);
 		transaction.setId(UUID.randomUUID().toString());
 		transaction.setPhone(params.getString("phone"));
 		transaction.setSource("coinback");
