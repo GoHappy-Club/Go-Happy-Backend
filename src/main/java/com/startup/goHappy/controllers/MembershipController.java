@@ -182,7 +182,7 @@ public class MembershipController {
 
             // add this transaction to user's history
             transaction.setAmount(membership.getCoinsPerMonth());
-            transaction.setSource("Membership");
+            transaction.setSource("membership");
             transaction.setType(TransactionTypeEnum.CREDIT);
             transaction.setTransactionDate(new Date().getTime());
             transaction.setPhone(phoneNumber);
@@ -436,7 +436,7 @@ public class MembershipController {
 
             // add this transaction to user's history
             newTransaction.setAmount(membership.getSubscriptionFees());
-            newTransaction.setSource("Membership");
+            newTransaction.setSource("membership");
             newTransaction.setTitle("Upgrade to "+membership.getMembershipType()+" Membership");
             newTransaction.setType(TransactionTypeEnum.CREDIT);
             newTransaction.setSourceId(membershipId);
@@ -496,8 +496,8 @@ public class MembershipController {
 
         // add this transaction to user's history
         CoinTransactions newTransaction = new CoinTransactions();
-        newTransaction.setAmount(Integer.parseInt(amount));
-        newTransaction.setSource("Wallet");
+        newTransaction.setAmount(Integer.parseInt(coinsToGive));
+        newTransaction.setSource("wallet");
         newTransaction.setType(TransactionTypeEnum.CREDIT);
         newTransaction.setSourceId(plog.getId());
         newTransaction.setTransactionDate(new Date().getTime());
@@ -550,6 +550,19 @@ public class MembershipController {
         long endDate = startDate - 30L * 24 * 60 * 60 * 1000;
         CollectionReference coinTransactionsRef = coinTransactionsService.getCollectionReference();
         Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).whereGreaterThanOrEqualTo("transactionDate",endDate).whereLessThanOrEqualTo("transactionDate",startDate).orderBy("transactionDate", Query.Direction.DESCENDING);
+        ApiFuture<QuerySnapshot> snapshotApiFuture = transactionQuery.get();
+        List<CoinTransactions> transactions = new ArrayList<>();
+        for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
+            transactions.add(document.toObject(CoinTransactions.class));
+        }
+        return transactions;
+    }
+
+    @ApiOperation(value = "Get user's coin backs from the sessions")
+    @PostMapping("/getRewards")
+    public List<CoinTransactions> getRewards(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+        CollectionReference coinTransactionsRef = coinTransactionsService.getCollectionReference();
+        Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).whereEqualTo("source","coinback").orderBy("transactionDate", Query.Direction.DESCENDING);
         ApiFuture<QuerySnapshot> snapshotApiFuture = transactionQuery.get();
         List<CoinTransactions> transactions = new ArrayList<>();
         for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
