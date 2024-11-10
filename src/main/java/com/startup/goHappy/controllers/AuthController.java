@@ -43,12 +43,6 @@ public class AuthController {
     UserProfileController userProfileController;
     @Autowired
     MembershipController membershipController;
-    @Autowired
-    Constants constants;
-    @Autowired
-    EmailService emailService;
-    @Autowired
-    ReferralRepository referralService;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -142,19 +136,5 @@ public class AuthController {
         }
 
         return null;
-    }
-
-    @GetMapping("/testRef")
-    public void testRef() {
-        for (int i = 0; i < 5; i++) {
-            Referral referObject = new Referral();
-            referObject.setId(UUID.randomUUID().toString());
-            referObject.setFrom("911234554321");
-            referObject.setTo("918850102929");
-            referObject.setTime("" + (new Date().getTime() - (i * 1000)));
-            referObject.setHasAttendedSession(true);
-            referObject.setReferralId("OPxuoI");
-            referralService.save(referObject);
-        }
     }
 }

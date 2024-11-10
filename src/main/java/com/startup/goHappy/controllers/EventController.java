@@ -543,7 +543,7 @@ public class EventController {
 
 			// add the data in user's transaction history
 			newTransaction.setAmount(event.getCost());
-			newTransaction.setSource("Refund");
+			newTransaction.setSource("refund");
 			newTransaction.setSourceId(event.getId());
 			newTransaction.setTitle("Refund of "+event.getEventName()+ " session");
 			newTransaction.setType(TransactionTypeEnum.CREDIT);
