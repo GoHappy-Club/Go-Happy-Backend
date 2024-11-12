@@ -2,6 +2,8 @@ package com.startup.goHappy.admin.controllers;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -39,52 +41,10 @@ public class AdminEventController {
 
     @ApiOperation(value = "To create a new params")
     @PostMapping("/createTemplate")
-    public @ResponseBody JSONObject createTemplate(@RequestBody JSONObject params) {
-        Templates templateNew = new Templates();
+    public @ResponseBody JSONObject createTemplate(@RequestBody JSONObject params) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        Templates templateNew = objectMapper.readValue(params.toString(),Templates.class);
         templateNew.setId(UUID.randomUUID().toString());
-        if (params.containsKey("templateName")) {
-            templateNew.setTemplateName(params.getString("templateName"));
-        }if (params.containsKey("eventName")) {
-            templateNew.setEventName(params.getString("eventName"));
-        }if (params.containsKey("coverImage")) {
-            templateNew.setCoverImage(params.getString("coverImage"));
-        }if (params.containsKey("description")) {
-            templateNew.setDescription(params.getString("description"));
-        }if (params.containsKey("beautifulDescription")) {
-            templateNew.setBeautifulDescription(params.getString("beautifulDescription"));
-        }if (params.containsKey("expertImage")) {
-            templateNew.setExpertImage(params.getString("expertImage"));
-        }if (params.containsKey("expertName")) {
-            templateNew.setExpertName(params.getString("expertName"));
-        }if (params.containsKey("category")) {
-            templateNew.setCategory(params.getString("category"));
-        }if (params.containsKey("creator")) {
-            templateNew.setCreator(params.getString("creator"));
-        }if (params.containsKey("eventDate")) {
-            templateNew.setEventDate(params.getString("eventDate"));
-        }if (params.containsKey("startTime")) {
-            templateNew.setStartTime(params.getString("startTime"));
-        }if (params.containsKey("endTime")) {
-            templateNew.setEndTime(params.getString("endTime"));
-        }if (params.containsKey("costType")) {
-            templateNew.setCostType(params.getString("costType"));
-        }if (params.containsKey("cost")) {
-            templateNew.setCost(params.getInteger("cost"));
-        }if (params.containsKey("seatsLeft")) {
-            templateNew.setSeatsLeft(params.getInteger("seatsLeft"));
-        }if (params.containsKey("occurance")) {
-            templateNew.setOccurance(params.getString("occurance"));
-        }if (params.containsKey("type")) {
-            templateNew.setType(params.getString("type"));
-        }if (params.containsKey("isParent")) {
-            templateNew.setIsParent(params.getBoolean("isParent"));
-        }if (params.containsKey("isScheduled")) {
-            templateNew.setIsScheduled(params.getBoolean("isScheduled"));
-        }if (params.containsKey("cron")) {
-            templateNew.setCron(params.getString("cron"));
-        }if (params.containsKey("sameDayEventId")) {
-            templateNew.setSameDayEventId(params.getString("sameDayEventId"));
-        }
         templateService.save(templateNew);
         JSONObject output = new JSONObject();
         output.put("success",true);
