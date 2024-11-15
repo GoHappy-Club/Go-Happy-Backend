@@ -89,6 +89,12 @@ public class EventController {
 	MembershipRepository membershipService;
 
 	@Autowired
+	UserVouchersRepository userVouchersService;
+
+	@Autowired
+	VouchersRepository vouchersService;
+
+	@Autowired
 	Helpers helpers;
 
 	@Autowired
