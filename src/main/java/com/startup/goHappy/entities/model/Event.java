@@ -5,6 +5,7 @@ package com.startup.goHappy.entities.model;
 import java.util.*;
 
 import com.google.firebase.database.utilities.Pair;
+import kotlin.jvm.Transient;
 import org.springframework.context.annotation.Primary;
 
 
@@ -26,6 +27,7 @@ public class Event {
 	private String expertName;
 	private String expertImage;
 	private String category;
+	private String subCategory;
 	private String description;
 	private String beautifulDescription;
 	private String shareMessage;
@@ -49,6 +51,8 @@ public class Event {
 
 	private String sameDayEventId;
 
+	@Transient
+	private int rating;
 //	private Map<Pair<String,String>,String> tambolaTicketsMapping;
 	
 	@Override

@@ -124,7 +124,7 @@
 	    <dependency>
 		  <groupId>com.google.firebase</groupId>
 		  <artifactId>firebase-admin</artifactId>
-		  <version>8.1.0</version>
+		  <version>9.4.1</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.google.gms/google-services -->
 		<dependency>
@@ -149,10 +149,11 @@
 		    <version>v1-rev110-1.25.0</version>
 		</dependency>
 		<dependency>
-		    <groupId>com.google.guava</groupId>
-		    <artifactId>guava</artifactId>
-		    <version>31.0.1-jre</version>
-		</dependency>       
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>33.0.0-jre</version>
+		</dependency>
+
 		<dependency>
 		    <groupId>com.squareup.okhttp3</groupId>
 		    <artifactId>okhttp</artifactId>
