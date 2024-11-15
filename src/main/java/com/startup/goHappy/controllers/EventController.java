@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import javax.mail.MessagingException;
 
@@ -20,6 +21,8 @@ import com.startup.goHappy.entities.model.Event;
 import com.startup.goHappy.entities.repository.*;
 import com.startup.goHappy.enums.MembershipEnum;
 import com.startup.goHappy.enums.TransactionTypeEnum;
+import com.startup.goHappy.enums.VoucherStatusEnum;
+import com.startup.goHappy.services.RatingHelperService;
 import com.startup.goHappy.utils.Constants;
 import com.startup.goHappy.utils.Helpers;
 import io.swagger.annotations.ApiOperation;
@@ -90,6 +93,12 @@ public class EventController {
 
 	@Autowired
 	Constants constants;
+
+	@Autowired
+	RatingHelperService ratingHelperService;
+
+	@Autowired
+	RatingsRepository ratingsService;
 
 
 	public long calculateDuration(long t1, long t2){
@@ -303,7 +312,6 @@ public class EventController {
 		}
 
 		int coinsToGive = (int) Math.round(event.getCost() * membership.getRewardMultiplier());
-		System.out.println("Giving coins ==>"+coinsToGive);
 
 		CoinTransactions transaction = new CoinTransactions();
 		transaction.setAmount(coinsToGive);
@@ -355,9 +363,19 @@ public class EventController {
 		ApiFuture<QuerySnapshot> querySnapshotNew = queryNew.get();
 
 		Set<Event> eventsNew = new HashSet<>();
+		Map<String, Double> subCategoryRatings = new HashMap<>();
 		try {
 			for (DocumentSnapshot document : querySnapshotNew.get().getDocuments()) {
-				eventsNew.add(document.toObject(Event.class));
+				Event newEvent = document.toObject(Event.class);
+				eventsNew.add(newEvent);
+			}
+			Set<String> uniqueSubCategories = new HashSet<>();
+			for (Event event : eventsNew) {
+				uniqueSubCategories.add(event.getSubCategory());
+			}
+			for (String subCategory : uniqueSubCategories) {
+				double rating = ratingHelperService.getRatingByCategory(subCategory); // Fetch the rating once per unique subcategory
+				subCategoryRatings.put(subCategory, rating);
 			}
 		}
 		catch(Exception e) {
@@ -368,7 +386,29 @@ public class EventController {
 		Collections.sort(eventsNewBest,(a, b) -> a.getStartTime().compareTo(b.getStartTime()));
 		JSONObject output = new JSONObject();
 		output.put("events", eventsNewBest);
+		output.put("ratings",subCategoryRatings);
 		return output;
+	}
+
+	@ApiOperation(value = "Save user's rating for a session/workshop")
+	@PostMapping("/submitRating")
+	public void submitRating(@RequestBody JSONObject params){
+		System.out.println("Params ==>"+params);
+		String phone = params.getString("phone");
+		String reason = params.containsKey("reason") ? params.getString("reason"):null;
+		String usersRating = params.getString("rating");
+		String subCategory = params.getString("subCategory");
+		String eventId = params.getString("id");
+		Ratings rating = new Ratings();
+		rating.setId(UUID.randomUUID().toString());
+		rating.setId(eventId);
+		rating.setPhone(phone);
+		rating.setRating(usersRating);
+		rating.setSubCategory(subCategory);
+		if(reason!=null) {
+			rating.setReason(reason);
+		}
+		ratingsService.save(rating);
 	}
 
 	@ApiOperation(value = "Get events by within date range")
@@ -451,7 +491,7 @@ public class EventController {
 		event.setParticipantList(participants);
 
 		// deduct coins from user's wallet if paid event
-		if (StringUtils.equals(event.getCostType(), "paid")) {
+		if (StringUtils.equals(event.getCostType(), "paid") && !userMembership.isFreeTrialActive()) {
 			userMembership.setCoins(userMembership.getCoins() - event.getCost());
 			// add the data in user's transaction history
 			newTransaction.setAmount(event.getCost());
@@ -464,9 +504,9 @@ public class EventController {
 			newTransaction.setId(UUID.randomUUID().toString());
 		}
 
-
 		userMembershipsService.save(userMembership);
-		coinTransactionsService.save(newTransaction);
+        if (StringUtils.equals(event.getCostType(), "paid") && !userMembership.isFreeTrialActive())
+            coinTransactionsService.save(newTransaction);
 
 		//TAMBOLA GENERATION-START
 		List<String> tambolaTickets = event.getTambolaTickets();
@@ -544,7 +584,7 @@ public class EventController {
 
 		// refund coins to user's wallet in case of paid event
 		CoinTransactions newTransaction = new CoinTransactions();
-		if (StringUtils.equals(event.getCostType(),"paid")) {
+		if (StringUtils.equals(event.getCostType(),"paid") && !userMembership.isFreeTrialUsed()) {
 			userMembership.setCoins(userMembership.getCoins() + event.getCost());
 
 			// add the data in user's transaction history
@@ -559,7 +599,8 @@ public class EventController {
 		}
 
 		userMembershipsService.save(userMembership);
-        coinTransactionsService.save(newTransaction);
+		if (StringUtils.equals(event.getCostType(),"paid") && !userMembership.isFreeTrialUsed())
+            coinTransactionsService.save(newTransaction);
 		Map<String, Object> map = new HashMap<>();
 		if(event.getEventName().toLowerCase().contains("tambola")) {
 			List<String> tickets = event.getTambolaTickets();
