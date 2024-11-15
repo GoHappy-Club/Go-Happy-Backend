@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/membership")
@@ -52,6 +53,12 @@ public class MembershipController {
 
     @Autowired
     CoinTransactionsRepository coinTransactionsService;
+
+    @Autowired
+    VouchersRepository vouchersService;
+
+    @Autowired
+    UserVouchersRepository userVouchersService;
 
     @Autowired
     Constants constants;
@@ -92,6 +99,7 @@ public class MembershipController {
         userMembership.setMembershipStartDate(String.valueOf(calendar.getTimeInMillis()));
         calendar.add(Calendar.MONTH, 1);
         userMembership.setMembershipEndDate(String.valueOf(calendar.getTimeInMillis()));
+        userMembership.setFreeTrialActive(true);
         userMembership.setMembershipType(MembershipEnum.Silver);
 
         userMembershipsService.save(userMembership);
@@ -105,6 +113,8 @@ public class MembershipController {
         userMembership.setMembershipStartDate(null);
         userMembership.setMembershipType(MembershipEnum.Free);
         userMembership.setMembershipEndDate(null);
+        userMembership.setFreeTrialActive(false);
+        userMembership.setFreeTrialUsed(true);
         userMembershipsService.save(userMembership);
     }
 
@@ -188,7 +198,7 @@ public class MembershipController {
             transaction.setPhone(phoneNumber);
             transaction.setId(UUID.randomUUID().toString());
             transaction.setSourceId(membershipId);
-            transaction.setTitle("Buy "+membership.getMembershipType()+ " Membership");
+            transaction.setTitle("Buy " + membership.getMembershipType() + " Membership");
 
 
             // set user's phone and uid in this membership document
@@ -437,7 +447,7 @@ public class MembershipController {
             // add this transaction to user's history
             newTransaction.setAmount(membership.getSubscriptionFees());
             newTransaction.setSource("membership");
-            newTransaction.setTitle("Upgrade to "+membership.getMembershipType()+" Membership");
+            newTransaction.setTitle("Upgrade to " + membership.getMembershipType() + " Membership");
             newTransaction.setType(TransactionTypeEnum.CREDIT);
             newTransaction.setSourceId(membershipId);
             newTransaction.setTransactionDate(new Date().getTime());
@@ -537,7 +547,7 @@ public class MembershipController {
         Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).orderBy("transactionDate", Query.Direction.DESCENDING).limit(10);
         ApiFuture<QuerySnapshot> snapshotApiFuture = transactionQuery.get();
         List<CoinTransactions> recentTransactions = new ArrayList<>();
-        for(DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
+        for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
             recentTransactions.add(document.toObject(CoinTransactions.class));
         }
         return recentTransactions;
@@ -549,7 +559,7 @@ public class MembershipController {
         long startDate = new Date().getTime();
         long endDate = startDate - 30L * 24 * 60 * 60 * 1000;
         CollectionReference coinTransactionsRef = coinTransactionsService.getCollectionReference();
-        Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).whereGreaterThanOrEqualTo("transactionDate",endDate).whereLessThanOrEqualTo("transactionDate",startDate).orderBy("transactionDate", Query.Direction.DESCENDING);
+        Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).whereGreaterThanOrEqualTo("transactionDate", endDate).whereLessThanOrEqualTo("transactionDate", startDate).orderBy("transactionDate", Query.Direction.DESCENDING);
         ApiFuture<QuerySnapshot> snapshotApiFuture = transactionQuery.get();
         List<CoinTransactions> transactions = new ArrayList<>();
         for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
@@ -562,7 +572,10 @@ public class MembershipController {
     @PostMapping("/getRewards")
     public List<CoinTransactions> getRewards(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
         CollectionReference coinTransactionsRef = coinTransactionsService.getCollectionReference();
-        Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).whereEqualTo("source","coinback").orderBy("transactionDate", Query.Direction.DESCENDING);
+        List<String> sources = new ArrayList<>();
+        sources.add("coinback");
+        sources.add("prize");
+        Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).whereIn("source",sources).orderBy("transactionDate", Query.Direction.DESCENDING);
         ApiFuture<QuerySnapshot> snapshotApiFuture = transactionQuery.get();
         List<CoinTransactions> transactions = new ArrayList<>();
         for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
@@ -570,6 +583,44 @@ public class MembershipController {
         }
         return transactions;
     }
+
+    @ApiOperation(value = "To get user's vouchers")
+    @PostMapping("/getVouchers")
+    public List<Map<String,Object>> getVouchers(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+        CollectionReference userVouchersRef = userVouchersService.getCollectionReference();
+        Query vouchersQuery = userVouchersRef.whereEqualTo("phone", params.getString("phone"));
+        ApiFuture<QuerySnapshot> snapshotApiFuture = vouchersQuery.get();
+        List<UserVouchers> usersVouchers = new ArrayList<>();
+        for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
+            UserVouchers usersVoucher = document.toObject(UserVouchers.class);
+            usersVouchers.add(usersVoucher);
+        }
+        Set<String> voucherIds = usersVouchers.stream().map(UserVouchers::getVoucherId).collect(Collectors.toSet());
+        Map<String, Vouchers> idToVoucherMap = voucherIds.stream()
+                .map(voucherId -> {
+                    try {
+                        return getVoucherDetailFromVoucherId(voucherId);
+                    } catch (ExecutionException | InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toMap(Vouchers::getId, voucher -> voucher));
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<Map<String,Object>> resultantUserVouchers = new ArrayList<>();
+        for (UserVouchers userVoucher: usersVouchers){
+            Map<String, Object> userVoucherMap = objectMapper.convertValue(userVoucher, Map.class);
+            userVoucherMap.put("title", idToVoucherMap.get(userVoucher.getVoucherId()).getTitle());
+            userVoucherMap.put("image", idToVoucherMap.get(userVoucher.getVoucherId()).getImage());
+            userVoucherMap.put("description", idToVoucherMap.get(userVoucher.getVoucherId()).getDescription());
+            userVoucherMap.put("value", idToVoucherMap.get(userVoucher.getVoucherId()).getValue());
+            userVoucherMap.put("limit", idToVoucherMap.get(userVoucher.getVoucherId()).getLimit());
+            userVoucherMap.put("percent", idToVoucherMap.get(userVoucher.getVoucherId()).getPercent());
+            resultantUserVouchers.add(userVoucherMap);
+        }
+        return resultantUserVouchers;
+    }
+
+    // create vouchers api
 
     @ApiOperation(value = "Get user's profile and membership document for update")
     @PostMapping("/getUserUpdates")
@@ -647,5 +698,17 @@ public class MembershipController {
             System.err.println("Failed to send weekly contribution reminder: " + e.getMessage());
         }
         FirebaseMessaging.getInstance().unsubscribeFromTopic(fcmTokens, topic);
+    }
+
+    public Vouchers getVoucherDetailFromVoucherId(String voucherId) throws ExecutionException, InterruptedException {
+        CollectionReference vouchersRef = vouchersService.getCollectionReference();
+        Query query = vouchersRef.whereEqualTo("id", voucherId);
+        ApiFuture<QuerySnapshot> querySnapshotApiFuture = query.get();
+        Vouchers voucher = null;
+        for (DocumentSnapshot document : querySnapshotApiFuture.get().getDocuments()) {
+            voucher = document.toObject(Vouchers.class);
+            break;
+        }
+        return voucher;
     }
 }

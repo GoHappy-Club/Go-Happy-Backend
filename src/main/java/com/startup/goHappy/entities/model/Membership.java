@@ -13,5 +13,5 @@ public class Membership {
     private Double rewardMultiplier;
     private Integer coinsPerMonth;
     private Integer discount;
-    private Integer duration; // duration of membership in DAYS
+    private Integer duration; // duration of membership in MONTHS
 }
