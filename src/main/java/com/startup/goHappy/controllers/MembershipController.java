@@ -610,6 +610,7 @@ public class MembershipController {
         for (UserVouchers userVoucher: usersVouchers){
             Map<String, Object> userVoucherMap = objectMapper.convertValue(userVoucher, Map.class);
             userVoucherMap.put("title", idToVoucherMap.get(userVoucher.getVoucherId()).getTitle());
+            userVoucherMap.put("category", idToVoucherMap.get(userVoucher.getVoucherId()).getCategory());
             userVoucherMap.put("image", idToVoucherMap.get(userVoucher.getVoucherId()).getImage());
             userVoucherMap.put("description", idToVoucherMap.get(userVoucher.getVoucherId()).getDescription());
             userVoucherMap.put("value", idToVoucherMap.get(userVoucher.getVoucherId()).getValue());
