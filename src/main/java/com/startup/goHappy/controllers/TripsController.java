@@ -137,36 +137,38 @@ public class TripsController {
                 voucherTrips = document.toObject(Vouchers.class);
             }
             CollectionReference userVouchersRef = userVouchersService.getCollectionReference();
-            Query query = userVouchersRef.whereEqualTo("phone", phone).whereEqualTo("voucherId", voucherTrips.getId()).whereEqualTo("status", VoucherStatusEnum.ACTIVE);
-            ApiFuture<QuerySnapshot> snapshotApiFuture = query.get();
-            List<UserVouchers> usersVouchers = new ArrayList<>();
-            for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
-                UserVouchers usersVoucher = document.toObject(UserVouchers.class);
-                usersVouchers.add(usersVoucher);
+			if(voucherTrips != null) {
+                Query query = userVouchersRef.whereEqualTo("phone", phone).whereEqualTo("voucherId", voucherTrips.getId()).whereEqualTo("status", VoucherStatusEnum.ACTIVE);
+                ApiFuture<QuerySnapshot> snapshotApiFuture = query.get();
+                List<UserVouchers> usersVouchers = new ArrayList<>();
+                for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
+                    UserVouchers usersVoucher = document.toObject(UserVouchers.class);
+                    usersVouchers.add(usersVoucher);
+                }
+                Set<String> voucherIds = usersVouchers.stream().map(UserVouchers::getVoucherId).collect(Collectors.toSet());
+                Map<String, Vouchers> categoryToVoucherMap = voucherIds.stream()
+                        .map(voucherId -> {
+                            try {
+                                return membershipController.getVoucherDetailFromVoucherId(voucherId);
+                            } catch (ExecutionException | InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        })
+                        .collect(Collectors.toMap(Vouchers::getId, voucher -> voucher));
+                System.out.println(categoryToVoucherMap);
+                ObjectMapper objectMapper = new ObjectMapper();
+                for (UserVouchers userVoucher : usersVouchers) {
+                    Map<String, Object> userVoucherMap = objectMapper.convertValue(userVoucher, Map.class);
+                    userVoucherMap.put("title", categoryToVoucherMap.get(userVoucher.getVoucherId()).getTitle());
+                    userVoucherMap.put("image", categoryToVoucherMap.get(userVoucher.getVoucherId()).getImage());
+                    userVoucherMap.put("description", categoryToVoucherMap.get(userVoucher.getVoucherId()).getDescription());
+                    userVoucherMap.put("percent", categoryToVoucherMap.get(userVoucher.getVoucherId()).getPercent());
+                    userVoucherMap.put("limit", categoryToVoucherMap.get(userVoucher.getVoucherId()).getLimit());
+                    userVoucherMap.put("value", categoryToVoucherMap.get(userVoucher.getVoucherId()).getValue());
+                    resultantUserVouchers.add(userVoucherMap);
+                }
             }
-            Set<String> voucherIds = usersVouchers.stream().map(UserVouchers::getVoucherId).collect(Collectors.toSet());
-            Map<String, Vouchers> categoryToVoucherMap = voucherIds.stream()
-                    .map(voucherId -> {
-                        try {
-                            return membershipController.getVoucherDetailFromVoucherId(voucherId);
-                        } catch (ExecutionException | InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .collect(Collectors.toMap(Vouchers::getId, voucher -> voucher));
-            System.out.println(categoryToVoucherMap);
-            ObjectMapper objectMapper = new ObjectMapper();
-            for (UserVouchers userVoucher : usersVouchers) {
-                Map<String, Object> userVoucherMap = objectMapper.convertValue(userVoucher, Map.class);
-                userVoucherMap.put("title", categoryToVoucherMap.get(userVoucher.getVoucherId()).getTitle());
-                userVoucherMap.put("image", categoryToVoucherMap.get(userVoucher.getVoucherId()).getImage());
-                userVoucherMap.put("description", categoryToVoucherMap.get(userVoucher.getVoucherId()).getDescription());
-                userVoucherMap.put("percent",categoryToVoucherMap.get(userVoucher.getVoucherId()).getPercent());
-                userVoucherMap.put("limit",categoryToVoucherMap.get(userVoucher.getVoucherId()).getLimit());
-                userVoucherMap.put("value",categoryToVoucherMap.get(userVoucher.getVoucherId()).getValue());
-                resultantUserVouchers.add(userVoucherMap);
-			}
-		}
+        }
 		JSONObject output = new JSONObject();
 		output.put("details", trip);
 		output.put("vouchers",resultantUserVouchers);
