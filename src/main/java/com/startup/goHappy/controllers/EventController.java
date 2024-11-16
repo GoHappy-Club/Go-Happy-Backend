@@ -497,10 +497,39 @@ public class EventController {
 		event.setParticipantList(participants);
 
 		// deduct coins from user's wallet if paid event
+		double resultantCost = event.getCost();
+        UserVouchers userVoucher = null;
+		if(params.getString("voucherId") !=null) {
+			CollectionReference userVouchersRef = userVouchersService.getCollectionReference();
+			CollectionReference vouchersRef = vouchersService.getCollectionReference();
+			Query userVoucherQuery = userVouchersRef.whereEqualTo("voucherId", params.getString("voucherId"));
+			Query voucherQuery = vouchersRef.whereEqualTo("id", params.getString("voucherId"));
+			ApiFuture<QuerySnapshot> querySnapshotVoucher = voucherQuery.get();
+			ApiFuture<QuerySnapshot> querySnapshotUserVoucher = userVoucherQuery.get();
+			Vouchers voucher = null;
+			for (DocumentSnapshot document : querySnapshotVoucher.get().getDocuments()) {
+				voucher = document.toObject(Vouchers.class);
+				break;
+			}
+			for (DocumentSnapshot document : querySnapshotUserVoucher.get().getDocuments()) {
+				userVoucher = document.toObject(UserVouchers.class);
+				break;
+			}
+			Double value = voucher.getValue();
+			Double limit = voucher.getLimit();
+			Integer percent = voucher.getPercent();
+			if(value != null && userVoucher.getStatus() == VoucherStatusEnum.ACTIVE) {
+                resultantCost -= value;
+            } else if (percent != null && userVoucher.getStatus() == VoucherStatusEnum.ACTIVE) {
+                Double discount = (double) ((event.getCost() * percent) / 100);
+                resultantCost -= limit != null ? Math.min(discount, limit) : discount;
+            }
+			userVoucher.setStatus(VoucherStatusEnum.REDEEMED);
+		}
 		if (StringUtils.equals(event.getCostType(), "paid") && !userMembership.isFreeTrialActive()) {
-			userMembership.setCoins(userMembership.getCoins() - event.getCost());
+			userMembership.setCoins((int) (userMembership.getCoins() - resultantCost));
 			// add the data in user's transaction history
-			newTransaction.setAmount(event.getCost());
+			newTransaction.setAmount((int) resultantCost);
 			newTransaction.setSource(event.getType());
 			newTransaction.setType(TransactionTypeEnum.DEBIT);
 			newTransaction.setTitle("Book "+event.getEventName()+" session");
@@ -510,6 +539,8 @@ public class EventController {
 			newTransaction.setId(UUID.randomUUID().toString());
 		}
 
+        if(userVoucher != null)
+            userVouchersService.save(userVoucher);
 		userMembershipsService.save(userMembership);
         if (StringUtils.equals(event.getCostType(), "paid") && !userMembership.isFreeTrialActive())
             coinTransactionsService.save(newTransaction);
