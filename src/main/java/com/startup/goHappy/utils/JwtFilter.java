@@ -26,7 +26,7 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        if (request.getServletPath().equals("/_ah/start") || request.getServletPath().equals("/authenticate") || request.getServletPath().equals("/user/setPaymentDataWorkshop") || request.getServletPath().equals("/user/setPaymentDataContribution")) {
+        if (request.getServletPath().equals("/_ah/start") || request.getServletPath().equals("/authenticate") || request.getServletPath().equals("/user/setPaymentDataWorkshop") || request.getServletPath().equals("/user/setPaymentDataContribution") || request.getServletPath().equals("/membership/buy") || request.getServletPath().equals("/membership/renew") || request.getServletPath().equals("/membership/upgrade") || request.getServletPath().equals("/membership/topUp")) {
             filterChain.doFilter(request, response);
             return;
         }

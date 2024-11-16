@@ -2,6 +2,11 @@ package com.startup.goHappy.utils;
 
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Service
 public class Helpers {
     public boolean matches(String fullText, String searchText) {
@@ -26,5 +31,12 @@ public class Helpers {
             }
         }
         return true;
+    }
+
+    public String FormatMilliseconds(long milliseconds) {
+        Instant instant = Instant.ofEpochMilli(milliseconds);
+        ZonedDateTime zonedDateTime = instant.atZone(ZoneId.of("Asia/Kolkata"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return zonedDateTime.format(formatter);
     }
 }

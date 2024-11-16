@@ -12,9 +12,10 @@ import com.google.cloud.firestore.*;
 import com.opencsv.CSVWriter;
 import com.startup.goHappy.entities.model.PaymentLog;
 import com.startup.goHappy.entities.model.Referral;
+import com.startup.goHappy.entities.model.UserMemberships;
 import com.startup.goHappy.entities.repository.PaymentLogRepository;
 import com.startup.goHappy.entities.repository.ReferralRepository;
-import org.apache.commons.collections4.IterableUtils;
+import com.startup.goHappy.enums.MembershipEnum;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -54,10 +55,14 @@ public class UserProfileController {
     @Autowired
     EventController eventController;
 
+    @Autowired
+    MembershipController membershipController;
+
 
     public UserProfileController() {
 
     }
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @TestOnly
     public UserProfileController(UserProfileRepository userProfileService) {
@@ -136,7 +141,7 @@ public class UserProfileController {
         String[] columnNames = {"ID", "Name", "Age", "Email", "Phone Number",
                 "Last Payment Date", "Invite Code", "Sessions Attended",
                 "Date Of Joining", "Date of Joining (Date Format)",
-                "Profile Image", "Membership", "Last Payment Amount"};
+                "Profile Image", "Last Payment Amount"};
         users.add(columnNames);
         for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
             UserProfile user = document.toObject(UserProfile.class);
@@ -155,7 +160,6 @@ public class UserProfileController {
                     user.getDateOfJoining(),
                     user.getDateOfJoiningDateObject(),
                     user.getProfileImage(),
-                    user.getMembership(),
                     user.getLastPaymentAmount() != null ? user.getLastPaymentAmount().toString() : "",
                     user.getCity(),
                     user.getEmergencyContact(),
@@ -260,13 +264,12 @@ public class UserProfileController {
     }
 
     @PostMapping("update")
-    public UserProfile updateUser(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+    public JSONObject updateUser(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
 
         CollectionReference userProfiles = userProfileService.getCollectionReference();
-        if(!StringUtils.isEmpty(params.getString("phone"))) {
-            if (params.getString("phone").startsWith("+")) {
-                params.put("phone", params.getString("phone").substring(1));
-            }
+
+        if (params.getString("phone").startsWith("+")) {
+            params.put("phone", params.getString("phone").substring(1));
         }
         Query query = userProfiles.whereEqualTo("phone", params.getString("phone"));
 
@@ -291,7 +294,24 @@ public class UserProfileController {
             break;
         }
         userProfileService.save(user);
-        return user;
+
+        //retrieve userMembership Profile to send to frontend
+        JSONObject getMembershipByPhoneParams = new JSONObject();
+        getMembershipByPhoneParams.put("phone",params.getString("phone"));
+        UserMemberships userMembership = membershipController.getMembershipByPhone(getMembershipByPhoneParams);
+        if(userMembership == null){
+            userMembership = membershipController.createNewMembership(user.getPhone(),user.getId());
+        }
+        Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
+        Map<String, Object> membershipMap = objectMapper.convertValue(userMembership, Map.class);
+
+        // Merge the maps into one
+        Map<String, Object> mergedMap = new HashMap<>(userMap);
+        mergedMap.putAll(membershipMap);
+//        output.put("user", user);
+//        output.put("membership",userMembership);
+
+        return new JSONObject(mergedMap);
     }
 
     @PostMapping("updateProfileImage")
