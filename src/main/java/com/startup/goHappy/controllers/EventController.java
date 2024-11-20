@@ -286,7 +286,7 @@ public class EventController {
 
 	@ApiOperation(value = "to give user's their cashback of sessions")
 	@PostMapping("/giveReward")
-	public UserMemberships giveReward(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+	public void giveReward(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
 		JSONObject getRecentTransactionsParams = new JSONObject();
 		getRecentTransactionsParams.put("phone",params.getString("phone"));
 		UserMemberships userMembership = membershipController.getMembershipByPhone(getRecentTransactionsParams);
@@ -299,7 +299,7 @@ public class EventController {
 			break;
 		}
 		if(newTransaction != null) {
-			return userMembership;
+			return;
 		}
 		JSONObject eventParams = new JSONObject();
 		eventParams.put("id",params.getString("eventId"));
@@ -326,16 +326,13 @@ public class EventController {
 		transaction.setSource("coinback");
 		transaction.setSourceId(params.getString("eventId"));
 		transaction.setTitle("Coinback for "+event.getEventName());
-		transaction.setTransactionDate(new Date().getTime());
 		transaction.setType(TransactionTypeEnum.CREDIT);
+		transaction.setScratched(false);
 
-        // add coins to user's wallet
-        userMembership.setCoins(userMembership.getCoins() + (int)coinsToGive);
+        // don't add coins yet, will add after scratching of scratch card
+//        userMembership.setCoins(userMembership.getCoins() + (int)coinsToGive);
 
 		coinTransactionsService.save(transaction);
-        userMembershipsService.save(userMembership);
-
-        return  userMembership;
 	}
 
 	@ApiOperation(value = "Get events by date range (used when user clicks a date on the app)")
