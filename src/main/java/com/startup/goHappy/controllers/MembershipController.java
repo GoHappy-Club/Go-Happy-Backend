@@ -568,6 +568,35 @@ public class MembershipController {
         return transactions;
     }
 
+
+
+    @ApiOperation(value = "TO give user coins after successfully scratching the card")
+    @PostMapping("/scratchCardReward")
+    public void scratchCardReward(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+        String phone = params.getString("phone");
+        String transactionId = params.getString("coinTransactionId");
+        System.out.println(params);
+
+        CollectionReference coinTransactionRef = coinTransactionsService.getCollectionReference();
+        Query query = coinTransactionRef.whereEqualTo("id", transactionId);
+        ApiFuture<QuerySnapshot> querySnapshotApiFuture = query.get();
+        CoinTransactions transaction = null;
+        for (DocumentSnapshot document : querySnapshotApiFuture.get().getDocuments()) {
+            transaction = document.toObject(CoinTransactions.class);
+            break;
+        }
+        transaction.setScratched(true);
+        transaction.setTransactionDate(new Date().getTime());
+
+        UserMemberships userMembership = getMembershipByPhone(new JSONObject() {{
+            put("phone", phone);
+        }});
+        userMembership.setCoins(userMembership.getCoins() + transaction.getAmount());
+
+        userMembershipsService.save(userMembership);
+        coinTransactionsService.save(transaction);
+    }
+
     @ApiOperation(value = "Get user's coin backs from the sessions")
     @PostMapping("/getRewards")
     public List<CoinTransactions> getRewards(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
@@ -575,7 +604,7 @@ public class MembershipController {
         List<String> sources = new ArrayList<>();
         sources.add("coinback");
         sources.add("prize");
-        Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).whereIn("source",sources).orderBy("transactionDate", Query.Direction.DESCENDING);
+        Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).whereIn("source", sources).orderBy("transactionDate", Query.Direction.DESCENDING);
         ApiFuture<QuerySnapshot> snapshotApiFuture = transactionQuery.get();
         List<CoinTransactions> transactions = new ArrayList<>();
         for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
@@ -586,7 +615,7 @@ public class MembershipController {
 
     @ApiOperation(value = "To get user's vouchers")
     @PostMapping("/getVouchers")
-    public List<Map<String,Object>> getVouchers(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+    public List<Map<String, Object>> getVouchers(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
         CollectionReference userVouchersRef = userVouchersService.getCollectionReference();
         Query vouchersQuery = userVouchersRef.whereEqualTo("phone", params.getString("phone"));
         ApiFuture<QuerySnapshot> snapshotApiFuture = vouchersQuery.get();
@@ -606,8 +635,8 @@ public class MembershipController {
                 })
                 .collect(Collectors.toMap(Vouchers::getId, voucher -> voucher));
         ObjectMapper objectMapper = new ObjectMapper();
-        List<Map<String,Object>> resultantUserVouchers = new ArrayList<>();
-        for (UserVouchers userVoucher: usersVouchers){
+        List<Map<String, Object>> resultantUserVouchers = new ArrayList<>();
+        for (UserVouchers userVoucher : usersVouchers) {
             Map<String, Object> userVoucherMap = objectMapper.convertValue(userVoucher, Map.class);
             userVoucherMap.put("title", idToVoucherMap.get(userVoucher.getVoucherId()).getTitle());
             userVoucherMap.put("category", idToVoucherMap.get(userVoucher.getVoucherId()).getCategory());
