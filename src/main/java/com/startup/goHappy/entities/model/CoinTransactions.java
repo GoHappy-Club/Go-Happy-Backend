@@ -14,4 +14,5 @@ public class CoinTransactions {
     private TransactionTypeEnum type;   // CREDIT or DEBIT
     private long transactionDate;
     private String title;
+    private boolean scratched;
 }
