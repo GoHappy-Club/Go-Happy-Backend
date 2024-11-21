@@ -78,6 +78,7 @@ public class FestiveWishesController {
         ZoneId zoneId = ZoneId.of("Asia/Kolkata");
         LocalDate date = instant.atZone(zoneId).toLocalDate();
         String isoDate = date.format(DateTimeFormatter.ISO_LOCAL_DATE);
+        System.out.println("ISO date ==>"+isoDate);
         CollectionReference festivalsRef = festivalsService.getCollectionReference();
         Query query = festivalsRef.whereEqualTo("isoDate", isoDate).whereEqualTo("active", true);
         ApiFuture<QuerySnapshot> querySnapshotApiFuture = query.get();

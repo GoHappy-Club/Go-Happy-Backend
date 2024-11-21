@@ -14,6 +14,7 @@ import com.startup.goHappy.entities.model.*;
 import com.startup.goHappy.entities.repository.*;
 import com.startup.goHappy.enums.MembershipEnum;
 import com.startup.goHappy.enums.TransactionTypeEnum;
+import com.startup.goHappy.enums.VoucherStatusEnum;
 import com.startup.goHappy.integrations.service.EmailService;
 import com.startup.goHappy.utils.Constants;
 import com.startup.goHappy.utils.Helpers;
@@ -29,6 +30,8 @@ import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import static com.startup.goHappy.utils.Helpers.generateCouponCode;
 
 @RestController
 @RequestMapping("/membership")
@@ -128,17 +131,17 @@ public class MembershipController {
             amount
             membershipId
          */
-        String encodedResponse = params.getString("response");
-
-        byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
-        String decodedString = new String(decodedBytes);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode decodedJson = objectMapper.readTree(decodedString);
-        String code = decodedJson.get("code").asText();
-
-        // if status is error, then return
-        if ("PAYMENT_ERROR".equals(code)) return;
+//        String encodedResponse = params.getString("response");
+//
+//        byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
+//        String decodedString = new String(decodedBytes);
+//
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        JsonNode decodedJson = objectMapper.readTree(decodedString);
+//        String code = decodedJson.get("code").asText();
+//
+//        // if status is error, then return
+//        if ("PAYMENT_ERROR".equals(code)) return;
 
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"));
         calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -211,6 +214,18 @@ public class MembershipController {
             plog.setAmount(user.getLastPaymentAmount());
             plog.setType("membership");
             break;
+        }
+
+        List<String> voucherIds = membership.getVouchers();
+        for (String voucherId : voucherIds) {
+            UserVouchers userVoucher = new UserVouchers();
+            userVoucher.setId(UUID.randomUUID().toString());
+            userVoucher.setVoucherId(voucherId);
+            userVoucher.setCode(generateCouponCode());
+            userVoucher.setPhone(user.getPhone());
+            userVoucher.setExpiryDate(Long.parseLong(userMembership.getMembershipEndDate()));
+            userVoucher.setStatus(VoucherStatusEnum.ACTIVE);
+            userVouchersService.save(userVoucher);
         }
 
         userProfileService.save(user);
@@ -356,6 +371,18 @@ public class MembershipController {
             break;
         }
 
+        List<String> voucherIds = membership.getVouchers();
+        for (String voucherId : voucherIds) {
+            UserVouchers userVoucher = new UserVouchers();
+            userVoucher.setId(UUID.randomUUID().toString());
+            userVoucher.setVoucherId(voucherId);
+            userVoucher.setCode(generateCouponCode());
+            userVoucher.setPhone(user.getPhone());
+            userVoucher.setExpiryDate(Long.parseLong(userMember.getMembershipEndDate()));
+            userVoucher.setStatus(VoucherStatusEnum.ACTIVE);
+            userVouchersService.save(userVoucher);
+        }
+
         userMembershipsService.save(userMember);
         userProfileService.save(user);
 
@@ -454,6 +481,18 @@ public class MembershipController {
             newTransaction.setId(UUID.randomUUID().toString());
 
             break;
+        }
+
+        List<String> voucherIds = membership.getVouchers();
+        for (String voucherId : voucherIds) {
+            UserVouchers userVoucher = new UserVouchers();
+            userVoucher.setId(UUID.randomUUID().toString());
+            userVoucher.setVoucherId(voucherId);
+            userVoucher.setCode(generateCouponCode());
+            userVoucher.setPhone(user.getPhone());
+            userVoucher.setExpiryDate(Long.parseLong(userMember.getMembershipEndDate()));
+            userVoucher.setStatus(VoucherStatusEnum.ACTIVE);
+            userVouchersService.save(userVoucher);
         }
 
         userMembershipsService.save(userMember);
@@ -569,7 +608,6 @@ public class MembershipController {
     }
 
 
-
     @ApiOperation(value = "TO give user coins after successfully scratching the card")
     @PostMapping("/scratchCardReward")
     public void scratchCardReward(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
@@ -625,15 +663,13 @@ public class MembershipController {
             usersVouchers.add(usersVoucher);
         }
         Set<String> voucherIds = usersVouchers.stream().map(UserVouchers::getVoucherId).collect(Collectors.toSet());
-        Map<String, Vouchers> idToVoucherMap = voucherIds.stream()
-                .map(voucherId -> {
-                    try {
-                        return getVoucherDetailFromVoucherId(voucherId);
-                    } catch (ExecutionException | InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .collect(Collectors.toMap(Vouchers::getId, voucher -> voucher));
+        Map<String, Vouchers> idToVoucherMap = voucherIds.stream().map(voucherId -> {
+            try {
+                return getVoucherDetailFromVoucherId(voucherId);
+            } catch (ExecutionException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toMap(Vouchers::getId, voucher -> voucher));
         ObjectMapper objectMapper = new ObjectMapper();
         List<Map<String, Object>> resultantUserVouchers = new ArrayList<>();
         for (UserVouchers userVoucher : usersVouchers) {
@@ -651,6 +687,11 @@ public class MembershipController {
     }
 
     // create vouchers api
+    @ApiOperation(value = "Create voucher for user")
+    @PostMapping("/createVoucher")
+    public UserVouchers createVoucher(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+        return new UserVouchers();
+    }
 
     @ApiOperation(value = "Get user's profile and membership document for update")
     @PostMapping("/getUserUpdates")
@@ -732,7 +773,7 @@ public class MembershipController {
 
     public Vouchers getVoucherDetailFromVoucherId(String voucherId) throws ExecutionException, InterruptedException {
         CollectionReference vouchersRef = vouchersService.getCollectionReference();
-        Query query = vouchersRef.whereEqualTo("id", voucherId);
+        Query query = vouchersRef.whereEqualTo("id", voucherId).whereEqualTo("status", VoucherStatusEnum.ACTIVE);
         ApiFuture<QuerySnapshot> querySnapshotApiFuture = query.get();
         Vouchers voucher = null;
         for (DocumentSnapshot document : querySnapshotApiFuture.get().getDocuments()) {
