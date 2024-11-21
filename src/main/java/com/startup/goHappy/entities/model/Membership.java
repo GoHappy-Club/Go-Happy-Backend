@@ -3,6 +3,8 @@ package com.startup.goHappy.entities.model;
 import com.startup.goHappy.enums.MembershipEnum;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class Membership {
     @DocumentId
@@ -14,4 +16,5 @@ public class Membership {
     private Integer coinsPerMonth;
     private Integer discount;
     private Integer duration; // duration of membership in MONTHS
+    private List<String> vouchers;
 }

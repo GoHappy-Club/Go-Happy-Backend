@@ -374,6 +374,7 @@ public class EventController {
 			}
 			Set<String> uniqueSubCategories = new HashSet<>();
 			for (Event event : eventsNew) {
+				if(event.getSubCategory() == null) continue;
 				uniqueSubCategories.add(event.getSubCategory());
 			}
 			for (String subCategory : uniqueSubCategories) {
@@ -396,7 +397,6 @@ public class EventController {
 	@ApiOperation(value = "Save user's rating for a session/workshop")
 	@PostMapping("/submitRating")
 	public void submitRating(@RequestBody JSONObject params){
-		System.out.println("Params ==>"+params);
 		String phone = params.getString("phone");
 		String reason = params.containsKey("reason") ? params.getString("reason"):null;
 		String usersRating = params.getString("rating");
@@ -404,7 +404,7 @@ public class EventController {
 		String eventId = params.getString("id");
 		Ratings rating = new Ratings();
 		rating.setId(UUID.randomUUID().toString());
-		rating.setId(eventId);
+		rating.setEventId(eventId);
 		rating.setPhone(phone);
 		rating.setRating(usersRating);
 		rating.setSubCategory(subCategory);
@@ -507,6 +507,9 @@ public class EventController {
 			for (DocumentSnapshot document : querySnapshotVoucher.get().getDocuments()) {
 				voucher = document.toObject(Vouchers.class);
 				break;
+			}
+			if(voucher.getStatus() != VoucherStatusEnum.ACTIVE){
+				return "FAILED";
 			}
 			for (DocumentSnapshot document : querySnapshotUserVoucher.get().getDocuments()) {
 				userVoucher = document.toObject(UserVouchers.class);
@@ -618,7 +621,7 @@ public class EventController {
 
 		// refund coins to user's wallet in case of paid event
 		CoinTransactions newTransaction = new CoinTransactions();
-		if (StringUtils.equals(event.getCostType(),"paid") && !userMembership.isFreeTrialUsed()) {
+		if (StringUtils.equals(event.getCostType(),"paid") && !userMembership.isFreeTrialActive()) {
 			userMembership.setCoins(userMembership.getCoins() + event.getCost());
 
 			// add the data in user's transaction history
@@ -633,7 +636,7 @@ public class EventController {
 		}
 
 		userMembershipsService.save(userMembership);
-		if (StringUtils.equals(event.getCostType(),"paid") && !userMembership.isFreeTrialUsed())
+		if (StringUtils.equals(event.getCostType(),"paid") && !userMembership.isFreeTrialActive())
             coinTransactionsService.save(newTransaction);
 		Map<String, Object> map = new HashMap<>();
 		if(event.getEventName().toLowerCase().contains("tambola")) {

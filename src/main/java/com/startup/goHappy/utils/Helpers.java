@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Random;
 
 @Service
 public class Helpers {
@@ -38,5 +39,23 @@ public class Helpers {
         ZonedDateTime zonedDateTime = instant.atZone(ZoneId.of("Asia/Kolkata"));
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return zonedDateTime.format(formatter);
+    }
+
+    public static String generateCouponCode() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder sb = new StringBuilder();
+        Random random = new Random();
+
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                int index = random.nextInt(chars.length());
+                sb.append(chars.charAt(index));
+            }
+            if (i < 3) {
+                sb.append("-");
+            }
+        }
+
+        return sb.toString();
     }
 }
