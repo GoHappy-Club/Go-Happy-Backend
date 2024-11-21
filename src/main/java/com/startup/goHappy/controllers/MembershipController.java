@@ -131,17 +131,17 @@ public class MembershipController {
             amount
             membershipId
          */
-//        String encodedResponse = params.getString("response");
-//
-//        byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
-//        String decodedString = new String(decodedBytes);
-//
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        JsonNode decodedJson = objectMapper.readTree(decodedString);
-//        String code = decodedJson.get("code").asText();
-//
-//        // if status is error, then return
-//        if ("PAYMENT_ERROR".equals(code)) return;
+        String encodedResponse = params.getString("response");
+
+        byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
+        String decodedString = new String(decodedBytes);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode decodedJson = objectMapper.readTree(decodedString);
+        String code = decodedJson.get("code").asText();
+
+        // if status is error, then return
+        if ("PAYMENT_ERROR".equals(code)) return;
 
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"));
         calendar.set(Calendar.HOUR_OF_DAY, 0);
