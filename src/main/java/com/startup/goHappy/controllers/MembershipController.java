@@ -90,7 +90,7 @@ public class MembershipController {
 
     @ApiOperation(value = "activate a user's free trial for 1 month/ will be used as a callback for PhonePe")
     @PostMapping("/activateFreeTrial")
-    public void activateFreeTrial(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+    public UserMemberships activateFreeTrial(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
         UserMemberships userMembership = getMembershipByPhone(params);
 
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"));
@@ -106,6 +106,7 @@ public class MembershipController {
         userMembership.setMembershipType(MembershipEnum.Silver);
 
         userMembershipsService.save(userMembership);
+        return userMembership;
     }
 
     @ApiOperation("cancel or de-activate a user's free trial")
