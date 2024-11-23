@@ -184,6 +184,11 @@ public class EmailService {
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+				}finally {
+					// Ensure the response is closed to release the connection
+					if (response != null) {
+						response.close();
+					}
 				}
     		    
 //    	JSONObject requestBody = new JSONObject();
