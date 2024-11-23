@@ -960,12 +960,14 @@ public class EventController {
 	@PostMapping("bookEvent")
 	public String bookEvent(@RequestBody JSONObject params) throws IOException, MessagingException, GeneralSecurityException, InterruptedException, ExecutionException {
 		CollectionReference eventRef = eventService.getCollectionReference();
-		CollectionReference referrals = referralService.getCollectionReference();
 
 		Optional<Event> oevent = eventService.findById(params.getString("id"));
-		Event event = oevent.get();
+		Event event = oevent.orElse(null);
+		if (event == null) {
+			return "FAILED: EVENT NOT FOUND";
+		}
 		String ticket = "\""+params.getString("tambolaTicket")+"\"";
-		if(event.getSeatsLeft()<=0) {
+        if(event.getSeatsLeft()<=0) {
 			return "FAILED:FULL";
 		}
 		event.setSeatsLeft(event.getSeatsLeft()-1);
@@ -1025,38 +1027,22 @@ public class EventController {
 			sessionsAttended++;
 			user.setSessionsAttended(""+sessionsAttended);
 			userProfileService.save(user);
-//			Query query = referrals.whereEqualTo("to", user.getPhone());
-//			ApiFuture<QuerySnapshot> querySnapshot = query.get();
-//			if(querySnapshot.get().getDocuments().size()!=0){
-//				Referral referred = querySnapshot.get().getDocuments().get(0).toObject(Referral.class);
-//				referred.setHasAttendedSession(true);
-//				referralService.save(referred);
-//			}
-
 			if(!StringUtils.isEmpty(user.getEmail()))
 				emailService.sendSimpleMessage(user.getEmail(), event.getEventName(), currentContent);
 		}
 
 		return "SUCCESS";
 	}
-	
-  public String sendEmail(String email, String subject, String content)  {
-	  try {
-		emailService.sendSimpleMessage(email,subject,content);
-	} catch (MessagingException | IOException | GeneralSecurityException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
-	  
-    return "SUCCESS"; 
-  }
 
 	@ApiOperation(value = "To cancel an event")
 	@PostMapping("cancelEvent")
 	public String cancelEvent(@RequestBody JSONObject params) throws IOException {
 		CollectionReference eventRef = eventService.getCollectionReference();
 		Optional<Event> oevent = eventService.findById(params.getString("id"));
-		Event event = oevent.get();
+		Event event = oevent.orElse(null);
+		if (event == null) {
+			return "FAILED: EVENT NOT FOUND";
+		}
 
 		event.setSeatsLeft(event.getSeatsLeft()+1);
 		List<String> participants = event.getParticipantList();
