@@ -2,12 +2,15 @@ package com.startup.goHappy.integrations.service;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
 import com.alibaba.fastjson.JSON;
+import com.startup.goHappy.integrations.model.ZoomParticipantsDTO;
 import io.netty.handler.codec.base64.Base64Encoder;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.TestOnly;
@@ -114,6 +117,20 @@ public class ZoomService {
         if(zoomEntityRes.getStatusCodeValue() == 200) {
             return zoomEntityRes.getBody().getString("share_url");
         } else if (zoomEntityRes.getStatusCodeValue() == 404) {
+        }
+        return null;
+    }
+
+    public List<ZoomParticipantsDTO.Participant> getPastMeetingParticipants(String meetingId) {
+        String getParticipantsUrl = "https://api.zoom.us/v2/report/meetings/" + meetingId + "/participants?include_fields=registrant_id";
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + generateZoomOAuth());
+        headers.add("content-type", "application/json");
+        HttpEntity<?> requestEntity = new HttpEntity<>(headers);
+        ResponseEntity<ZoomParticipantsDTO> zoomEntityRes =  restTemplate
+                .exchange(getParticipantsUrl, HttpMethod.GET, requestEntity, ZoomParticipantsDTO.class);
+        if(zoomEntityRes.getStatusCodeValue() == 200) {
+            return Objects.requireNonNull(zoomEntityRes.getBody()).getParticipants();
         }
         return null;
     }
