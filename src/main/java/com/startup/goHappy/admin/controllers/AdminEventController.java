@@ -1,16 +1,20 @@
 package com.startup.goHappy.admin.controllers;
 
 
+import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Query;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.startup.goHappy.entities.model.Event;
+import com.startup.goHappy.entities.model.Templates;
 import com.startup.goHappy.entities.repository.EventRepository;
+import com.startup.goHappy.entities.repository.TemplateRepository;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections4.IterableUtils;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,6 +29,27 @@ import java.util.concurrent.ExecutionException;
 public class AdminEventController {
     @Autowired
     EventRepository eventService;
+    @Autowired
+    TemplateRepository templateService;
+
+    @ApiOperation(value = "To get already created templates")
+    @GetMapping("/getTemplates")
+    public List<Templates> getTemplates() {
+        Iterable<Templates> iterableTemplates = templateService.retrieveAll();
+        return IterableUtils.toList(iterableTemplates);
+    }
+
+    @ApiOperation(value = "To create a new params")
+    @PostMapping("/createTemplate")
+    public @ResponseBody JSONObject createTemplate(@RequestBody JSONObject params) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        Templates templateNew = objectMapper.readValue(params.toString(),Templates.class);
+        templateNew.setId(UUID.randomUUID().toString());
+        templateService.save(templateNew);
+        JSONObject output = new JSONObject();
+        output.put("success",true);
+        return output;
+    }
 
     @ApiOperation(value = "To get paginated events data")
     @GetMapping("getPaginatedEvents")
