@@ -24,4 +24,5 @@ public class Vouchers {
         put("tnc", new ArrayList<>(List.of("first first first first", "second second second second ")));
     }};
     private VoucherStatusEnum status;
+    private Long expiryDate;
 }
