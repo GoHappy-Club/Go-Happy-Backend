@@ -72,13 +72,13 @@ public class FestiveWishesController {
 
     @ApiOperation(value = "Get today's festival")
     @GetMapping("/today")
-    public Festivals getFestival() throws ExecutionException, InterruptedException {
+    public JSONObject getFestival() throws ExecutionException, InterruptedException {
         long timestamp = new Date().getTime();
         Instant instant = Instant.ofEpochMilli(timestamp);
         ZoneId zoneId = ZoneId.of("Asia/Kolkata");
         LocalDate date = instant.atZone(zoneId).toLocalDate();
         String isoDate = date.format(DateTimeFormatter.ISO_LOCAL_DATE);
-        System.out.println("ISO date ==>"+isoDate);
+        System.out.println("ISO date ==>" + isoDate);
         CollectionReference festivalsRef = festivalsService.getCollectionReference();
         Query query = festivalsRef.whereEqualTo("isoDate", isoDate).whereEqualTo("active", true);
         ApiFuture<QuerySnapshot> querySnapshotApiFuture = query.get();
@@ -87,6 +87,9 @@ public class FestiveWishesController {
             festival = document.toObject(Festivals.class);
             break;
         }
-        return festival;
+        JSONObject output = new JSONObject();
+        output.put("festival", festival);
+        System.out.println("REturrning ==>"+output);
+        return output;
     }
 }

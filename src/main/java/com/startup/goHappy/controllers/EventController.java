@@ -525,6 +525,7 @@ public class EventController {
                 resultantCost -= limit != null ? Math.min(discount, limit) : discount;
             }
 			userVoucher.setStatus(VoucherStatusEnum.REDEEMED);
+			userVoucher.setRedemptionTime(new Date().getTime());
 		}
 		if (StringUtils.equals(event.getCostType(), "paid") && !userMembership.isFreeTrialActive()) {
 			userMembership.setCoins((int) (userMembership.getCoins() - resultantCost));
