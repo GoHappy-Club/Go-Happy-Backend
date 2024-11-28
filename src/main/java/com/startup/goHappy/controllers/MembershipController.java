@@ -1,6 +1,7 @@
 package com.startup.goHappy.controllers;
 
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -658,34 +659,40 @@ public class MembershipController {
         CollectionReference userVouchersRef = userVouchersService.getCollectionReference();
         Query vouchersQuery = userVouchersRef.whereEqualTo("phone", params.getString("phone"));
         ApiFuture<QuerySnapshot> snapshotApiFuture = vouchersQuery.get();
-        List<UserVouchers> usersVouchers = new ArrayList<>();
-        for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
-            UserVouchers usersVoucher = document.toObject(UserVouchers.class);
-            usersVouchers.add(usersVoucher);
-        }
-        Set<String> voucherIds = usersVouchers.stream().map(UserVouchers::getVoucherId).collect(Collectors.toSet());
-        Map<String, Vouchers> idToVoucherMap = voucherIds.stream().map(voucherId -> {
-            try {
-                return getVoucherDetailFromVoucherId(voucherId);
-            } catch (ExecutionException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toMap(Vouchers::getId, voucher -> voucher));
-        ObjectMapper objectMapper = new ObjectMapper();
+
+        Map<String, Vouchers> idToVoucherMap = new HashMap<>();
         List<Map<String, Object>> resultantUserVouchers = new ArrayList<>();
-        for (UserVouchers userVoucher : usersVouchers) {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
+            UserVouchers userVoucher = document.toObject(UserVouchers.class);
+
+            String voucherId = userVoucher.getVoucherId();
+            Vouchers voucherDetails = idToVoucherMap.computeIfAbsent(voucherId, id -> {
+                try {
+                    return getVoucherDetailFromVoucherId(id);
+                } catch (ExecutionException | InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
             Map<String, Object> userVoucherMap = objectMapper.convertValue(userVoucher, Map.class);
-            userVoucherMap.put("title", idToVoucherMap.get(userVoucher.getVoucherId()).getTitle());
-            userVoucherMap.put("category", idToVoucherMap.get(userVoucher.getVoucherId()).getCategory());
-            userVoucherMap.put("image", idToVoucherMap.get(userVoucher.getVoucherId()).getImage());
-            userVoucherMap.put("description", idToVoucherMap.get(userVoucher.getVoucherId()).getDescription());
-            userVoucherMap.put("value", idToVoucherMap.get(userVoucher.getVoucherId()).getValue());
-            userVoucherMap.put("limit", idToVoucherMap.get(userVoucher.getVoucherId()).getLimit());
-            userVoucherMap.put("percent", idToVoucherMap.get(userVoucher.getVoucherId()).getPercent());
+            userVoucherMap.put("title", voucherDetails.getTitle());
+            userVoucherMap.put("category", voucherDetails.getCategory());
+            userVoucherMap.put("image", voucherDetails.getImage());
+            userVoucherMap.put("description", voucherDetails.getDescription());
+            userVoucherMap.put("value", voucherDetails.getValue());
+            userVoucherMap.put("limit", voucherDetails.getLimit());
+            userVoucherMap.put("percent", voucherDetails.getPercent());
+            userVoucherMap.put("parentStatus", voucherDetails.getStatus());
+            userVoucherMap.put("parentExpiryDate", voucherDetails.getExpiryDate());
+
             resultantUserVouchers.add(userVoucherMap);
         }
+
         return resultantUserVouchers;
     }
+
 
     // create vouchers api
     @ApiOperation(value = "Create voucher for user")
@@ -693,6 +700,42 @@ public class MembershipController {
     public UserVouchers createVoucher(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
         return new UserVouchers();
     }
+
+    // update vouchers api
+    @ApiOperation(value = "Update voucher for user")
+    @PostMapping("/updateVoucher")
+    public void updateVoucher(
+            @RequestBody JSONObject params,
+            @RequestParam(required = false) String toExpire) throws ExecutionException, InterruptedException {
+
+        CollectionReference userVoucherRef = userVouchersService.getCollectionReference();
+
+        if ("true".equalsIgnoreCase(toExpire)) {
+            JSONArray voucherIds = params.getJSONArray("voucherIds");
+            if (voucherIds != null) {
+                for (int i = 0; i < voucherIds.size(); i++) {
+                    String voucherId = voucherIds.getString(i);
+                    DocumentReference docRef = userVoucherRef.document(voucherId);
+                    HashMap<String, Object> updates = new HashMap<>();
+                    updates.put("status",VoucherStatusEnum.EXPIRED);
+                    docRef.update(updates);
+                }
+            }
+        } else {
+            String voucherId = params.getString("voucherId");
+            if (voucherId != null && !voucherId.isEmpty()) {
+                DocumentReference docRef = userVoucherRef.document(voucherId);
+                HashMap<String, Object> updates = new HashMap<>();
+                for (String key : params.keySet()) {
+                    if (!"voucherId".equals(key)) {
+                        updates.put(key, params.get(key));
+                    }
+                }
+                docRef.update(updates);
+            }
+        }
+    }
+
 
     @ApiOperation(value = "Get user's profile and membership document for update")
     @PostMapping("/getUserUpdates")
@@ -774,7 +817,7 @@ public class MembershipController {
 
     public Vouchers getVoucherDetailFromVoucherId(String voucherId) throws ExecutionException, InterruptedException {
         CollectionReference vouchersRef = vouchersService.getCollectionReference();
-        Query query = vouchersRef.whereEqualTo("id", voucherId).whereEqualTo("status", VoucherStatusEnum.ACTIVE);
+        Query query = vouchersRef.whereEqualTo("id", voucherId);
         ApiFuture<QuerySnapshot> querySnapshotApiFuture = query.get();
         Vouchers voucher = null;
         for (DocumentSnapshot document : querySnapshotApiFuture.get().getDocuments()) {

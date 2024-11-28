@@ -10,6 +10,7 @@ public class UserVouchers {
     private String voucherId;
     private String code;
     private String phone;
-    private long expiryDate;
+    private Long expiryDate;
+    private Long redemptionTime;
     private VoucherStatusEnum status;
 }
