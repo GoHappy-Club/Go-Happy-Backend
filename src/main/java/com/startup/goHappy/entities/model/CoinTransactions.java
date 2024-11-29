@@ -12,7 +12,7 @@ public class CoinTransactions {
     private String sourceId;
     private int amount;
     private TransactionTypeEnum type;   // CREDIT or DEBIT
-    private long transactionDate;
+    private Long transactionDate;
     private String title;
     private boolean scratched;
 }

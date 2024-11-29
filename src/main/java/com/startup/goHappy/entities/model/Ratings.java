@@ -10,7 +10,7 @@ public class Ratings {
     @DocumentId
     private String id;
     private String subCategory;
-    private String rating;
+    private Integer rating;
     private String phone;
     private String reason;
     private String eventId;

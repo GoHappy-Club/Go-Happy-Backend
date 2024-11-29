@@ -406,7 +406,7 @@ public class EventController {
 		rating.setId(UUID.randomUUID().toString());
 		rating.setEventId(eventId);
 		rating.setPhone(phone);
-		rating.setRating(usersRating);
+		rating.setRating(Integer.parseInt(usersRating));
 		rating.setSubCategory(subCategory);
 		if(reason!=null) {
 			rating.setReason(reason);
