@@ -585,7 +585,7 @@ public class MembershipController {
     @PostMapping("/getRecentTransactions")
     public List<CoinTransactions> getRecentTransactions(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
         CollectionReference coinTransactionsRef = coinTransactionsService.getCollectionReference();
-        Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).orderBy("transactionDate", Query.Direction.DESCENDING).limit(10);
+        Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).whereGreaterThan("transactionDate",1).orderBy("transactionDate", Query.Direction.DESCENDING).limit(10);
         ApiFuture<QuerySnapshot> snapshotApiFuture = transactionQuery.get();
         List<CoinTransactions> recentTransactions = new ArrayList<>();
         for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
