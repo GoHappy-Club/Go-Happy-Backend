@@ -338,15 +338,10 @@ public class EventController {
 	@ApiOperation(value = "Get events by date range (used when user clicks a date on the app)")
 	@PostMapping("getEventsByDate")
 	public JSONObject getEventsByDate(@RequestBody JSONObject params){
-		System.out.println("date"+params.getString("date"));
-
 		Instant instance = java.time.Instant.ofEpochMilli(Long.parseLong(params.getString("date")));
 		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
 		                            .ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
 		zonedDateTime = zonedDateTime.with(LocalTime.of ( 23 , 59 ));
-		System.out.println(zonedDateTime);
-
-		System.out.println(zonedDateTime.toInstant().toEpochMilli());
 		CollectionReference eventsRef = eventService.getCollectionReference();
 		Instant instance2 = java.time.Instant.now();
 		ZonedDateTime zonedDateTime2 = java.time.ZonedDateTime
@@ -378,7 +373,8 @@ public class EventController {
 				uniqueSubCategories.add(event.getSubCategory());
 			}
 			for (String subCategory : uniqueSubCategories) {
-				double rating = ratingHelperService.getRatingByCategory(subCategory); // Fetch the rating once per unique subcategory
+				double rating = ratingHelperService.getRatingByCategory(subCategory);// Fetch the rating once per unique subcategory
+				System.out.println("Rating for "+subCategory+" is "+rating);
 				subCategoryRatings.put(subCategory, rating);
 			}
 		}
@@ -391,6 +387,7 @@ public class EventController {
 		JSONObject output = new JSONObject();
 		output.put("events", eventsNewBest);
 		output.put("ratings",subCategoryRatings);
+		System.out.println(output);
 		return output;
 	}
 
@@ -764,7 +761,10 @@ public class EventController {
             return "FAILED:FULL";
         }
         if (StringUtils.equals(event.getCostType(), "paid")) {
-            if (membership.getMembershipType() == MembershipEnum.Free) {
+			if(membership.isFreeTrialActive()){
+				return "SUCCESS";
+			}
+            else if (membership.getMembershipType() == MembershipEnum.Free) {
                 return "FAILED:NON-MEMBER";
             } else if (event.getCost() > membership.getCoins()) {
                 return "FAILED:COST";
