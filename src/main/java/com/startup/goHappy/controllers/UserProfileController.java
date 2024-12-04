@@ -293,6 +293,8 @@ public class UserProfileController {
                 user.setAge("" + params.getString("age"));
             if (!StringUtils.isEmpty(params.getString("fcmToken")))
                 user.setFcmToken(params.getString("fcmToken"));
+            if (!StringUtils.isEmpty(params.getString("dob")))
+                user.setDob(params.getString("dob"));
             break;
         }
         userProfileService.save(user);
@@ -310,9 +312,7 @@ public class UserProfileController {
         // Merge the maps into one
         Map<String, Object> mergedMap = new HashMap<>(userMap);
         mergedMap.putAll(membershipMap);
-//        output.put("user", user);
-//        output.put("membership",userMembership);
-
+        System.out.println(mergedMap);
         return new JSONObject(mergedMap);
     }
 
