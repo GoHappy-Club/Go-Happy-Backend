@@ -8,7 +8,6 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Query;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.gson.JsonObject;
 import com.startup.goHappy.controllers.UserProfileController;
 import com.startup.goHappy.entities.model.Membership;
 import com.startup.goHappy.entities.model.UserMemberships;
@@ -17,16 +16,14 @@ import com.startup.goHappy.entities.repository.MembershipRepository;
 import com.startup.goHappy.entities.repository.UserMembershipsRepository;
 import com.startup.goHappy.enums.MembershipEnum;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
 @Service
-public class Memberships {
+public class MembershipJob {
 
     String EXPIRING_MEMBERSHIPS = "expiring_memberships";
 
