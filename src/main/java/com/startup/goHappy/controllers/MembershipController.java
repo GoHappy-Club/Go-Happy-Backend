@@ -188,6 +188,8 @@ public class MembershipController {
             user.setLastPaymentDate("" + new Date().getTime());
 
             //set user's membership type and start/end date & append coins in user's wallet
+            userMembership.setFreeTrialUsed(true);
+            userMembership.setFreeTrialActive(false);
             userMembership.setMembershipType(membership.getMembershipType());
             userMembership.setMembershipStartDate("" + calendar.getTimeInMillis());
             userMembership.setLastCoinsCreditedDate("" + calendar.getTimeInMillis());
