@@ -312,7 +312,6 @@ public class UserProfileController {
         // Merge the maps into one
         Map<String, Object> mergedMap = new HashMap<>(userMap);
         mergedMap.putAll(membershipMap);
-        System.out.println(mergedMap);
         return new JSONObject(mergedMap);
     }
 

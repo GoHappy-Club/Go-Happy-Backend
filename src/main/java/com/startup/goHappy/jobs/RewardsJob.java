@@ -11,10 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,7 +26,7 @@ public class RewardsJob {
     @Autowired
     private EventController eventController;
 
-    @Scheduled(cron = "0 59 23 * * *", zone = "Asia/Kolkata")
+    @Scheduled(cron = "0 30 03 * * *", zone = "Asia/Kolkata")
     public void getParticipantInfo() throws ExecutionException, InterruptedException {
         long now = new Date().getTime();
         long twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
@@ -42,30 +39,27 @@ public class RewardsJob {
         for (Event event : events) {
             String meetingNumber = extractMeetingNumber(event.getMeetingLink());
             List<ZoomParticipantsDTO.Participant> participants = zoomService.getPastMeetingParticipants(meetingNumber);
+
             HashMap<String, Integer> phoneDurationMap = new HashMap<>();
             int maxDuration = 0;
 
             for (ZoomParticipantsDTO.Participant participant : participants) {
-                String[] nameParts = participant.getName().split("-");
-                if (nameParts.length > 1) {
-                    String phoneNumber = nameParts[nameParts.length - 1];
-                    int durationInMinutes = participant.getDuration() / 60;
-                    phoneDurationMap.put(phoneNumber, durationInMinutes);
+                String phoneNumber = participant.getCustomer_key();
+                int durationInMinutes = participant.getDuration() / 60;
 
-                    if (durationInMinutes > maxDuration) {
-                        maxDuration = durationInMinutes;
-                    }
+                if (!phoneNumber.isEmpty()) {
+                    phoneDurationMap.put(phoneNumber, phoneDurationMap.getOrDefault(phoneNumber, 0) + durationInMinutes);
                 }
+                maxDuration = Math.max(maxDuration, phoneDurationMap.getOrDefault(phoneNumber, 0) + durationInMinutes);
             }
             double threshold = maxDuration * 0.6;
             for (Map.Entry<String, Integer> entry : phoneDurationMap.entrySet()) {
                 String phoneNumber = entry.getKey();
                 int duration = entry.getValue();
-
                 if (duration >= threshold) {
                     JSONObject giveRewardParams = new JSONObject();
                     giveRewardParams.put("phoneNumber", phoneNumber);
-                    giveRewardParams.put("eventId",event.getId());
+                    giveRewardParams.put("eventId", event.getId());
                     eventController.giveReward(giveRewardParams);
                 }
             }
