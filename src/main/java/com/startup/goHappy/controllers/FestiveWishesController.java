@@ -5,10 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Query;
-import com.google.cloud.firestore.QuerySnapshot;
+import com.google.cloud.firestore.*;
 import com.startup.goHappy.entities.model.Festivals;
 import com.startup.goHappy.entities.repository.FestivalsRepository;
 import io.swagger.annotations.ApiOperation;
@@ -21,7 +18,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -70,6 +69,20 @@ public class FestiveWishesController {
         festivalsService.save(festival);
     }
 
+    @ApiOperation(value = "Get all festivals of the year")
+    @PostMapping("/get")
+    public List<Festivals> getAllFestivals(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+        System.out.println("Dates are" + params.getJSONArray("isoDates"));
+        CollectionReference festivalsRef = festivalsService.getCollectionReference();
+        Query festivalsQuery = festivalsRef.whereIn("isoDate", params.getJSONArray("isoDates"));
+        ApiFuture<QuerySnapshot> future = festivalsQuery.get();
+        List<Festivals> festivals = new ArrayList<>();
+        for (QueryDocumentSnapshot document : future.get().getDocuments()) {
+            festivals.add(document.toObject(Festivals.class));
+        }
+        return festivals;
+    }
+
     @ApiOperation(value = "Get today's festival")
     @GetMapping("/today")
     public JSONObject getFestival() throws ExecutionException, InterruptedException {
@@ -78,7 +91,6 @@ public class FestiveWishesController {
         ZoneId zoneId = ZoneId.of("Asia/Kolkata");
         LocalDate date = instant.atZone(zoneId).toLocalDate();
         String isoDate = date.format(DateTimeFormatter.ISO_LOCAL_DATE);
-        System.out.println("ISO date ==>" + isoDate);
         CollectionReference festivalsRef = festivalsService.getCollectionReference();
         Query query = festivalsRef.whereEqualTo("isoDate", isoDate).whereEqualTo("active", true);
         ApiFuture<QuerySnapshot> querySnapshotApiFuture = query.get();
@@ -89,7 +101,6 @@ public class FestiveWishesController {
         }
         JSONObject output = new JSONObject();
         output.put("festival", festival);
-        System.out.println("REturrning ==>"+output);
         return output;
     }
 }
