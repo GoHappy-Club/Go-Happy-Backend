@@ -587,7 +587,7 @@ public class MembershipController {
     @PostMapping("/getRecentTransactions")
     public List<CoinTransactions> getRecentTransactions(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
         CollectionReference coinTransactionsRef = coinTransactionsService.getCollectionReference();
-        Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).whereGreaterThan("transactionDate",1).orderBy("transactionDate", Query.Direction.DESCENDING).limit(10);
+        Query transactionQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).whereGreaterThan("transactionDate", 1).orderBy("transactionDate", Query.Direction.DESCENDING).limit(10);
         ApiFuture<QuerySnapshot> snapshotApiFuture = transactionQuery.get();
         List<CoinTransactions> recentTransactions = new ArrayList<>();
         for (DocumentSnapshot document : snapshotApiFuture.get().getDocuments()) {
@@ -699,8 +699,31 @@ public class MembershipController {
     // create vouchers api
     @ApiOperation(value = "Create voucher for user")
     @PostMapping("/createVoucher")
-    public UserVouchers createVoucher(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
-        return new UserVouchers();
+    public boolean createVoucher(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+        /*
+         * @params
+         * - title
+         * - image
+         * - value
+         * - percent
+         * - limit
+         * - category
+         * - status
+         * - expiryDate*/
+
+        Vouchers voucher = new Vouchers();
+        voucher.setId(UUID.randomUUID().toString());
+        voucher.setTitle(params.getString("title"));
+        voucher.setImage(params.getString("image"));
+        voucher.setValue(params.getDouble("value"));
+        voucher.setPercent(params.getInteger("percent"));
+        voucher.setLimit(params.getDouble("limit"));
+        voucher.setCategory(params.getString("category"));
+        voucher.setStatus(VoucherStatusEnum.valueOf(params.getString("status")));
+        voucher.setExpiryDate(params.getLong(params.getString("expiryDate")));
+
+        vouchersService.save(voucher);
+        return true;
     }
 
     // update vouchers api
@@ -719,7 +742,7 @@ public class MembershipController {
                     String voucherId = voucherIds.getString(i);
                     DocumentReference docRef = userVoucherRef.document(voucherId);
                     HashMap<String, Object> updates = new HashMap<>();
-                    updates.put("status",VoucherStatusEnum.EXPIRED);
+                    updates.put("status", VoucherStatusEnum.EXPIRED);
                     docRef.update(updates);
                 }
             }
