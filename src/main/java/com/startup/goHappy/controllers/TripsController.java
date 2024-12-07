@@ -58,7 +58,6 @@ public class TripsController {
 		}
 		List<Trip> result = IterableUtils.toList(trips);
 		result.sort(Comparator.comparing(Trip::getStartTime));
-		Collections.reverse(result);
 		JSONObject output = new JSONObject();
 		output.put("trips", result);
 		return output;

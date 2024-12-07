@@ -17,6 +17,7 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Query;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.startup.goHappy.entities.model.Poster;
+import com.startup.goHappy.entities.model.Trip;
 import com.startup.goHappy.entities.repository.PosterRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -175,6 +176,7 @@ public class HomeController {
 		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
 			workshops.add(document.toObject(Event.class));
 		}
+		workshops.sort(Comparator.comparing(Event::getStartTime));
 		return workshops;
 	}
 
