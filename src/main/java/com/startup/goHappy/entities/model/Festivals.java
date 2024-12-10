@@ -11,5 +11,6 @@ public class Festivals {
     private boolean active;
     private String title;
     private String isoDate;
+    private Long timestamp;
     private String message;
 }
