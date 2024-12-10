@@ -387,7 +387,6 @@ public class EventController {
 		JSONObject output = new JSONObject();
 		output.put("events", eventsNewBest);
 		output.put("ratings",subCategoryRatings);
-		System.out.println(output);
 		return output;
 	}
 
