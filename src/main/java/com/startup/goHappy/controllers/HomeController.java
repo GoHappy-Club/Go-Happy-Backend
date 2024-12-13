@@ -17,7 +17,7 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Query;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.startup.goHappy.entities.model.Poster;
-import com.startup.goHappy.entities.model.Trip;
+import com.startup.goHappy.entities.model.Video;
 import com.startup.goHappy.entities.repository.PosterRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,141 +35,152 @@ import com.startup.goHappy.entities.repository.EventRepository;
 //import com.startup.goHappy.services.HomeService;
 
 
-
 @RestController
 @RequestMapping("/home")
 public class HomeController {
 
-	@Autowired
-	EventRepository eventService;
+    @Autowired
+    EventRepository eventService;
 
-	@Autowired
-	PosterRepository posterService;
+    @Autowired
+    PosterRepository posterService;
 
-	static class TrendingEventClass<K, V> {
-		private K key;
-		private K normKey;
-		private V value;
+    @Autowired
+    VideoController videoController;
 
-		public TrendingEventClass(K key, V value) {
-			this.key = key;
-			this.value = value;
-		}
+    static class TrendingEventClass<K, V> {
+        private K key;
+        private K normKey;
+        private V value;
 
-		public K getKey() {
-			return key;
-		}
+        public TrendingEventClass(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
 
-		public K getNormKey() {
-			return normKey;
-		}
+        public K getKey() {
+            return key;
+        }
 
-		public V getValue() {
-			return value;
-		}
-		public void setKey(K key) {
-			this.key = key;
-		}
-		public void setNormKey(K key) {
-			this.normKey = key;
-		}
-	}
-	
-	@GetMapping("getEvents")
-	public String getEvents() throws Exception {
-		//emailService.sendSimpleMessage("","","");
-		return "";
-	}
+        public K getNormKey() {
+            return normKey;
+        }
 
-	@GetMapping("/overview")
-	public JSONObject overview() throws Exception {
-		JSONObject content = new JSONObject();
-		content.put("trendingSessions",trendingSessions());
-		content.put("upcomingWorkshops",upcomingWorkshops());
-		content.put("posters",posters());
-		return content;
-	}
-	public List<TrendingEventClass<Double,Event>> trendingSessions() throws ExecutionException, InterruptedException {
-		JSONObject sessions = new JSONObject();
-		List<TrendingEventClass<Double,Event>> upcomingSessions = new ArrayList<>();
-		CollectionReference eventsRef = eventService.getCollectionReference();
+        public V getValue() {
+            return value;
+        }
 
-		Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
-		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
-				.ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
-		ZonedDateTime zonedDateTimeAfter14 = java.time.ZonedDateTime
-				.ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata")).plusDays(14);
+        public void setKey(K key) {
+            this.key = key;
+        }
 
-		Query query = eventsRef.whereLessThan("endTime", ""+zonedDateTimeAfter14.toInstant().toEpochMilli()).whereGreaterThan("endTime",""+zonedDateTime.toInstant().toEpochMilli());
+        public void setNormKey(K key) {
+            this.normKey = key;
+        }
+    }
+
+    @GetMapping("getEvents")
+    public String getEvents() throws Exception {
+        //emailService.sendSimpleMessage("","","");
+        return "";
+    }
+
+    @GetMapping("/overview")
+    public JSONObject overview() throws Exception {
+        JSONObject content = new JSONObject();
+        content.put("trendingSessions", trendingSessions());
+        content.put("upcomingWorkshops", upcomingWorkshops());
+        content.put("posters", posters());
+        content.put("videos", randomVideos());
+        return content;
+    }
+
+    public Set<Video> randomVideos() throws ExecutionException, InterruptedException {
+        return videoController.getRandomVideo();
+    }
+
+    public List<TrendingEventClass<Double, Event>> trendingSessions() throws ExecutionException, InterruptedException {
+        JSONObject sessions = new JSONObject();
+        List<TrendingEventClass<Double, Event>> upcomingSessions = new ArrayList<>();
+        CollectionReference eventsRef = eventService.getCollectionReference();
+
+        Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
+        ZonedDateTime zonedDateTime = java.time.ZonedDateTime
+                .ofInstant(instance, java.time.ZoneId.of("Asia/Kolkata"));
+        ZonedDateTime zonedDateTimeAfter14 = java.time.ZonedDateTime
+                .ofInstant(instance, java.time.ZoneId.of("Asia/Kolkata")).plusDays(14);
+
+        Query query = eventsRef.whereLessThan("endTime", "" + zonedDateTimeAfter14.toInstant().toEpochMilli()).whereGreaterThan("endTime", "" + zonedDateTime.toInstant().toEpochMilli());
 //				.whereNotEqualTo("type", "workshop");
-		ApiFuture<QuerySnapshot> querySnapshot = query.get();
-		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
-			Event ev = document.toObject(Event.class);
-			Integer seatsLeft = ev.getSeatsLeft();
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+        for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+            Event ev = document.toObject(Event.class);
+            Integer seatsLeft = ev.getSeatsLeft();
 
-			Integer totalSeats = 0;
-			if(ev.getParticipantList()!=null){
-				totalSeats = seatsLeft + ev.getParticipantList().size();
-			}
-			else{
-				totalSeats = seatsLeft;
-			}
-			double fillRate = (double)(totalSeats - seatsLeft) / totalSeats;
-			Double trendingScore = fillRate * Math.log(totalSeats);
-			DecimalFormat decimalFormat = new DecimalFormat("##.##");
-			fillRate = Double.parseDouble(decimalFormat.format(fillRate));
-			trendingScore = Double.parseDouble(decimalFormat.format(trendingScore));
+            Integer totalSeats = 0;
+            if (ev.getParticipantList() != null) {
+                totalSeats = seatsLeft + ev.getParticipantList().size();
+            } else {
+                totalSeats = seatsLeft;
+            }
+            double fillRate = (double) (totalSeats - seatsLeft) / totalSeats;
+            Double trendingScore = fillRate * Math.log(totalSeats);
+            DecimalFormat decimalFormat = new DecimalFormat("##.##");
+            fillRate = Double.parseDouble(decimalFormat.format(fillRate));
+            trendingScore = Double.parseDouble(decimalFormat.format(trendingScore));
 
-			upcomingSessions.add(new TrendingEventClass<Double,Event>(trendingScore,ev));
-		}
+            upcomingSessions.add(new TrendingEventClass<Double, Event>(trendingScore, ev));
+        }
 
 
-		normalizeTrendingScores(upcomingSessions);
+        normalizeTrendingScores(upcomingSessions);
 
-		// Set the threshold for trending sessions
-		double threshold = 0.7;
+        // Set the threshold for trending sessions
+        double threshold = 0.7;
 
-		// Filter the trending sessions based on the threshold
-		List<TrendingEventClass<Double, Event>> filteredSessions = new ArrayList<>();
-		for (TrendingEventClass<Double, Event> session : upcomingSessions) {
-			if (session.getNormKey() >= threshold) {
-				filteredSessions.add(session);
-			}
-		}
+        // Filter the trending sessions based on the threshold
+        List<TrendingEventClass<Double, Event>> filteredSessions = new ArrayList<>();
+        for (TrendingEventClass<Double, Event> session : upcomingSessions) {
+            if (session.getNormKey() >= threshold) {
+                filteredSessions.add(session);
+            }
+        }
 
-		// Sort the filtered sessions by the normalized trending scores
-		Collections.sort(filteredSessions, new Comparator<TrendingEventClass<Double, Event>>() {
-			@Override
-			public int compare(TrendingEventClass<Double, Event> o1, TrendingEventClass<Double, Event> o2) {
-				return Double.compare(o2.getKey(), o1.getKey());
-			}
-		});
+        // Sort the filtered sessions by the normalized trending scores
+        Collections.sort(filteredSessions, new Comparator<TrendingEventClass<Double, Event>>() {
+            @Override
+            public int compare(TrendingEventClass<Double, Event> o1, TrendingEventClass<Double, Event> o2) {
+                return Double.compare(o2.getKey(), o1.getKey());
+            }
+        });
 
-		return filteredSessions;
-	}
-	// Normalize the trending scores of sessions
-	static void normalizeTrendingScores(List<TrendingEventClass<Double, Event>> sessions) {
-		// Find the maximum trending score
-		double maxTrendingScore = sessions.stream()
-				.mapToDouble(TrendingEventClass::getKey)
-				.max()
-				.orElse(0.0);
+        return filteredSessions;
+    }
 
-		// Normalize the trending scores
-		for (TrendingEventClass<Double, Event> session : sessions) {
-			DecimalFormat decimalFormat = new DecimalFormat("##.##");
-			double normalizedScore = session.getKey() / maxTrendingScore;
-			session.setNormKey(Double.parseDouble(decimalFormat.format(normalizedScore)));
-		}
-	}
-	public List<Event> upcomingWorkshops() throws ExecutionException, InterruptedException {
-		List<Event> workshops = new ArrayList<>();
+    // Normalize the trending scores of sessions
+    static void normalizeTrendingScores(List<TrendingEventClass<Double, Event>> sessions) {
+        // Find the maximum trending score
+        double maxTrendingScore = sessions.stream()
+                .mapToDouble(TrendingEventClass::getKey)
+                .max()
+                .orElse(0.0);
 
-		CollectionReference eventsRef = eventService.getCollectionReference();
+        // Normalize the trending scores
+        for (TrendingEventClass<Double, Event> session : sessions) {
+            DecimalFormat decimalFormat = new DecimalFormat("##.##");
+            double normalizedScore = session.getKey() / maxTrendingScore;
+            session.setNormKey(Double.parseDouble(decimalFormat.format(normalizedScore)));
+        }
+    }
 
-		Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
-		ZonedDateTime zonedDateTime = java.time.ZonedDateTime
-				.ofInstant(instance,java.time.ZoneId.of("Asia/Kolkata"));
+    public List<Event> upcomingWorkshops() throws ExecutionException, InterruptedException {
+        List<Event> workshops = new ArrayList<>();
+
+        CollectionReference eventsRef = eventService.getCollectionReference();
+
+        Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
+        ZonedDateTime zonedDateTime = java.time.ZonedDateTime
+                .ofInstant(instance, java.time.ZoneId.of("Asia/Kolkata"));
 
 		Query query = eventsRef.whereGreaterThanOrEqualTo("endTime", ""+zonedDateTime.toInstant().toEpochMilli()).whereEqualTo("type", "workshop");
 		ApiFuture<QuerySnapshot> querySnapshot = query.get();
@@ -180,15 +191,15 @@ public class HomeController {
 		return workshops;
 	}
 
-	public List<Poster> posters() throws ExecutionException, InterruptedException {
-		List<Poster> posters = new ArrayList<>();
+    public List<Poster> posters() throws ExecutionException, InterruptedException {
+        List<Poster> posters = new ArrayList<>();
 
-		CollectionReference postersRef = posterService.getCollectionReference();
+        CollectionReference postersRef = posterService.getCollectionReference();
 
-		ApiFuture<QuerySnapshot> querySnapshot = postersRef.get();
-		for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
-			posters.add(document.toObject(Poster.class));
-		}
-		return posters;
-	}
+        ApiFuture<QuerySnapshot> querySnapshot = postersRef.get();
+        for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
+            posters.add(document.toObject(Poster.class));
+        }
+        return posters;
+    }
 }
