@@ -617,7 +617,6 @@ public class MembershipController {
     public void scratchCardReward(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
         String phone = params.getString("phone");
         String transactionId = params.getString("coinTransactionId");
-        System.out.println(params);
 
         CollectionReference coinTransactionRef = coinTransactionsService.getCollectionReference();
         Query query = coinTransactionRef.whereEqualTo("id", transactionId);
