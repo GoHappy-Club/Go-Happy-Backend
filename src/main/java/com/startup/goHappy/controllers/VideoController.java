@@ -29,10 +29,7 @@ public class VideoController {
     public Set<Video> getRandomVideo() throws ExecutionException, InterruptedException {
         CollectionReference playlistsRef = videoService.getCollectionReference();
         double randomThreshold = Math.random();
-        ApiFuture<QuerySnapshot> query = playlistsRef
-                .whereGreaterThan("random", randomThreshold)
-                .limit(6)
-                .get();
+        ApiFuture<QuerySnapshot> query = playlistsRef.whereNotEqualTo("category", "Promotion").whereGreaterThan("random", randomThreshold).limit(6).get();
 
         List<QueryDocumentSnapshot> documents = query.get().getDocuments();
         Set<Video> playlists = new LinkedHashSet<>();
@@ -42,10 +39,7 @@ public class VideoController {
         }
 
         if (playlists.size() < 6) {
-            ApiFuture<QuerySnapshot> fallbackQuery = playlistsRef
-                    .whereLessThan("random", randomThreshold)
-                    .limit(6 - playlists.size())
-                    .get();
+            ApiFuture<QuerySnapshot> fallbackQuery = playlistsRef.whereLessThan("random", randomThreshold).limit(6 - playlists.size()).get();
 
             List<QueryDocumentSnapshot> fallbackDocuments = fallbackQuery.get().getDocuments();
             for (QueryDocumentSnapshot doc : fallbackDocuments) {
@@ -53,10 +47,21 @@ public class VideoController {
             }
         }
 
-        if (playlists.size() > 6) {
-            return playlists.stream().limit(6).collect(Collectors.toSet());
-        }
-        return playlists;
+        playlists = playlists.stream().limit(6).collect(Collectors.toCollection(LinkedHashSet::new));
+            ApiFuture<QuerySnapshot> promotionQuery = videoService.getCollectionReference().whereEqualTo("category", "Promotion").get();
+
+            List<QueryDocumentSnapshot> promotionDocs = promotionQuery.get().getDocuments();
+            int listSize = promotionDocs.size();
+            int random = (int) (Math.random() * listSize);
+            if (!promotionDocs.isEmpty()) {
+                Video promotionVideo = promotionDocs.get(random).toObject(Video.class);
+                playlists.add(promotionVideo);
+            }
+
+        List<Video> shuffledPlaylist = new ArrayList<>(playlists);
+        Collections.shuffle(shuffledPlaylist);
+
+        return new LinkedHashSet<>(shuffledPlaylist);
     }
 
 
@@ -71,7 +76,7 @@ public class VideoController {
             newVideo.setTitle(params.getString("title"));
             newVideo.setThumbnail(params.getString("thumbnail"));
             newVideo.setRandom(Math.random());
-            newVideo.setVideoUrl(params.getString("videoUrl"));
+            newVideo.setContentUrl(params.getString("videoUrl"));
             newVideo.setPlaylistLink(params.getString("playlistLink"));
             videoService.save(newVideo);
         } else {
@@ -86,7 +91,7 @@ public class VideoController {
                 newVideo.setTitle(title);
                 newVideo.setThumbnail(thumbnail);
                 newVideo.setRandom(Math.random());
-                newVideo.setVideoUrl(videoUrl);
+                newVideo.setContentUrl(videoUrl);
                 newVideo.setPlaylistLink(params.getString("playlistUrl"));
                 videoService.save(newVideo);
             }
