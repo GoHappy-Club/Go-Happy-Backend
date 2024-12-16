@@ -9,7 +9,7 @@ public class Video {
     private String category;
     private String thumbnail;
     private String title;
-    private String videoUrl;
+    private String contentUrl;
     private String playlistLink;
     private Double random;
 }
