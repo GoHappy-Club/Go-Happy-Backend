@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import javax.mail.MessagingException;
 
+import com.google.cloud.firestore.*;
 import com.startup.goHappy.entities.TypecastedModels.SearchEventDTO;
 import com.startup.goHappy.entities.model.*;
 import com.startup.goHappy.entities.model.Event;
@@ -35,10 +36,6 @@ import org.springframework.web.bind.annotation.*;
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Query;
-import com.google.cloud.firestore.QuerySnapshot;
 import com.startup.goHappy.integrations.model.ZoomMeetingObjectDTO;
 import com.startup.goHappy.integrations.service.EmailService;
 import com.startup.goHappy.integrations.service.ZoomService;
@@ -349,18 +346,17 @@ public class EventController {
                 .ofInstant(instance, java.time.ZoneId.of("Asia/Kolkata"));
         zonedDateTime = zonedDateTime.with(LocalTime.of(23, 59));
         CollectionReference eventsRef = eventService.getCollectionReference();
-        Instant instance2 = java.time.Instant.now();
-        ZonedDateTime zonedDateTime2 = java.time.ZonedDateTime
-                .ofInstant(instance2, java.time.ZoneId.of("Asia/Kolkata"));
-        String newDate = zonedDateTime2.toInstant().toEpochMilli() + "";
-//		if(params.getString("date").compareTo(newDate)<0) {
-//			params.put("date", newDate);
-//		}
-        Query queryNew = eventsRef.whereGreaterThanOrEqualTo("startTime", params.getString("date")).whereEqualTo("isParent", false);
+        Query queryNew = eventsRef.whereEqualTo("isParent", false);
 
-        if (params.getString("endDate") != null) {
-            queryNew = queryNew.whereLessThanOrEqualTo("endTime", "" + params.getString("endDate"));
+        if (params.getString("midnightDate") != null) {
+            Filter filter = Filter.and(
+                    Filter.lessThanOrEqualTo("startTime", params.getString("midnightDate")),
+                    Filter.greaterThanOrEqualTo("startTime", params.getString("date"))
+            );
+
+            queryNew = queryNew.where(filter);
         } else {
+            queryNew = queryNew.whereGreaterThanOrEqualTo("startTime",params.getString("date"));
             queryNew = queryNew.whereLessThanOrEqualTo("endTime", "" + zonedDateTime.toInstant().toEpochMilli());
         }
         ApiFuture<QuerySnapshot> querySnapshotNew = queryNew.get();
@@ -378,8 +374,7 @@ public class EventController {
                 uniqueSubCategories.add(event.getSubCategory());
             }
             for (String subCategory : uniqueSubCategories) {
-                double rating = ratingHelperService.getRatingByCategory(subCategory);// Fetch the rating once per unique subcategory
-                System.out.println("Rating for " + subCategory + " is " + rating);
+                double rating = ratingHelperService.getRatingByCategory(subCategory);
                 subCategoryRatings.put(subCategory, rating);
             }
         } catch (Exception e) {
