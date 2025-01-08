@@ -213,7 +213,7 @@ public class UserProfileController {
         int amountInPaisa = dataNode.get("amount").asInt();
         int amount = amountInPaisa / 100;
         String code = decodedJson.get("code").asText();
-        if ("PAYMENT_ERROR".equals(code)) return;
+        if (!"PAYMENT_SUCCESS".equals(code)) return;
         Query profileQuery = userProfiles.whereEqualTo("phone", phoneNumber);
 
         ApiFuture<QuerySnapshot> querySnapshot1 = profileQuery.get();
@@ -248,7 +248,7 @@ public class UserProfileController {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode decodedJson = objectMapper.readTree(decodedString);
         String code = decodedJson.get("code").asText();
-        if ("PAYMENT_ERROR".equals(code)) return;
+        if (!"PAYMENT_SUCCESS".equals(code)) return;
 
         JSONObject bookEventParams = new JSONObject();
         bookEventParams.put("id",orderId);
