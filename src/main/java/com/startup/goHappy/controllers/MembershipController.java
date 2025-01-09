@@ -261,6 +261,7 @@ public class MembershipController {
          */
         CollectionReference userMemberships = userMembershipsService.getCollectionReference();
         CollectionReference userProfiles = userProfileService.getCollectionReference();
+        CollectionReference userVoucherRef = userVouchersService.getCollectionReference();
 
         String phoneNumber = params.getString("phoneNumber");
         Query memberQuery = userMemberships.whereEqualTo("phone", phoneNumber);
@@ -280,7 +281,7 @@ public class MembershipController {
             userMember.setMembershipStartDate(null);
             userMember.setMembershipEndDate(null);
             userMember.setLastCoinsCreditedDate(null);
-            userMember.setCancellationDate(helpers.FormatMilliseconds(new Date().getTime()));
+            userMember.setCancellationDate(""+new Date().getTime());
             userMember.setCancellationReason(params.getString("reason"));
             break;
         }
@@ -300,6 +301,15 @@ public class MembershipController {
             currentContent = currentContent.replace("${name}", user.getName());
             if (!StringUtils.isEmpty(user.getEmail()))
                 emailService.sendSimpleMessage(user.getEmail(), subject, currentContent);
+        }
+
+        Query userVouchersQuery = userVoucherRef.whereEqualTo("phone", phoneNumber).whereEqualTo("status", VoucherStatusEnum.ACTIVE);
+        ApiFuture<QuerySnapshot> querySnapshot3 = userVouchersQuery.get();
+        for (DocumentSnapshot document : querySnapshot3.get().getDocuments()) {
+            UserVouchers userVoucher = document.toObject(UserVouchers.class);
+            assert userVoucher != null;
+            userVoucher.setStatus(VoucherStatusEnum.EXPIRED);
+            userVouchersService.save(userVoucher);
         }
 
         return userMember;
