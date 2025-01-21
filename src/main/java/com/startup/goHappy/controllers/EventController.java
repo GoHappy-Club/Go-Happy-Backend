@@ -520,7 +520,7 @@ public class EventController {
             userVoucher.setStatus(VoucherStatusEnum.REDEEMED);
             userVoucher.setRedemptionTime(new Date().getTime());
         }
-        if (StringUtils.equals(event.getCostType(), "paid") && !userMembership.isFreeTrialActive()) {
+        if (StringUtils.equals(event.getCostType(), "paid") && !userMembership.isFreeTrialActive() && !"workshop".equals(event.getType())) {
             userMembership.setCoins((int) (userMembership.getCoins() - resultantCost));
             // add the data in user's transaction history
             newTransaction.setAmount((int) resultantCost);
@@ -536,7 +536,7 @@ public class EventController {
         if (userVoucher != null)
             userVouchersService.save(userVoucher);
         userMembershipsService.save(userMembership);
-        if (StringUtils.equals(event.getCostType(), "paid") && !userMembership.isFreeTrialActive())
+        if (StringUtils.equals(event.getCostType(), "paid") && !userMembership.isFreeTrialActive() && !"workshop".equals(event.getType()))
             coinTransactionsService.save(newTransaction);
 
         //TAMBOLA GENERATION-START
@@ -756,7 +756,8 @@ public class EventController {
         if (event.getSeatsLeft() <= 0) {
             return "FAILED:FULL";
         }
-        if (StringUtils.equals(event.getCostType(), "paid")) {
+        // TODO : REMOVE this workshop case from here after most people have migrated to latest app
+        if (StringUtils.equals(event.getCostType(), "paid") && !"workshop".equals(event.getType())) {
             if (membership.isFreeTrialActive()) {
                 return "SUCCESS";
             } else if (membership.getMembershipType() == MembershipEnum.Free) {
