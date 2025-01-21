@@ -31,6 +31,7 @@ import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.startup.goHappy.utils.Helpers.generateCouponCode;
 
@@ -79,7 +80,9 @@ public class MembershipController {
     @GetMapping("/listAll")
     public List<Membership> listAll() {
         Iterable<Membership> memberships = membershipService.retrieveAll();
-        return IterableUtils.toList(memberships);
+        return StreamSupport.stream(memberships.spliterator(), false)
+                .filter(Membership::getActive)
+                .collect(Collectors.toList());
     }
 
     @ApiOperation(value = "To get all the coin pricing and packages")

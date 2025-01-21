@@ -18,4 +18,5 @@ public class Membership {
     private Integer duration; // duration of membership in MONTHS
     private List<String> vouchers;
     private List<String> perks; // use unicode for bolds(already present in DB)
+    private Boolean active;
 }
