@@ -21,6 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.alibaba.fastjson.JSONObject;
@@ -121,21 +122,27 @@ public class ZoomService {
         return null;
     }
 
-    public List<ZoomParticipantsDTO.Participant> getPastMeetingParticipants(String meetingId) {
+    public List<ZoomParticipantsDTO.Participant> getPastMeetingParticipants(String meetingId,String zoomToken) {
         String getParticipantsUrl = "https://api.zoom.us/v2/report/meetings/" + meetingId + "/participants?include_fields=registrant_id&page_size=300";
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + generateZoomOAuth());
+        headers.add("Authorization", "Bearer " +zoomToken);
         headers.add("content-type", "application/json");
         HttpEntity<?> requestEntity = new HttpEntity<>(headers);
-        ResponseEntity<ZoomParticipantsDTO> zoomEntityRes = restTemplate
-                .exchange(getParticipantsUrl, HttpMethod.GET, requestEntity, ZoomParticipantsDTO.class);
-        if (zoomEntityRes.getStatusCodeValue() == 200) {
-            return Objects.requireNonNull(zoomEntityRes.getBody()).getParticipants();
+        try {
+            ResponseEntity<ZoomParticipantsDTO> zoomEntityRes = restTemplate
+                    .exchange(getParticipantsUrl, HttpMethod.GET, requestEntity, ZoomParticipantsDTO.class);
+            if (zoomEntityRes.getStatusCodeValue() == 200) {
+                return Objects.requireNonNull(zoomEntityRes.getBody()).getParticipants();
+            }
+        } catch (RestClientException e) {
+            System.out.println("Error fetching Zoom participants for meeting {}: {}" + meetingId + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Unexpected error while fetching Zoom participants: {}" + e.getMessage());
         }
         return null;
     }
 
-    private String generateZoomOAuth() {
+    public String generateZoomOAuth() {
         String getTokenUrl = "https://zoom.us/oauth/token?grant_type=account_credentials&account_id=" + accountId;
 //        RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();

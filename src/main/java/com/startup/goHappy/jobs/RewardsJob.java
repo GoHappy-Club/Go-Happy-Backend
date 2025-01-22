@@ -36,9 +36,10 @@ public class RewardsJob {
         params.put("maxDate", "" + now);
 
         List<Event> events = eventController.getEventsWithinDateRange(params);
+        String zoomToken = zoomService.generateZoomOAuth();
         for (Event event : events) {
             String meetingNumber = extractMeetingNumber(event.getMeetingLink());
-            List<ZoomParticipantsDTO.Participant> participants = zoomService.getPastMeetingParticipants(meetingNumber);
+            List<ZoomParticipantsDTO.Participant> participants = zoomService.getPastMeetingParticipants(meetingNumber,zoomToken);
 
             HashMap<String, Integer> phoneDurationMap = new HashMap<>();
             int maxDuration = 0;
