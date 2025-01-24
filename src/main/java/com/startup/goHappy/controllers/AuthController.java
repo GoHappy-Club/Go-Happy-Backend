@@ -24,6 +24,7 @@ import okhttp3.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,6 +37,7 @@ import com.google.cloud.firestore.QuerySnapshot;
 import com.startup.goHappy.entities.model.UserProfile;
 import com.startup.goHappy.entities.repository.UserProfileRepository;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.mail.MessagingException;
@@ -108,6 +110,9 @@ public class AuthController {
         for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
             user = document.toObject(UserProfile.class);
             break;
+        }
+        if (user.getIsBlocked()){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is blocked");
         }
         if (user != null) {
             if (!StringUtils.isEmpty(params.getString("fcmToken"))) {
