@@ -24,4 +24,5 @@ public class UserProfile {
 	private String emergencyContact;
 	private String fcmToken;
 	private String dob;
+	private Boolean isBlocked=false;
 }
