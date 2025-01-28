@@ -26,7 +26,7 @@ public class RewardsJob {
     @Autowired
     private EventController eventController;
 
-    @Scheduled(cron = "0 30 03 * * *", zone = "Asia/Kolkata")
+//    @Scheduled(cron = "0 30 03 * * *", zone = "Asia/Kolkata")
     public void getParticipantInfo() throws ExecutionException, InterruptedException {
         long now = new Date().getTime();
         long twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
