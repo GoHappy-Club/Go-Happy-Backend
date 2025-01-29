@@ -15,4 +15,5 @@ public class Properties {
     private String appVersion;
     private Boolean forceUpdate;
     private int buildNumber;
+    private List<String> tripImages;
 }
