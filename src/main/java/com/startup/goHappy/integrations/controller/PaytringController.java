@@ -142,8 +142,6 @@ public class PaytringController {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("key", payKey);
         requestBody.put("id", params.getString("id"));
-        //paymentFor - contribution, workshop, coins, subscription
-        String paymentFor = params.getString("paymentFor");
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
@@ -211,6 +209,26 @@ public class PaytringController {
         }
         return output;
     }
+
+    @ApiOperation(value = "Webhook for Paytring")
+    @PostMapping("/result")
+    public void Success(@RequestBody JSONObject params) throws IOException {
+        System.out.println(params);
+        String orderId = params.getString("orderId");
+        JSONObject verifyParams = new JSONObject();
+        verifyParams.put("id", orderId);
+        verify(verifyParams);
+    }
+
+//    @ApiOperation(value = "Webhook for Paytring's Success message")
+//    @PostMapping("/result/failure")
+//    public void Failure(@RequestBody JSONObject params) throws IOException {
+//        System.out.println(params);
+//        String orderId = params.getString("orderId");
+//        JSONObject verifyParams = new JSONObject();
+//        verifyParams.put("id", orderId);
+//        verify(verifyParams);
+//    }
 
     private String getBasicAuthToken() {
         Base64.Encoder encoder = Base64.getEncoder();
