@@ -111,10 +111,10 @@ public class AuthController {
             user = document.toObject(UserProfile.class);
             break;
         }
-        if (user.getIsBlocked()){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is blocked");
-        }
         if (user != null) {
+            if (user.getIsBlocked()) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is blocked");
+            }
             if (!StringUtils.isEmpty(params.getString("fcmToken"))) {
                 user.setFcmToken(params.getString("fcmToken"));
                 userProfileService.save(user);
@@ -194,9 +194,9 @@ public class AuthController {
             );
 
             JSONObject result = new JSONObject();
-            if(Objects.requireNonNull(response.getBody()).contains("success")){
+            if (Objects.requireNonNull(response.getBody()).contains("success")) {
                 result.put("success", true);
-            }else{
+            } else {
                 result.put("success", false);
             }
             return result;
@@ -233,7 +233,7 @@ public class AuthController {
             return new JSONObject() {{
                 put("success", false);
             }};
-        }catch (Exception e) {
+        } catch (Exception e) {
             System.err.println("Error verifying OTP: " + e.getMessage());
             return new JSONObject() {{
                 put("success", false);
