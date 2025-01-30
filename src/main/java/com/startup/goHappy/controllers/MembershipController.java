@@ -312,6 +312,7 @@ public class MembershipController {
             UserVouchers userVoucher = document.toObject(UserVouchers.class);
             assert userVoucher != null;
             userVoucher.setStatus(VoucherStatusEnum.EXPIRED);
+            userVoucher.setExpiryDate(new Date().getTime());
             userVouchersService.save(userVoucher);
         }
 
