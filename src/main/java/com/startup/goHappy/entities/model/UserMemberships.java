@@ -26,6 +26,6 @@ public class UserMemberships {
     private String cancellationDate;
     private String cancellationReason;
     private String lastCoinsCreditedDate;
-    private boolean freeTrialUsed = false;
+    private boolean freeTrialUsed = true;
     private boolean freeTrialActive = false;
 }
