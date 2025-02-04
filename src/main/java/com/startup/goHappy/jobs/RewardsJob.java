@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
@@ -27,7 +28,7 @@ public class RewardsJob {
     private EventController eventController;
 
 //    @Scheduled(cron = "0 30 03 * * *", zone = "Asia/Kolkata")
-    public void getParticipantInfo() throws ExecutionException, InterruptedException {
+    public void getParticipantInfo() throws ExecutionException, InterruptedException, IOException {
         long now = new Date().getTime();
         long twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
 

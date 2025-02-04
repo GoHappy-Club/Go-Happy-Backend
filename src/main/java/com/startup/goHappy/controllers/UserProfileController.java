@@ -295,6 +295,8 @@ public class UserProfileController {
                 user.setFcmToken(params.getString("fcmToken"));
             if (!StringUtils.isEmpty(params.getString("dob")))
                 user.setDob(params.getString("dob"));
+            if (!StringUtils.isEmpty(params.getString("sessionsAttended")))
+                user.setSessionsAttended(params.getString("sessionsAttended"));
             break;
         }
         userProfileService.save(user);

@@ -282,9 +282,11 @@ public class EventController {
 
     @ApiOperation(value = "to give user's their cashback of sessions")
     @PostMapping("/giveReward")
-    public void giveReward(@RequestBody JSONObject params) throws ExecutionException, InterruptedException {
+    public void giveReward(@RequestBody JSONObject params) throws ExecutionException, InterruptedException, IOException {
         JSONObject getRecentTransactionsParams = new JSONObject();
         getRecentTransactionsParams.put("phone", params.getString("phone"));
+        JSONObject userProfileParams = new JSONObject();
+        userProfileParams.put("phoneNumber", params.getString("phone"));
         UserMemberships userMembership = membershipController.getMembershipByPhone(getRecentTransactionsParams);
         CollectionReference coinTransactionsRef = coinTransactionsService.getCollectionReference();
         Query cashbackQuery = coinTransactionsRef.whereEqualTo("phone", params.getString("phone")).whereEqualTo("source", "coinback").whereEqualTo("sourceId", params.getString("eventId"));
@@ -297,6 +299,10 @@ public class EventController {
         if (newTransaction != null) {
             return;
         }
+        UserProfile user = userProfileController.getUserByPhone(userProfileParams).getObject("user", UserProfile.class);
+        Integer sessionsAttended = Integer.parseInt(user.getSessionsAttended());
+        sessionsAttended++;
+        user.setSessionsAttended("" + sessionsAttended);
         JSONObject eventParams = new JSONObject();
         eventParams.put("id", params.getString("eventId"));
         JSONObject eventObject = getEventById(eventParams);
@@ -336,6 +342,7 @@ public class EventController {
 //        userMembership.setCoins(userMembership.getCoins() + (int)coinsToGive);
 
         coinTransactionsService.save(transaction);
+        userProfileService.save(user);
     }
 
     @ApiOperation(value = "Get events by date range (used when user clicks a date on the app)")
@@ -571,10 +578,6 @@ public class EventController {
         if (user != null) {
             currentContent = currentContent.replace("${name}", user.getName());
             currentContent = currentContent.replace("${name}", user.getName());
-            Integer sessionsAttended = Integer.parseInt(user.getSessionsAttended());
-            sessionsAttended++;
-            user.setSessionsAttended("" + sessionsAttended);
-            userProfileService.save(user);
             if (!StringUtils.isEmpty(user.getEmail()))
                 emailService.sendSimpleMessage(user.getEmail(), event.getEventName(), currentContent);
         }
