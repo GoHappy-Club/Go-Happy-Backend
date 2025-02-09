@@ -398,7 +398,7 @@ public class EventController {
 
     @ApiOperation(value = "Save user's rating for a session/workshop")
     @PostMapping("/submitRating")
-    public void submitRating(@RequestBody JSONObject params) {
+    public void submitRating(@RequestBody JSONObject params) throws IOException, ExecutionException, InterruptedException {
         String phone = params.getString("phone");
         String reason = params.containsKey("reason") ? params.getString("reason") : null;
         String usersRating = params.getString("rating");
@@ -413,6 +413,10 @@ public class EventController {
         if (reason != null) {
             rating.setReason(reason);
         }
+        JSONObject giveRewardParams = new JSONObject();
+        giveRewardParams.put("eventId", eventId);
+        giveRewardParams.put("phone", phone);
+        giveReward(giveRewardParams);
         ratingsService.save(rating);
     }
 
