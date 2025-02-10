@@ -1,9 +1,6 @@
 package com.startup.goHappy.controllers;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -12,12 +9,7 @@ import java.util.concurrent.ExecutionException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.startup.goHappy.entities.model.Referral;
 import com.startup.goHappy.entities.model.UserMemberships;
-import com.startup.goHappy.entities.repository.ReferralRepository;
-import com.startup.goHappy.entities.repository.UserMembershipsRepository;
-import com.startup.goHappy.integrations.service.EmailService;
-import com.startup.goHappy.utils.Constants;
 import io.swagger.annotations.ApiOperation;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -40,7 +32,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.mail.MessagingException;
 
 @RestController
 @RequestMapping("auth")
@@ -59,9 +50,9 @@ public class AuthController {
     private RestTemplate restTemplate;
 
     @Value("${gupshup.userId}")
-    private String userId;
+    private String GsId;
     @Value("${gupshup.userPass}")
-    private String userPass;
+    private String GsPass;
 
     public AuthController() {
         this.restTemplate = new RestTemplate();
@@ -165,66 +156,33 @@ public class AuthController {
     @ApiOperation(value = "Send OTP to user")
     @PostMapping("/init")
     public JSONObject init(@RequestBody JSONObject params) throws Exception {
-        try {
-            String messageTemplate = "Dear User,\n" +
-                    "Your OTP for login to GoHappy Club is %code%. This code is valid for 30 minutes. Please do not share this OTP.\n" +
-                    "Regards,\n" +
-                    "GoHappy Club Team";
+        String uri = "https://enterprise.smsgupshup.com/GatewayAPI/rest?userid=" + GsId + "&password=" + GsPass + "&method=TWO_FACTOR_AUTH&v=1.1&phone_no=" + params.getString("phone") + "&format=text&otpCodeLength=6&otpCodeType=NUMERIC&msg=Dear%20User%2C%0A%0AYour%20OTP%20for%20login%20to%20GoHappy%20Club%20is%20%25code%25.%20This%20code%20is%20valid%20for%2010%20minutes.%20Please%20do%20not%20share%20this%20OTP.%0A%0ARegards%2C%0AGoHappy%20Club%20Team%0AVYLRTtpjlEV";
 
-            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(GUPSHUP_BASE_URL)
-                    .queryParam("userid", userId)
-                    .queryParam("password", userPass)
-                    .queryParam("method", "TWO_FACTOR_AUTH")
-                    .queryParam("v", "1.1")
-                    .queryParam("phone_no", params.getString("phone"))
-                    .queryParam("format", "text")
-                    .queryParam("otpCodeLength", "6")
-                    .queryParam("otpCodeType", "NUMERIC");
-
-            String encodedMessage = messageTemplate
-                    .replace("\n", "%0A")
-                    .replace(" ", "%20")
-                    .replace(",", "%2C");
-
-            String finalUrl = builder.toUriString() + "&msg=" + encodedMessage;
-
-            ResponseEntity<String> response = restTemplate.getForEntity(
-                    finalUrl,
-                    String.class
-            );
-
-            JSONObject result = new JSONObject();
-            if (Objects.requireNonNull(response.getBody()).contains("success")) {
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(uri)
+                .build();
+        JSONObject result = new JSONObject();
+        try (Response response = client.newCall(request).execute()) {
+            if (Objects.requireNonNull(response.body().string()).contains("success")) {
                 result.put("success", true);
             } else {
                 result.put("success", false);
             }
-            return result;
-
         } catch (Exception e) {
             System.err.println("Error sending OTP: " + e.getMessage());
-            return new JSONObject() {{
-                put("success", false);
-            }};
+            result.put("success", false);
         }
+        return result;
     }
 
     @ApiOperation(value = "Verify user's OTP")
     @PostMapping("/verify")
     public JSONObject verify(@RequestBody JSONObject params) throws Exception {
         try {
-            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(GUPSHUP_BASE_URL)
-                    .queryParam("userid", userId)
-                    .queryParam("password", userPass)
-                    .queryParam("method", "TWO_FACTOR_AUTH")
-                    .queryParam("v", "1.1")
-                    .queryParam("phone_no", params.getString("phone"))
-                    .queryParam("otp_code", params.getString("otp"));
+            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(GUPSHUP_BASE_URL).queryParam("userid", GsId).queryParam("password", GsPass).queryParam("method", "TWO_FACTOR_AUTH").queryParam("v", "1.1").queryParam("phone_no", params.getString("phone")).queryParam("otp_code", params.getString("otp"));
 
-            ResponseEntity<String> response = restTemplate.getForEntity(
-                    builder.toUriString(),
-                    String.class
-            );
+            ResponseEntity<String> response = restTemplate.getForEntity(builder.toUriString(), String.class);
             if (Objects.requireNonNull(response.getBody()).contains("success")) {
                 return new JSONObject() {{
                     put("success", true);
