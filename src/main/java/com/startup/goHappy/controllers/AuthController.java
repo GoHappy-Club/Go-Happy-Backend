@@ -156,7 +156,7 @@ public class AuthController {
     @ApiOperation(value = "Send OTP to user")
     @PostMapping("/init")
     public JSONObject init(@RequestBody JSONObject params) throws Exception {
-        String uri = "https://enterprise.smsgupshup.com/GatewayAPI/rest?userid=" + GsId + "&password=" + GsPass + "&method=TWO_FACTOR_AUTH&v=1.1&phone_no=" + params.getString("phone") + "&format=text&otpCodeLength=6&otpCodeType=NUMERIC&msg=Dear%20User%2C%0A%0AYour%20OTP%20for%20login%20to%20GoHappy%20Club%20is%20%25code%25.%20This%20code%20is%20valid%20for%2010%20minutes.%20Please%20do%20not%20share%20this%20OTP.%0A%0ARegards%2C%0AGoHappy%20Club%20Team%0AVYLRTtpjlEV";
+        String uri = GUPSHUP_BASE_URL+"?userid=" + GsId + "&password=" + GsPass + "&method=TWO_FACTOR_AUTH&v=1.1&phone_no=" + params.getString("phone") + "&format=text&otpCodeLength=6&otpCodeType=NUMERIC&msg=Dear%20User%2C%0A%0AYour%20OTP%20for%20login%20to%20GoHappy%20Club%20is%20%25code%25.%20This%20code%20is%20valid%20for%2010%20minutes.%20Please%20do%20not%20share%20this%20OTP.%0A%0ARegards%2C%0AGoHappy%20Club%20Team%0AVYLRTtpjlEV";
 
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
