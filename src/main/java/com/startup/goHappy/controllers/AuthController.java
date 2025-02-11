@@ -156,7 +156,7 @@ public class AuthController {
     @ApiOperation(value = "Send OTP to user")
     @PostMapping("/init")
     public JSONObject init(@RequestBody JSONObject params) throws Exception {
-        String uri = GUPSHUP_BASE_URL+"?userid=" + GsId + "&password=" + GsPass + "&method=TWO_FACTOR_AUTH&v=1.1&phone_no=" + params.getString("phone") + "&format=text&otpCodeLength=6&otpCodeType=NUMERIC&msg=Dear%20User%2C%0A%0AYour%20OTP%20for%20login%20to%20GoHappy%20Club%20is%20%25code%25.%20This%20code%20is%20valid%20for%2010%20minutes.%20Please%20do%20not%20share%20this%20OTP.%0A%0ARegards%2C%0AGoHappy%20Club%20Team%0AVYLRTtpjlEV";
+        String uri = GUPSHUP_BASE_URL + "?userid=" + GsId + "&password=" + GsPass + "&method=TWO_FACTOR_AUTH&v=1.1&phone_no=" + params.getString("phone") + "&format=text&otpCodeLength=6&otpCodeType=NUMERIC&msg=Dear%20User%2C%0A%0AYour%20OTP%20for%20login%20to%20GoHappy%20Club%20is%20%25code%25.%20This%20code%20is%20valid%20for%2010%20minutes.%20Please%20do%20not%20share%20this%20OTP.%0A%0ARegards%2C%0AGoHappy%20Club%20Team%0AVYLRTtpjlEV";
 
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
@@ -164,8 +164,11 @@ public class AuthController {
                 .build();
         JSONObject result = new JSONObject();
         try (Response response = client.newCall(request).execute()) {
-            if (Objects.requireNonNull(response.body().string()).contains("success")) {
+            String responseBody = response.body().string(); // Read response body once
+            if (responseBody.contains("success")) {
                 result.put("success", true);
+            } else if (responseBody.contains("308")) {
+                result.put("statusCode", 308);
             } else {
                 result.put("success", false);
             }
@@ -173,6 +176,7 @@ public class AuthController {
             System.err.println("Error sending OTP: " + e.getMessage());
             result.put("success", false);
         }
+
         return result;
     }
 
