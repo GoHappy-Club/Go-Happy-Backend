@@ -174,8 +174,16 @@ public class UserProfileController {
         return outputStream -> outputStream.flush();
     }
 
+    /*
+    * This is used in @PaytringController.java to add the payment amount and date to user profile, not used anywhere else
+    * */
     @PostMapping("setPaymentData")
     public void setPaymentData(@RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
+        /*
+        * @params
+        * phoneNumber : String
+        * amount : String
+        * */
         CollectionReference userProfiles = userProfileService.getCollectionReference();
 
         Query profileQuery = userProfiles.whereEqualTo("phone", params.getString("phoneNumber"));
@@ -192,23 +200,28 @@ public class UserProfileController {
         userProfileService.save(user);
 
     }
-
+     /*
+     * This is used for phonePe's callback, when the payment is in terminated state, then this one is called, this is not used with paytring's implementation, can be removed once we are fully moved out of phone pe
+     * */
     @PostMapping("setPaymentDataContribution")
     public void setPaymentDataContribution(@RequestParam String phoneNumber, @RequestBody JSONObject params) throws IOException, InterruptedException, ExecutionException {
         CollectionReference userProfiles = userProfileService.getCollectionReference();
-//        String encodedResponse = params.getString("response");
-//
-//        byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
-//        String decodedString = new String(decodedBytes);
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        JsonNode decodedJson = objectMapper.readTree(decodedString);
-//
-//        JsonNode dataNode = decodedJson.get("data");
-//        String merchantTransactionId = dataNode.get("merchantTransactionId").asText();
-//        int amountInPaisa = dataNode.get("amount").asInt();
-//        int amount = amountInPaisa / 100;
-//        String code = decodedJson.get("code").asText();
-//        if (!"PAYMENT_SUCCESS".equals(code)) return;
+        /*
+        * The below code checks for the payment status, whether success or false and proceeds accordingly
+        * */
+        String encodedResponse = params.getString("response");
+
+        byte[] decodedBytes = Base64.getDecoder().decode(encodedResponse);
+        String decodedString = new String(decodedBytes);
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode decodedJson = objectMapper.readTree(decodedString);
+
+        JsonNode dataNode = decodedJson.get("data");
+        String merchantTransactionId = dataNode.get("merchantTransactionId").asText();
+        int amountInPaisa = dataNode.get("amount").asInt();
+        int amount = amountInPaisa / 100;
+        String code = decodedJson.get("code").asText();
+        if (!"PAYMENT_SUCCESS".equals(code)) return;
         Query profileQuery = userProfiles.whereEqualTo("phone", phoneNumber);
 
         ApiFuture<QuerySnapshot> querySnapshot1 = profileQuery.get();
@@ -250,7 +263,7 @@ public class UserProfileController {
 
         CollectionReference userProfiles = userProfileService.getCollectionReference();
         if(!StringUtils.isEmpty(params.getString("phone"))) {
-    
+
         if (params.getString("phone").startsWith("+")) {
                 params.put("phone", params.getString("phone").substring(1));
             }
