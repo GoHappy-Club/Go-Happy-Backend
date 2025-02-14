@@ -8,6 +8,7 @@ import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.Query;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
+import com.startup.goHappy.controllers.EventController;
 import com.startup.goHappy.controllers.MembershipController;
 import com.startup.goHappy.controllers.UserProfileController;
 import com.startup.goHappy.entities.model.PaymentLog;
@@ -57,6 +58,8 @@ public class PaytringController {
     private UserProfileController userProfileController;
     @Autowired
     private MembershipController membershipController;
+    @Autowired
+    private EventController eventController;
 
     public PaytringController() {
         this.restTemplate = new RestTemplate();
@@ -181,7 +184,8 @@ public class PaytringController {
                     case "contribution":
                         JSONObject setPaymentParams = new JSONObject();
                         setPaymentParams.put("amount", plog.getAmount());
-                        userProfileController.setPaymentDataContribution(plog.getPhone(), setPaymentParams);
+                        setPaymentParams.put("phoneNumber", plog.getPhone());
+                        userProfileController.setPaymentData(setPaymentParams);
                         break;
                     case "subscription":
                         System.out.println("Type is subscription");
@@ -200,6 +204,7 @@ public class PaytringController {
                         JSONObject topUpParams = new JSONObject();
                         topUpParams.put("id", plog.getId());
                         membershipController.topUpWallet(topUpParams, plog.getPhone(), String.valueOf(plog.getAmount()), notes.getString("udf4"));
+                        break;
                 }
             }
             paymentsService.save(plog);
