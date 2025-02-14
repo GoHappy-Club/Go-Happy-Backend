@@ -184,18 +184,9 @@ public class UserProfileController {
         UserProfile user = null;
         for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
             user = document.toObject(UserProfile.class);
+            assert user != null;
             user.setLastPaymentAmount(Integer.parseInt(params.getString("amount")));
             user.setLastPaymentDate("" + new Date().getTime());
-
-            PaymentLog log = new PaymentLog();
-            log.setPaymentDate(user.getLastPaymentDate());
-            log.setPhone(user.getPhone());
-            log.setId(UUID.randomUUID().toString());
-            log.setAmount(user.getLastPaymentAmount());
-            log.setType("contribution");
-            paymentLogService.save(log);
-
-
             break;
         }
         userProfileService.save(user);
