@@ -225,16 +225,6 @@ public class PaytringController {
         verify(verifyParams);
     }
 
-//    @ApiOperation(value = "Webhook for Paytring's Success message")
-//    @PostMapping("/result/failure")
-//    public void Failure(@RequestBody JSONObject params) throws IOException {
-//        System.out.println(params);
-//        String orderId = params.getString("orderId");
-//        JSONObject verifyParams = new JSONObject();
-//        verifyParams.put("id", orderId);
-//        verify(verifyParams);
-//    }
-
     private String getBasicAuthToken() {
         Base64.Encoder encoder = Base64.getEncoder();
         return "Basic " + encoder.encodeToString((payKey + ":" + payPass).getBytes());

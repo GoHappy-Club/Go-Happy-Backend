@@ -231,6 +231,15 @@ public class UserProfileController {
             assert user != null;
             user.setLastPaymentAmount(Integer.parseInt(params.getString("amount")));
             user.setLastPaymentDate("" + new Date().getTime());
+
+            PaymentLog log = new PaymentLog();
+            log.setPaymentDate(user.getLastPaymentDate());
+            log.setPhone(user.getPhone());
+            log.setId(merchantTransactionId);
+            log.setAmount(user.getLastPaymentAmount());
+            log.setType("contribution");
+            paymentLogService.save(log);
+
             break;
         }
         userProfileService.save(user);
