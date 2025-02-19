@@ -416,10 +416,10 @@ public class EventController {
         if (reason != null) {
             rating.setReason(reason);
         }
-        JSONObject giveRewardParams = new JSONObject();
-        giveRewardParams.put("eventId", eventId);
-        giveRewardParams.put("phone", phone);
-        giveReward(giveRewardParams);
+//        JSONObject giveRewardParams = new JSONObject();
+//        giveRewardParams.put("eventId", eventId);
+//        giveRewardParams.put("phone", phone);
+//        giveReward(giveRewardParams);
         ratingsService.save(rating);
     }
 
