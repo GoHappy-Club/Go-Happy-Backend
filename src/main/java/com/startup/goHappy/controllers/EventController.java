@@ -124,6 +124,9 @@ public class EventController {
         ev.setId(UUID.randomUUID().toString());
         ev.setParticipantList(new ArrayList<String>());
         ev.setCostType((!StringUtils.isEmpty(event.getString("costType")) && event.getString("costType").equals("paid")) ? "paid" : "free");
+        if (!StringUtils.isEmpty(event.getString("costType"))) {
+            ev.setCost(Integer.parseInt(event.getString("cost")) == 0 ? 20 : Integer.parseInt(event.getString("cost")));
+        }
         ev.setType(StringUtils.isEmpty(event.getString("type")) ? "session" : event.getString("type"));
         if (event.getString("eventName").toLowerCase().contains("tambola")) {
             List<Integer> numberCaller = new ArrayList<>();
@@ -363,7 +366,7 @@ public class EventController {
 
             queryNew = queryNew.where(filter);
         } else {
-            queryNew = queryNew.whereGreaterThanOrEqualTo("startTime",params.getString("date"));
+            queryNew = queryNew.whereGreaterThanOrEqualTo("startTime", params.getString("date"));
             queryNew = queryNew.whereLessThanOrEqualTo("endTime", "" + zonedDateTime.toInstant().toEpochMilli());
         }
         ApiFuture<QuerySnapshot> querySnapshotNew = queryNew.get();
@@ -478,14 +481,14 @@ public class EventController {
         UserMemberships userMembership = membershipController.getMembershipByPhone(getMembershipByPhoneParams);
         CoinTransactions newTransaction = new CoinTransactions();
 
-		Optional<Event> oevent = eventService.findById(params.getString("id"));
-		Event event = oevent.orElse(null);
-		if (event == null) {
-			return "FAILED: EVENT NOT FOUND";
-		}
-		String ticket = "\""+params.getString("tambolaTicket")+"\"";
-		String result = isParticipationAllowed(event,userMembership);
-        if(!result.equals("SUCCESS")){
+        Optional<Event> oevent = eventService.findById(params.getString("id"));
+        Event event = oevent.orElse(null);
+        if (event == null) {
+            return "FAILED: EVENT NOT FOUND";
+        }
+        String ticket = "\"" + params.getString("tambolaTicket") + "\"";
+        String result = isParticipationAllowed(event, userMembership);
+        if (!result.equals("SUCCESS")) {
             return result;
         }
         event.setSeatsLeft(event.getSeatsLeft() - 1);
@@ -610,9 +613,9 @@ public class EventController {
         UserMemberships userMembership = membershipController.getMembershipByPhone(getMembershipByPhoneParams);
         Optional<Event> oevent = eventService.findById(params.getString("id"));
         Event event = oevent.orElse(null);
-		if (event == null) {
-			return "FAILED: EVENT NOT FOUND";
-		}
+        if (event == null) {
+            return "FAILED: EVENT NOT FOUND";
+        }
 
         event.setSeatsLeft(event.getSeatsLeft() + 1);
         List<String> participants = event.getParticipantList();
