@@ -123,7 +123,7 @@ public class AuthController {
             Map<String, Object> mergedMap = new HashMap<>(userMap);
             mergedMap.putAll(membershipMap);
             return new JSONObject(mergedMap);
-        } else if (!StringUtils.isEmpty(params.getString("token"))) {
+        } else {
             Instant instance = java.time.Instant.ofEpochMilli(new Date().getTime());
             ZonedDateTime zonedDateTime = java.time.ZonedDateTime
                     .ofInstant(instance, java.time.ZoneId.of("Asia/Kolkata"));
@@ -149,8 +149,6 @@ public class AuthController {
             mergedMap.putAll(membershipMap);
             return new JSONObject(mergedMap);
         }
-
-        return null;
     }
 
     @ApiOperation(value = "Send OTP to user")
