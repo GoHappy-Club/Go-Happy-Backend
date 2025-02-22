@@ -9,7 +9,6 @@ import com.google.firebase.messaging.*;
 import com.startup.goHappy.controllers.EventController;
 import com.startup.goHappy.entities.model.Event;
 import com.startup.goHappy.entities.model.Fcm;
-import com.startup.goHappy.entities.model.UserProfile;
 import com.startup.goHappy.entities.repository.FcmRepository;
 import com.startup.goHappy.entities.repository.UserProfileRepository;
 import org.apache.catalina.User;
@@ -147,10 +146,12 @@ public class CloudNotification {
 //    Manually triggered when trip is added, we send a notification to all users and this will a high priority notification.
     public void sendTripUpdate(String title, String body, String image) throws IOException, ExecutionException, InterruptedException, FirebaseMessagingException {
 
-        List<String> fcmTokens = userProfileService.retrieveAll()
-                .stream()
-                .filter(user -> user != null && user.getFcmToken() != null)
-                .map(UserProfile::getFcmToken)
+        CollectionReference ups = userProfileService.getCollectionReference();
+        Query query = ups.select("fcmToken");
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+        List<String> fcmTokens = querySnapshot.get().getDocuments().stream()
+                .map(doc -> doc.getString("fcmToken"))
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
         CollectionReference fcms = fcmService.getCollectionReference();
