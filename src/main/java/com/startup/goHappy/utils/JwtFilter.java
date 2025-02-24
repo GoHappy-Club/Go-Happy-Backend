@@ -26,7 +26,7 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        if (request.getServletPath().equals("/_ah/start") || request.getServletPath().equals("/authenticate") || request.getServletPath().equals("/user/setPaymentDataWorkshop") || request.getServletPath().equals("/user/setPaymentDataContribution") || request.getServletPath().equals("/membership/buy") || request.getServletPath().equals("/membership/renew") || request.getServletPath().equals("/membership/upgrade") || request.getServletPath().equals("/membership/topUp") || request.getServletPath().equals("/") || request.getServletPath().equals("/properties/list")) {
+        if (request.getServletPath().equals("/_ah/start") || request.getServletPath().equals("/authenticate") || request.getServletPath().equals("/user/setPaymentDataWorkshop") || request.getServletPath().equals("/user/setPaymentDataContribution") || request.getServletPath().equals("/membership/buy") || request.getServletPath().equals("/membership/renew") || request.getServletPath().equals("/membership/upgrade") || request.getServletPath().equals("/membership/topUp") || request.getServletPath().equals("/") || request.getServletPath().equals("/properties/list") || request.getServletPath().equals("/paytring/result")) {
             filterChain.doFilter(request, response);
             return;
         }
