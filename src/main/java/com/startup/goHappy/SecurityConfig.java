@@ -73,6 +73,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/_ah/start").permitAll()
                 .antMatchers("/authenticate").permitAll()
+                .antMatchers("/paytring/result").permitAll()
                 .antMatchers("/").permitAll()
                 .antMatchers("/properties/list").permitAll()
                 .antMatchers("/user/setPaymentDataWorkshop", "/user/setPaymentDataContribution").permitAll()
