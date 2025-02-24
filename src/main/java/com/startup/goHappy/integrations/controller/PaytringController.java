@@ -22,6 +22,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("paytring")
@@ -136,7 +138,6 @@ public class PaytringController {
     @ApiOperation(value = "Verify whether the payment was successfull or not")
     @PostMapping("/verify")
     JSONObject verify(@RequestBody JSONObject params) throws IOException {
-        System.out.println(params);
         HttpHeaders headers = new HttpHeaders();
         headers.add("accept", "application/json");
         headers.add("authorization", getBasicAuthToken());
@@ -165,16 +166,23 @@ public class PaytringController {
                 break;
             }
             assert plog != null;
+            if(plog.getStatus()==PaymentStatusEnum.FAILED || plog.getStatus() == PaymentStatusEnum.SUCCESS){
+                output.put("status", plog.getStatus().toString().toLowerCase());
+                return output;
+            }
             if (orderObject.getString("order_status").equals("success")) {
                 plog.setStatus(PaymentStatusEnum.SUCCESS);
+                paymentsService.save(plog);
                 output.put("status", "success");
             } else if (orderObject.getString("order_status").equals("failed")) {
                 plog.setStatus(PaymentStatusEnum.FAILED);
                 output.put("status", "failed");
+                paymentsService.save(plog);
                 return output;
             } else {
                 plog.setStatus(PaymentStatusEnum.PENDING);
                 output.put("status", "pending");
+                paymentsService.save(plog);
                 return output;
             }
             if (orderObject.getString("order_status").equals("success")) {
@@ -183,9 +191,9 @@ public class PaytringController {
                 switch (type) {
                     case "workshop":
                         JSONObject bookEventParams = new JSONObject();
-                        bookEventParams.put("phoneNumber",plog.getPhone());
-                        bookEventParams.put("id",notes.getString("udf1"));
-                        bookEventParams.put("tambolaTicket","");
+                        bookEventParams.put("phoneNumber", plog.getPhone());
+                        bookEventParams.put("id", notes.getString("udf1"));
+                        bookEventParams.put("tambolaTicket", "");
                         eventController.bookEvent(bookEventParams);
                         break;
                     case "contribution":
@@ -195,26 +203,21 @@ public class PaytringController {
                         userProfileController.setPaymentData(setPaymentParams);
                         break;
                     case "subscription":
-                        System.out.println("Type is subscription");
                         membershipController.buySubscription(new JSONObject(), plog.getPhone(), String.valueOf(plog.getAmount()), notes.getString("udf2"));
                         break;
                     case "upgrade":
-                        System.out.println("Type is upgrade");
                         membershipController.upgradeSubscription(new JSONObject(), plog.getPhone(), String.valueOf(plog.getAmount()), notes.getString("udf2"));
                         break;
                     case "renewal":
-                        System.out.println("Type is renewal");
                         membershipController.renewSubscription(new JSONObject(), plog.getPhone(), String.valueOf(plog.getAmount()), notes.getString("udf2"));
                         break;
                     case "topUp":
-                        System.out.println("Type is top up");
                         JSONObject topUpParams = new JSONObject();
                         topUpParams.put("id", plog.getId());
                         membershipController.topUpWallet(topUpParams, plog.getPhone(), String.valueOf(plog.getAmount()), notes.getString("udf4"));
                         break;
                 }
             }
-            paymentsService.save(plog);
         } catch (Exception e) {
             output.put("status", "failed");
             e.printStackTrace();
@@ -225,11 +228,21 @@ public class PaytringController {
     @ApiOperation(value = "Webhook for Paytring")
     @PostMapping("/result")
     public void Success(@RequestBody JSONObject params) throws IOException {
-        System.out.println(params);
         String orderId = params.getString("order_id");
         JSONObject verifyParams = new JSONObject();
         verifyParams.put("id", orderId);
-        verify(verifyParams);
+        scheduleVerification(verifyParams);
+    }
+
+    @Async
+    public CompletableFuture<Void> scheduleVerification(JSONObject verifyParams) {
+        try {
+            Thread.sleep(10000);
+            verify(verifyParams);
+            return CompletableFuture.completedFuture(null);
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(e);
+        }
     }
 
     private String getBasicAuthToken() {
