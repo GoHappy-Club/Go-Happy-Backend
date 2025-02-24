@@ -219,7 +219,7 @@ public class PaytringController {
     @PostMapping("/result")
     public void Success(@RequestBody JSONObject params) throws IOException {
         System.out.println(params);
-        String orderId = params.getString("orderId");
+        String orderId = params.getString("order_id");
         JSONObject verifyParams = new JSONObject();
         verifyParams.put("id", orderId);
         verify(verifyParams);
