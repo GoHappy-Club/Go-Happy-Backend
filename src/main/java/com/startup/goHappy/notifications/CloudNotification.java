@@ -1,4 +1,5 @@
 package com.startup.goHappy.notifications;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.api.core.ApiFuture;
@@ -60,19 +61,19 @@ public class CloudNotification {
         JSONObject params = new JSONObject();
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"));
         long epochMillisIndia = calendar.getTimeInMillis();
-        params.put("minDate",""+epochMillisIndia);
+        params.put("minDate", "" + epochMillisIndia);
         long newTime = epochMillisIndia + 10 * 60 * 1000; //* 100 is additional
-        params.put("maxDate",""+newTime);
+        params.put("maxDate", "" + newTime);
         List<Event> events = eventController.getEventsWithinDateRange(params);
         long ISTOffset = calendar.getTimeZone().getRawOffset();
-        for(Event event: events){
+        for (Event event : events) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
-            Date date = new Date(Long.parseLong(event.getStartTime())+ISTOffset);
+            Date date = new Date(Long.parseLong(event.getStartTime()) + ISTOffset);
             String formattedTime = dateFormat.format(date);
             System.out.println(formattedTime);
             List<String> phones = event.getParticipantList();
             String title = event.getEventName();
-            String body = "Click below to attend the session at "+formattedTime;
+            String body = "Click below to attend the session at " + formattedTime;
             String image = event.getCoverImage();
             CollectionReference userProfiles = userProfileService.getCollectionReference();
             CollectionReference fcms = fcmService.getCollectionReference();
@@ -82,28 +83,28 @@ public class CloudNotification {
                 Query batchQuery = userProfiles.whereIn("phone", phoneBatch);
                 ApiFuture<QuerySnapshot> querySnapshot = batchQuery.get();
                 for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
-                    if(document.get("fcmToken")!=null) {
+                    if (document.get("fcmToken") != null) {
                         String fcm = document.get("fcmToken").toString();
                         fcmTokens.add(fcm);
                     }
                 }
             }
-            if(fcmTokens.isEmpty()){
+            if (fcmTokens.isEmpty()) {
                 continue;
             }
-            Query fcmQuery = fcms.whereEqualTo("topicName",SESSION_REMINDER_TOPIC);
+            Query fcmQuery = fcms.whereEqualTo("topicName", SESSION_REMINDER_TOPIC);
             ApiFuture<QuerySnapshot> fcmQuerySnapshot = fcmQuery.get();
             Fcm existingFcm = null;
             for (DocumentSnapshot document : fcmQuerySnapshot.get().getDocuments()) {
                 Fcm fcm = document.toObject(Fcm.class);
                 existingFcm = fcm;
-                if(fcm.getFcmTokens()!=null && fcm.getFcmTokens().size()>0) {
+                if (fcm.getFcmTokens() != null && fcm.getFcmTokens().size() > 0) {
                     FirebaseMessaging.getInstance().unsubscribeFromTopic(fcm.getFcmTokens(), SESSION_REMINDER_TOPIC);
                 }
                 break;
             }
             try {
-                FirebaseMessaging.getInstance().subscribeToTopic(fcmTokens,SESSION_REMINDER_TOPIC);
+                FirebaseMessaging.getInstance().subscribeToTopic(fcmTokens, SESSION_REMINDER_TOPIC);
                 existingFcm.setFcmTokens(fcmTokens);
                 existingFcm.setTopicName(SESSION_REMINDER_TOPIC);
                 fcmService.save(existingFcm);
@@ -113,7 +114,7 @@ public class CloudNotification {
             try {
                 Message message = Message.builder()
                         .setTopic(SESSION_REMINDER_TOPIC)
-                        .putData("deepLink", "https://www.gohappyclub.in/session_details/"+event.getId())
+                        .putData("deepLink", "https://www.gohappyclub.in/session_details/" + event.getId())
 //                        .putData("priority","HIGH")
                         .putData("confirmText", "Click here")
                         .setNotification(Notification.builder()
@@ -134,17 +135,69 @@ public class CloudNotification {
     }
 
     //Ex. Khayal. This will be triggered manually or can think about it.
-    public void promoteSession(String title, String body){
+    public void promoteSession(String title, String body, String sessionId) {
+        try {
+            CollectionReference ups = userProfileService.getCollectionReference();
+            Query query = ups.select("fcmToken");
+            ApiFuture<QuerySnapshot> querySnapshot = query.get();
+            List<String> fcmTokens = querySnapshot.get().getDocuments().stream()
+                    .map(doc -> doc.getString("fcmToken"))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            CollectionReference fcms = fcmService.getCollectionReference();
+            Query fcmQuery = fcms.whereEqualTo("topicName", ALL_USERS_TOPIC);
+            ApiFuture<QuerySnapshot> fcmQuerySnapshot = fcmQuery.get();
+
+            Fcm existingFcm = null;
+            for (DocumentSnapshot document : fcmQuerySnapshot.get().getDocuments()) {
+                Fcm fcm = document.toObject(Fcm.class);
+                existingFcm = fcm;
+                if (fcm.getFcmTokens() != null && fcm.getFcmTokens().size() > 0) {
+                    FirebaseMessaging.getInstance().unsubscribeFromTopic(fcm.getFcmTokens(), ALL_USERS_TOPIC);
+                }
+                break;
+            }
+            final int batchSize = 1000;
+            for (int i = 0; i < fcmTokens.size(); i += batchSize) {
+                List<String> batch = fcmTokens.subList(i, Math.min(i + batchSize, fcmTokens.size()));
+                FirebaseMessaging.getInstance().subscribeToTopic(batch, ALL_USERS_TOPIC);
+            }
+            if (existingFcm == null) {
+                existingFcm = new Fcm();
+                existingFcm.setId(UUID.randomUUID().toString());
+            }
+            existingFcm.setFcmTokens(fcmTokens);
+            existingFcm.setTopicName(ALL_USERS_TOPIC);
+            fcmService.save(existingFcm);
+
+            Message message = Message.builder()
+                    .setTopic(ALL_USERS_TOPIC)
+                    .putData("deepLink", "https://www.gohappyclub.in/session_details/" + sessionId)
+                    .setNotification(Notification.builder()
+                            .setTitle(title)
+                            .setBody(body)
+                            .build())
+                    .build();
+
+            String response = FirebaseMessaging.getInstance().send(message);
+            for (int i = 0; i < fcmTokens.size(); i += batchSize) {
+                List<String> batch = fcmTokens.subList(i, Math.min(i + batchSize, fcmTokens.size()));
+                FirebaseMessaging.getInstance().unsubscribeFromTopic(batch, ALL_USERS_TOPIC);
+            }
+        } catch (Exception e) {
+            System.err.println("Error sending session promotion: " + e.getMessage());
+        }
 
     }
 
     // This will run for people who never contributed and have a FcmToken. make it high priority notification
-    public void contributionReminders(){
+    public void contributionReminders() {
 
     }
 
-//    Manually triggered when trip is added, we send a notification to all users and this will a high priority notification.
-    public void sendTripUpdate(String title, String body, String image) throws IOException, ExecutionException, InterruptedException, FirebaseMessagingException {
+    //    Manually triggered when trip is added, we send a notification to all users and this will a high priority notification.
+    public void sendTripUpdate(String title, String body) throws IOException, ExecutionException, InterruptedException, FirebaseMessagingException {
 
         CollectionReference ups = userProfileService.getCollectionReference();
         Query query = ups.select("fcmToken");
@@ -155,7 +208,7 @@ public class CloudNotification {
                 .collect(Collectors.toList());
 
         CollectionReference fcms = fcmService.getCollectionReference();
-        Query fcmQuery = fcms.whereEqualTo("topicName",ALL_USERS_TOPIC);
+        Query fcmQuery = fcms.whereEqualTo("topicName", ALL_USERS_TOPIC);
 
         ApiFuture<QuerySnapshot> fcmQuerySnapshot = fcmQuery.get();
 
@@ -163,14 +216,18 @@ public class CloudNotification {
         for (DocumentSnapshot document : fcmQuerySnapshot.get().getDocuments()) {
             Fcm fcm = document.toObject(Fcm.class);
             existingFcm = fcm;
-            if(fcm.getFcmTokens()!=null && fcm.getFcmTokens().size()>0) {
+            if (fcm.getFcmTokens() != null && fcm.getFcmTokens().size() > 0) {
                 FirebaseMessaging.getInstance().unsubscribeFromTopic(fcm.getFcmTokens(), ALL_USERS_TOPIC);
             }
             break;
         }
         try {
-            FirebaseMessaging.getInstance().subscribeToTopic(fcmTokens,ALL_USERS_TOPIC);
-            if(existingFcm==null){
+            final int batchSize = 1000;
+            for (int i = 0; i < fcmTokens.size(); i += batchSize) {
+                List<String> batch = fcmTokens.subList(i, Math.min(i + batchSize, fcmTokens.size()));
+                FirebaseMessaging.getInstance().subscribeToTopic(batch, ALL_USERS_TOPIC);
+            }
+            if (existingFcm == null) {
                 existingFcm = new Fcm();
                 existingFcm.setId(UUID.randomUUID().toString());
             }
@@ -183,22 +240,24 @@ public class CloudNotification {
         try {
             Message message = Message.builder()
                     .setTopic(ALL_USERS_TOPIC)
-                    .putData("deepLink", "https://www.gohappyclub.in/refer")
+                    .putData("deepLink", "https://www.gohappyclub.in/trips")
                     .setNotification(Notification.builder()
                             .setTitle(title)
                             .setBody(body)
-                            .setImage(image)
                             .build())
                     .build();
 
             String response = FirebaseMessaging.getInstance().send(message);
             System.out.println(response);
+            final int batchSize = 1000;
+            for (int i = 0; i < fcmTokens.size(); i += batchSize) {
+                List<String> batch = fcmTokens.subList(i, Math.min(i + batchSize, fcmTokens.size()));
+                FirebaseMessaging.getInstance().unsubscribeFromTopic(batch, ALL_USERS_TOPIC);
+            }
         } catch (FirebaseMessagingException e) {
             // Handle exception
         }
-
     }
-
 
 
 }
