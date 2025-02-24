@@ -181,6 +181,13 @@ public class PaytringController {
                 JSONObject notes = orderObject.getJSONObject("notes");
                 String type = notes.getString("udf5");
                 switch (type) {
+                    case "workshop":
+                        JSONObject bookEventParams = new JSONObject();
+                        bookEventParams.put("phoneNumber",plog.getPhone());
+                        bookEventParams.put("id",notes.getString("udf1"));
+                        bookEventParams.put("tambolaTicket","");
+                        eventController.bookEvent(bookEventParams);
+                        break;
                     case "contribution":
                         JSONObject setPaymentParams = new JSONObject();
                         setPaymentParams.put("amount", plog.getAmount());
