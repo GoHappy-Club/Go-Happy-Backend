@@ -134,70 +134,13 @@ public class CloudNotification {
 
     }
 
-    //Ex. Khayal. This will be triggered manually or can think about it.
-    public void promoteSession(String title, String body, String sessionId) {
-        try {
-            CollectionReference ups = userProfileService.getCollectionReference();
-            Query query = ups.select("fcmToken");
-            ApiFuture<QuerySnapshot> querySnapshot = query.get();
-            List<String> fcmTokens = querySnapshot.get().getDocuments().stream()
-                    .map(doc -> doc.getString("fcmToken"))
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-
-            CollectionReference fcms = fcmService.getCollectionReference();
-            Query fcmQuery = fcms.whereEqualTo("topicName", ALL_USERS_TOPIC);
-            ApiFuture<QuerySnapshot> fcmQuerySnapshot = fcmQuery.get();
-
-            Fcm existingFcm = null;
-            for (DocumentSnapshot document : fcmQuerySnapshot.get().getDocuments()) {
-                Fcm fcm = document.toObject(Fcm.class);
-                existingFcm = fcm;
-                if (fcm.getFcmTokens() != null && fcm.getFcmTokens().size() > 0) {
-                    FirebaseMessaging.getInstance().unsubscribeFromTopic(fcm.getFcmTokens(), ALL_USERS_TOPIC);
-                }
-                break;
-            }
-            final int batchSize = 1000;
-            for (int i = 0; i < fcmTokens.size(); i += batchSize) {
-                List<String> batch = fcmTokens.subList(i, Math.min(i + batchSize, fcmTokens.size()));
-                FirebaseMessaging.getInstance().subscribeToTopic(batch, ALL_USERS_TOPIC);
-            }
-            if (existingFcm == null) {
-                existingFcm = new Fcm();
-                existingFcm.setId(UUID.randomUUID().toString());
-            }
-            existingFcm.setFcmTokens(fcmTokens);
-            existingFcm.setTopicName(ALL_USERS_TOPIC);
-            fcmService.save(existingFcm);
-
-            Message message = Message.builder()
-                    .setTopic(ALL_USERS_TOPIC)
-                    .putData("deepLink", "https://www.gohappyclub.in/session_details/" + sessionId)
-                    .setNotification(Notification.builder()
-                            .setTitle(title)
-                            .setBody(body)
-                            .build())
-                    .build();
-
-            String response = FirebaseMessaging.getInstance().send(message);
-            for (int i = 0; i < fcmTokens.size(); i += batchSize) {
-                List<String> batch = fcmTokens.subList(i, Math.min(i + batchSize, fcmTokens.size()));
-                FirebaseMessaging.getInstance().unsubscribeFromTopic(batch, ALL_USERS_TOPIC);
-            }
-        } catch (Exception e) {
-            System.err.println("Error sending session promotion: " + e.getMessage());
-        }
-
-    }
-
     // This will run for people who never contributed and have a FcmToken. make it high priority notification
     public void contributionReminders() {
 
     }
 
     //    Manually triggered when trip is added, we send a notification to all users and this will a high priority notification.
-    public void sendTripUpdate(String title, String body) throws IOException, ExecutionException, InterruptedException, FirebaseMessagingException {
+    public void sendAnnouncement(String title, String body, String deepLink) throws IOException, ExecutionException, InterruptedException, FirebaseMessagingException {
 
         CollectionReference ups = userProfileService.getCollectionReference();
         Query query = ups.select("fcmToken");
@@ -240,7 +183,7 @@ public class CloudNotification {
         try {
             Message message = Message.builder()
                     .setTopic(ALL_USERS_TOPIC)
-                    .putData("deepLink", "https://www.gohappyclub.in/trips")
+                    .putData("deepLink", deepLink)
                     .setNotification(Notification.builder()
                             .setTitle(title)
                             .setBody(body)
