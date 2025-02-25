@@ -822,11 +822,21 @@ public class MembershipController {
     }
 
     public UserMemberships createNewMembership(String phone, String userId) {
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"));
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
         UserMemberships userMembership = new UserMemberships();
 
         userMembership.setId(UUID.randomUUID().toString());
         userMembership.setUserId(userId);
         userMembership.setPhone(phone);
+        userMembership.setMembershipType(MembershipEnum.Silver);
+        userMembership.setMembershipStartDate(""+calendar.getTimeInMillis());
+        calendar.set(Calendar.MONTH,12);
+        userMembership.setMembershipEndDate(""+calendar.getTimeInMillis());
 
         userMembershipsService.save(userMembership);
 
