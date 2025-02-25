@@ -15,6 +15,8 @@ import java.util.concurrent.ExecutionException;
 @RequestMapping("/anouncements")
 public class AnnouncementsController {
 
+    private final String PREFIX_URL = "https://gohappyclub.in";
+
     @Autowired
     CloudNotification cloudNotification;
 
@@ -25,12 +27,14 @@ public class AnnouncementsController {
     @ApiOperation(value = "To anounce trips via a push notification")
     @PostMapping("/trips")
     public void tripNotify(@RequestBody JSONObject params) throws IOException, ExecutionException, InterruptedException, FirebaseMessagingException {
-        cloudNotification.sendTripUpdate(params.getString("title"), params.getString("body"));
+        String deepLink = PREFIX_URL+"/trips";
+        cloudNotification.sendAnnouncement(params.getString("title"), params.getString("body"),deepLink);
     }
 
     @ApiOperation(value = "Promote a session via a push notification with embedded deep link")
     @PostMapping("/session")
     public void sessionNotify(@RequestBody JSONObject params) throws IOException, ExecutionException, InterruptedException, FirebaseMessagingException {
-        cloudNotification.promoteSession(params.getString("title"), params.getString("body"), params.getString("id"));
+        String deepLink = PREFIX_URL+"/session_details/"+params.getString("session_id");
+        cloudNotification.sendAnnouncement(params.getString("title"), params.getString("body"), deepLink);
     }
 }
