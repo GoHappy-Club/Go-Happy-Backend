@@ -16,6 +16,7 @@ import com.startup.goHappy.entities.model.UserMemberships;
 import com.startup.goHappy.entities.repository.PaymentLogRepository;
 import com.startup.goHappy.entities.repository.ReferralRepository;
 import com.startup.goHappy.enums.MembershipEnum;
+import com.startup.goHappy.enums.PaymentStatusEnum;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -229,7 +230,7 @@ public class UserProfileController {
         for (DocumentSnapshot document : querySnapshot1.get().getDocuments()) {
             user = document.toObject(UserProfile.class);
             assert user != null;
-            user.setLastPaymentAmount(Integer.parseInt(params.getString("amount")));
+            user.setLastPaymentAmount(amount);
             user.setLastPaymentDate("" + new Date().getTime());
 
             PaymentLog log = new PaymentLog();
@@ -238,6 +239,7 @@ public class UserProfileController {
             log.setId(merchantTransactionId);
             log.setAmount(user.getLastPaymentAmount());
             log.setType("contribution");
+            log.setStatus(PaymentStatusEnum.SUCCESS);
             paymentLogService.save(log);
 
             break;
