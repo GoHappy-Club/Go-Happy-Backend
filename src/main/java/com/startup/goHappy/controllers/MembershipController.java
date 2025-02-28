@@ -104,7 +104,7 @@ public class MembershipController {
         calendar.set(Calendar.MILLISECOND, 0);
 
         userMembership.setMembershipStartDate(String.valueOf(calendar.getTimeInMillis()));
-        calendar.add(Calendar.MONTH, 1);
+        calendar.add(Calendar.MONTH, 12);
         userMembership.setMembershipEndDate(String.valueOf(calendar.getTimeInMillis()));
         userMembership.setFreeTrialActive(true);
         userMembership.setMembershipType(MembershipEnum.Silver);
