@@ -19,6 +19,7 @@ public class Templates {
     private String expertName;
     private String expertImage;
     private String category;
+    private String subCategory;
     private String description;
     private String beautifulDescription;
     private String shareMessage;
