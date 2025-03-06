@@ -25,4 +25,5 @@ public class UserProfile {
 	private String fcmToken;
 	private String dob;
 	private Boolean isBlocked=false;
+	private String lastDevice;
 }
