@@ -303,6 +303,8 @@ public class UserProfileController {
                 user.setDob(params.getString("dob"));
             if (!StringUtils.isEmpty(params.getString("sessionsAttended")))
                 user.setSessionsAttended(params.getString("sessionsAttended"));
+            if (!StringUtils.isEmpty(params.getString("lastDevice")))
+                user.setLastDevice(params.getString("lastDevice"));
             break;
         }
         userProfileService.save(user);
