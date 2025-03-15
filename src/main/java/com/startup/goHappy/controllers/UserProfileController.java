@@ -142,7 +142,7 @@ public class UserProfileController {
         String[] columnNames = {"ID", "Name", "Age", "Email", "Phone Number",
                 "Last Payment Date", "Invite Code", "Sessions Attended",
                 "Date Of Joining", "Date of Joining (Date Format)",
-                "Profile Image", "Last Payment Amount"};
+                "Profile Image", "Last Payment Amount","City","Emergency Contact","Device Name"};
         users.add(columnNames);
         for (DocumentSnapshot document : querySnapshot.get().getDocuments()) {
             UserProfile user = document.toObject(UserProfile.class);
@@ -164,6 +164,7 @@ public class UserProfileController {
                     user.getLastPaymentAmount() != null ? user.getLastPaymentAmount().toString() : "",
                     user.getCity(),
                     user.getEmergencyContact(),
+                    user.getLastDevice()
 
             };
             users.add(userData);
